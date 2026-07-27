@@ -4,8 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>مقسّم التشريعات</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg:#ffffff;
@@ -31,13 +29,14 @@
 
     --danger:#dc2626;
     --radius:14px;
+    --font: -apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans Arabic",Tahoma,Arial,sans-serif;
   }
   *{box-sizing:border-box;}
   body{
     margin:0;
     background:var(--bg-soft);
     color:var(--text);
-    font-family:'IBM Plex Sans Arabic','Tajawal',system-ui,sans-serif;
+    font-family:var(--font);
     -webkit-font-smoothing:antialiased;
   }
   .wrap{max-width:1180px;margin:0 auto;padding:28px 20px 80px;}
@@ -50,7 +49,7 @@
     background:var(--blue-bg);padding:4px 12px;border-radius:999px;
     margin-bottom:12px;
   }
-  h1{font-family:'Tajawal',sans-serif;font-weight:800;font-size:26px;margin:0 0 6px;}
+  h1{font-family:var(--font);font-weight:800;font-size:26px;margin:0 0 6px;}
   .sub{color:var(--text-muted);font-size:14.5px;line-height:1.7;max-width:640px;margin:0 0 20px;}
 
   .user-box{display:flex;flex-direction:column;gap:6px;min-width:220px;}
@@ -175,12 +174,12 @@
   }
 
   .part-heading{
-    font-family:'Tajawal',sans-serif;font-weight:800;font-size:21px;color:var(--lvl1-text);
+    font-family:var(--font);font-weight:800;font-size:21px;color:var(--lvl1-text);
     margin:32px 0 6px;padding:10px 16px;background:var(--lvl1-bg);border-radius:10px;
   }
   .part-heading:first-child{margin-top:0;}
   .chapter-heading{
-    font-family:'Tajawal',sans-serif;font-weight:700;font-size:17px;
+    font-family:var(--font);font-weight:700;font-size:17px;
     margin:20px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--border);
   }
   .article-card{
@@ -205,6 +204,25 @@
     background:#fffbeb;border:1px solid #fde68a;color:#92400e;
     font-size:13px;padding:12px 16px;border-radius:10px;margin-bottom:18px;
   }
+
+  .draft-banner{
+    display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+    background:var(--blue-bg);border:1px solid var(--blue-bg-hover);color:var(--blue);
+    font-size:13px;font-weight:600;padding:12px 16px;border-radius:10px;margin-bottom:16px;
+  }
+  .draft-banner button{font-size:12.5px;padding:7px 14px;}
+
+  .import-row{margin-bottom:14px;}
+
+  .lvl-switch{display:flex;gap:4px;flex-shrink:0;}
+  .lvl-switch-btn{
+    font-size:10px;font-weight:700;padding:2px 6px;border-radius:999px;
+    border:1px solid transparent;opacity:.8;
+  }
+  .lvl-switch-btn:hover{opacity:1;}
+  .lvl-switch-btn.lvl1{background:var(--lvl1-bg);color:var(--lvl1-text);border-color:var(--lvl1-border);}
+  .lvl-switch-btn.lvl2{background:var(--lvl2-bg);color:var(--lvl2-text);border-color:var(--lvl2-border);}
+  .lvl-switch-btn.lvl3{background:var(--lvl3-bg);color:var(--lvl3-text);border-color:var(--lvl3-border);}
 
   .toast{
     position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(20px);
@@ -264,6 +282,15 @@
   <!-- STEP 1 -->
   <div class="step" id="step1">
     <div class="card">
+      <div class="draft-banner" id="draftBanner" style="display:none;">
+        <span id="draftBannerText"></span>
+        <button class="btn-ghost" id="restoreDraftBtn">استعادة المسودة</button>
+        <button class="btn-ghost" id="discardDraftBtn">تجاهل</button>
+      </div>
+      <div class="import-row">
+        <button class="btn-ghost" id="importJsonBtn">استيراد من ملف JSON مُصدَّر سابقًا</button>
+        <input type="file" id="importJsonFile" accept="application/json" style="display:none;">
+      </div>
       <textarea id="rawInput" placeholder="الصق هنا النص الكامل للتشريع أو اللائحة..."></textarea>
       <div class="row-between">
         <div>
@@ -292,9 +319,9 @@
           <button class="mark-btn lvl1" id="markPartBtn"><span class="dot"></span> تحديد كعنوان باب</button>
           <button class="mark-btn lvl2" id="markChapterBtn"><span class="dot"></span> تحديد كعنوان فصل</button>
           <button class="mark-btn lvl3" id="markArticleBtn"><span class="dot"></span> تحديد كعنوان مادة</button>
-          <span class="hint">حدّد نص العنوان بالماوس أولًا ثم اضغط الزر — اضغط على أي عنوان محدد لإزالته</span>
+          <span class="hint">حدّد نص العنوان بالماوس أولًا ثم اضغط الزر (أو اختصار 1/2/3) — اضغط على أي عنوان محدد لإزالته</span>
         </div>
-        <div id="contentView"></div>
+        <div id="contentView" tabindex="0"></div>
       </div>
 
       <div class="card sidebar-card">
@@ -368,6 +395,7 @@ const markPartBtn = $('#markPartBtn');
 const markChapterBtn = $('#markChapterBtn');
 const markArticleBtn = $('#markArticleBtn');
 [markPartBtn, markChapterBtn, markArticleBtn].forEach(b=>b.addEventListener('mousedown', e=>e.preventDefault()));
+fileTitleInput.addEventListener('input', scheduleDraftSave);
 
 function showToast(msg){
   toast.textContent = msg;
@@ -387,15 +415,96 @@ function goToStep(n){
   });
 }
 
-/* ---------- remember username locally ---------- */
-(async function initUsername(){
+/* ---------- storage: host storage.js if present, else localStorage fallback ---------- */
+const hasHostStorage = typeof window.storage !== 'undefined' && typeof window.storage.get === 'function' && typeof window.storage.set === 'function';
+
+async function storageGet(key){
+  if(hasHostStorage){
+    try{
+      const res = await window.storage.get(key);
+      return (res && res.value != null) ? res.value : null;
+    }catch(e){ /* fall through to local */ }
+  }
+  try{ return localStorage.getItem('taqseem:'+key); }catch(e){ return null; }
+}
+async function storageSet(key, value){
+  if(hasHostStorage){
+    try{ await window.storage.set(key, value); return true; }
+    catch(e){ /* fall through to local */ }
+  }
+  try{ localStorage.setItem('taqseem:'+key, value); return true; }
+  catch(e){ return false; }
+}
+
+/* ---------- draft autosave (recovers in-progress work after a refresh/crash) ---------- */
+const DRAFT_KEY = 'draft-v1';
+let draftDirty = false;
+function scheduleDraftSave(){
+  draftDirty = true;
+  clearTimeout(scheduleDraftSave._t);
+  scheduleDraftSave._t = setTimeout(saveDraftNow, 800);
+}
+async function saveDraftNow(){
+  if(!draftDirty) return;
+  draftDirty = false;
+  const draft = {
+    rawText, mode, marks, nextId,
+    fileTitle: fileTitleInput.value,
+    savedAt: new Date().toISOString()
+  };
+  await storageSet(DRAFT_KEY, JSON.stringify(draft));
+}
+async function loadDraft(){
+  const raw = await storageGet(DRAFT_KEY);
+  if(!raw) return null;
+  try{ return JSON.parse(raw); }catch(e){ return null; }
+}
+async function clearDraft(){ await storageSet(DRAFT_KEY, ''); }
+
+async function applyDraft(draft){
+  rawText = draft.rawText || '';
+  mode = draft.mode || null;
+  marks = Array.isArray(draft.marks) ? draft.marks : [];
+  nextId = draft.nextId || (marks.reduce((m,x)=>Math.max(m,x.id),0)+1);
+  rawInput.value = rawText;
+  if(draft.fileTitle) fileTitleInput.value = draft.fileTitle;
+  if(mode){
+    document.querySelectorAll('.mode-opt').forEach(b=>b.classList.toggle('selected', b.dataset.mode===mode));
+    markPartBtn.style.display = mode === 'parts' ? 'flex' : 'none';
+    markChapterBtn.style.display = (mode === 'parts' || mode === 'chapters') ? 'flex' : 'none';
+  }
+  checkStep1Ready();
+  if(mode){
+    renderContent();
+    renderMarksList();
+    goToStep(2);
+  }
+}
+
+/* ---------- app init: remember username + offer to restore autosaved draft ---------- */
+(async function initApp(){
   try{
-    const res = await window.storage.get('entry-username', false);
-    if(res && res.value) usernameInput.value = res.value;
+    const savedName = await storageGet('entry-username');
+    if(savedName) usernameInput.value = savedName;
   }catch(e){ /* no stored value yet */ }
+
+  const draft = await loadDraft();
+  if(draft && draft.rawText && draft.rawText.trim()){
+    $('#draftBannerText').textContent = 'توجد مسودة محفوظة تلقائيًا من ' + formatDate(draft.savedAt) + ' — هل تريد استعادتها؟';
+    $('#draftBanner').style.display = 'flex';
+    $('#restoreDraftBtn').addEventListener('click', async ()=>{
+      $('#draftBanner').style.display = 'none';
+      await applyDraft(draft);
+      showToast('تم استعادة المسودة');
+    });
+    $('#discardDraftBtn').addEventListener('click', async ()=>{
+      $('#draftBanner').style.display = 'none';
+      await clearDraft();
+    });
+  }
 })();
 usernameInput.addEventListener('change', async ()=>{
-  try{ await window.storage.set('entry-username', usernameInput.value.trim(), false); }catch(e){}
+  await storageSet('entry-username', usernameInput.value.trim());
 });
 
 /* ---------- STEP 1 : mode + text ---------- */
@@ -406,12 +515,17 @@ document.querySelectorAll('.mode-opt').forEach(btn=>{
     markPartBtn.style.display = mode === 'parts' ? 'flex' : 'none';
     markChapterBtn.style.display = (mode === 'parts' || mode === 'chapters') ? 'flex' : 'none';
     checkStep1Ready();
+    scheduleDraftSave();
   });
 });
 function checkStep1Ready(){
   toStep2Btn.disabled = !(rawInput.value.trim().length > 0 && mode);
 }
-rawInput.addEventListener('input', checkStep1Ready);
+rawInput.addEventListener('input', ()=>{
+  rawText = rawInput.value;
+  checkStep1Ready();
+  scheduleDraftSave();
+});
 
 toStep2Btn.addEventListener('click', ()=>{
   rawText = rawInput.value;
@@ -425,6 +539,68 @@ toStep2Btn.addEventListener('click', ()=>{
 $('#backTo1Btn').addEventListener('click', ()=>{
   if(marks.length && !confirm('الرجوع لتعديل النص سيمسح كل العناوين المحددة، متابعة؟')) return;
   goToStep(1);
+});
+
+/* ---------- import a previously exported JSON to resume editing ---------- */
+function reconstructFromPayload(payload){
+  const importMode = payload.parts ? 'parts' : payload.chapters ? 'chapters' : (payload.articles ? 'articles' : null);
+  if(!importMode) throw new Error('صيغة غير معروفة');
+
+  let buf = '';
+  const importedMarks = [];
+  let id = 1;
+  function addHeading(text, level){
+    const title = (text || '').trim();
+    if(!title) return;
+    if(buf) buf += '\n\n';
+    const start = buf.length;
+    buf += title;
+    importedMarks.push({ id: id++, start, end: buf.length, level });
+  }
+  function addContent(text){
+    const t = (text || '').trim();
+    if(!t) return;
+    buf += '\n' + t;
+  }
+
+  if(payload.intro) addContent(payload.intro);
+
+  if(importMode === 'articles'){
+    payload.articles.forEach(a=>{ addHeading(a.title, 3); addContent(a.content); });
+  } else if(importMode === 'chapters'){
+    payload.chapters.forEach(ch=>{
+      if(!ch.orphan) addHeading(ch.title, 2);
+      addContent(ch.content);
+      ch.articles.forEach(a=>{ addHeading(a.title, 3); addContent(a.content); });
+    });
+  } else {
+    payload.parts.forEach(p=>{
+      if(!p.orphan) addHeading(p.title, 1);
+      addContent(p.content);
+      p.chapters.forEach(ch=>{
+        if(!ch.orphan) addHeading(ch.title, 2);
+        addContent(ch.content);
+        ch.articles.forEach(a=>{ addHeading(a.title, 3); addContent(a.content); });
+      });
+    });
+  }
+  return { rawText: buf, mode: importMode, marks: importedMarks, nextId: id, fileTitle: payload.meta && payload.meta.fileTitle };
+}
+
+$('#importJsonBtn').addEventListener('click', ()=>$('#importJsonFile').click());
+$('#importJsonFile').addEventListener('change', async e=>{
+  const file = e.target.files[0];
+  e.target.value = '';
+  if(!file) return;
+  try{
+    const text = await file.text();
+    const payload = JSON.parse(text);
+    const rebuilt = reconstructFromPayload(payload);
+    await applyDraft(rebuilt);
+    showToast('تم استيراد الملف — راجع التحديدات قبل المتابعة');
+  }catch(err){
+    showToast('تعذر قراءة الملف: تأكد أنه ملف JSON مُصدَّر من هذه الأداة');
+  }
 });
 
 /* ---------- STEP 2 : marking ---------- */
@@ -486,6 +662,10 @@ function markSelection(level){
   const start = getOffset(contentView, range.startContainer, range.startOffset);
   const end = getOffset(contentView, range.endContainer, range.endOffset);
   if(start === end){ showToast('التحديد فارغ'); return; }
+  if(!rawText.slice(start, end).trim()){
+    showToast('التحديد لا يحتوي على نص فعلي');
+    return;
+  }
   if(overlaps(start, end)){
     showToast('هذا النص يتداخل مع عنوان محدد مسبقًا');
     return;
@@ -494,11 +674,21 @@ function markSelection(level){
   sel.removeAllRanges();
   renderContent();
   renderMarksList();
+  scheduleDraftSave();
 }
 
 markPartBtn.addEventListener('click', ()=>markSelection(1));
 markChapterBtn.addEventListener('click', ()=>markSelection(2));
 markArticleBtn.addEventListener('click', ()=>markSelection(3));
+
+document.addEventListener('keydown', e=>{
+  if(currentStep !== 2) return;
+  if(e.key !== '1' && e.key !== '2' && e.key !== '3') return;
+  const sel = window.getSelection();
+  if(!sel || sel.isCollapsed || !contentView.contains(sel.anchorNode)) return;
+  e.preventDefault();
+  markSelection(parseInt(e.key));
+});
 
 contentView.addEventListener('click', e=>{
   const mk = e.target.closest('mark');
@@ -507,20 +697,31 @@ contentView.addEventListener('click', e=>{
   marks = marks.filter(m=>m.id !== id);
   renderContent();
   renderMarksList();
+  scheduleDraftSave();
 });
 
 const levelLabel = {1:'باب', 2:'فصل', 3:'مادة'};
+function levelOptionsForMode(){
+  if(mode === 'articles') return [3];
+  if(mode === 'chapters') return [2,3];
+  return [1,2,3];
+}
 
 function renderMarksList(){
   const sorted = [...marks].sort((a,b)=>a.start-b.start);
   if(sorted.length === 0){
     marksList.innerHTML = '<div class="empty-hint">لم يتم تحديد أي عنوان بعد</div>';
   } else {
+    const options = levelOptionsForMode();
     marksList.innerHTML = sorted.map(m=>{
       const snippet = rawText.slice(m.start, m.end).trim();
+      const switchBtns = options.filter(l=>l!==m.level).map(l=>
+        `<button class="lvl-switch-btn lvl${l}" data-id="${m.id}" data-level="${l}" title="تحويل إلى ${levelLabel[l]}">${levelLabel[l]}</button>`
+      ).join('');
       return `<div class="mark-item">
         <span class="badge lvl${m.level}">${levelLabel[m.level]}</span>
         <span class="snippet">${escapeHtml(snippet.length>60 ? snippet.slice(0,60)+'…' : snippet)}</span>
+        <div class="lvl-switch">${switchBtns}</div>
         <button class="del" data-id="${m.id}" title="إزالة">✕</button>
       </div>`;
     }).join('');
@@ -537,12 +738,27 @@ function renderMarksList(){
 }
 
 marksList.addEventListener('click', e=>{
-  const btn = e.target.closest('.del');
-  if(!btn) return;
-  const id = parseInt(btn.dataset.id);
-  marks = marks.filter(m=>m.id !== id);
-  renderContent();
-  renderMarksList();
+  const delBtn = e.target.closest('.del');
+  if(delBtn){
+    const id = parseInt(delBtn.dataset.id);
+    marks = marks.filter(m=>m.id !== id);
+    renderContent();
+    renderMarksList();
+    scheduleDraftSave();
+    return;
+  }
+  const lvlBtn = e.target.closest('.lvl-switch-btn');
+  if(lvlBtn){
+    const id = parseInt(lvlBtn.dataset.id);
+    const newLevel = parseInt(lvlBtn.dataset.level);
+    const m = marks.find(x=>x.id === id);
+    if(m){
+      m.level = newLevel;
+      renderContent();
+      renderMarksList();
+      scheduleDraftSave();
+    }
+  }
 });
 
 $('#clearMarksBtn').addEventListener('click', ()=>{
@@ -550,11 +766,13 @@ $('#clearMarksBtn').addEventListener('click', ()=>{
   marks = [];
   renderContent();
   renderMarksList();
+  scheduleDraftSave();
 });
 
 /* ---------- STEP 3 : build tree (up to 3 levels) ---------- */
 function buildTree(){
   const sorted = [...marks].sort((a,b)=>a.start-b.start);
+  const intro = (sorted.length ? rawText.slice(0, sorted[0].start) : rawText).trim();
   const items = sorted.map((m,i)=>{
     const nextStart = sorted[i+1] ? sorted[i+1].start : rawText.length;
     return {
@@ -565,7 +783,7 @@ function buildTree(){
   });
 
   if(mode === 'articles'){
-    return { hasOrphans:false, parts:null, chapters:null,
+    return { hasOrphans:false, intro, parts:null, chapters:null,
       articles: items.map(a=>({title:a.title, content:a.content})) };
   }
 
@@ -586,7 +804,7 @@ function buildTree(){
         current.articles.push({ title:item.title, content:item.content });
       }
     }
-    return { hasOrphans, parts:null, chapters, articles:null };
+    return { hasOrphans, intro, parts:null, chapters, articles:null };
   }
 
   // mode === 'parts'  ->  باب > فصل > مادة
@@ -627,7 +845,7 @@ function buildTree(){
       ch.articles.push({ title:item.title, content:item.content });
     }
   }
-  return { hasOrphans, parts, chapters:null, articles:null };
+  return { hasOrphans, intro, parts, chapters:null, articles:null };
 }
 
 $('#toStep3Btn').addEventListener('click', ()=>{
@@ -638,11 +856,19 @@ $('#backTo2Btn').addEventListener('click', ()=>goToStep(2));
 
 function renderPreview(){
   const tree = buildTree();
-  $('#warnArea').innerHTML = tree.hasOrphans
-    ? `<div class="warn-banner">توجد عناوين ظهرت بدون المستوى الأعلى الذي يفترض أن يسبقها — تم تجميعها تحت عناصر "بدون…"، راجعها قبل الاعتماد.</div>`
-    : '';
+  const warnings = [];
+  if(tree.intro){
+    warnings.push('يوجد نص قبل أول عنوان محدَّد (مثل ديباجة أو رقم مرسوم) — تمت إضافته إلى حقل "intro" منفصل في ملف التصدير بدلًا من إسقاطه، وهو معروض أدناه للمراجعة.');
+  }
+  if(tree.hasOrphans){
+    warnings.push('توجد عناوين ظهرت بدون المستوى الأعلى الذي يفترض أن يسبقها — تم تجميعها تحت عناصر "بدون…"، راجعها قبل الاعتماد.');
+  }
+  $('#warnArea').innerHTML = warnings.map(w=>`<div class="warn-banner">${escapeHtml(w)}</div>`).join('');
 
   let html = '';
+  if(tree.intro){
+    html += `<div class="chapter-heading">تمهيد (نص ورد قبل أول عنوان محدَّد)</div>` + chapterIntroHtml(tree.intro);
+  }
   if(mode === 'articles'){
     tree.articles.forEach(a=>{ html += articleCardHtml(a.title, a.content, null); });
   } else if(mode === 'chapters'){
@@ -669,9 +895,7 @@ function chapterIntroHtml(content){
   return `<div class="article-content" style="margin:-4px 0 16px;color:var(--text-muted);">${escapeHtml(content)}</div>`;
 }
 
-let cardIdx = 0;
 function articleCardHtml(title, content, parentPath){
-  cardIdx++;
   const breadcrumb = parentPath
     ? `<div class="breadcrumb"><b>${escapeHtml(parentPath)}</b> / ${escapeHtml(title)}</div>`
     : `<div class="breadcrumb">${escapeHtml(title)}</div>`;
@@ -685,12 +909,13 @@ function articleCardHtml(title, content, parentPath){
   </div>`;
 }
 
-document.addEventListener('click', e=>{
+document.addEventListener('click', async e=>{
   const btn = e.target.closest('.copy-content');
   if(!btn) return;
   const card = btn.closest('.article-card');
   const content = card.querySelector('.article-content').textContent;
-  navigator.clipboard.writeText(content).then(()=>showToast('تم نسخ المحتوى'));
+  const ok = await copyTextToClipboard(content);
+  showToast(ok ? 'تم نسخ المحتوى' : 'تعذر النسخ إلى الحافظة');
 });
 
 /* ---------- export + export log (shared storage) ---------- */
@@ -701,9 +926,10 @@ function buildExportPayload(){
     exportedBy: usernameInput.value.trim(),
     exportedAt: new Date().toISOString()
   };
-  if(mode === 'articles') return { meta, articles: tree.articles };
-  if(mode === 'chapters') return { meta, chapters: tree.chapters };
-  return { meta, parts: tree.parts };
+  const base = tree.intro ? { meta, intro: tree.intro } : { meta };
+  if(mode === 'articles') return { ...base, articles: tree.articles };
+  if(mode === 'chapters') return { ...base, chapters: tree.chapters };
+  return { ...base, parts: tree.parts };
 }
 
 function validateBeforeExport(){
@@ -722,24 +948,37 @@ function validateBeforeExport(){
 
 async function loadExportLog(){
   try{
-    const res = await window.storage.get('export-log', true);
-    return res && res.value ? JSON.parse(res.value) : [];
+    const raw = await storageGet('export-log');
+    return raw ? JSON.parse(raw) : [];
   }catch(e){ return []; }
 }
 async function saveExportLog(list){
-  try{ await window.storage.set('export-log', JSON.stringify(list), true); }
-  catch(e){ showToast('تعذر حفظ سجل التصدير'); }
+  const ok = await storageSet('export-log', JSON.stringify(list));
+  if(!ok) showToast('تعذر حفظ سجل التصدير');
+  return ok;
+}
+function randomId(){
+  return Math.random().toString(36).slice(2) + '-' + Date.now().toString(36);
 }
 async function logExport(action){
   const entry = {
+    id: randomId(),
     user: usernameInput.value.trim(),
     title: fileTitleInput.value.trim(),
     date: new Date().toISOString(),
     action
   };
-  const log = await loadExportLog();
-  log.unshift(entry);
-  await saveExportLog(log.slice(0,200));
+  // read-modify-write isn't atomic against concurrent users, so re-read
+  // right before writing and verify afterwards, retrying a few times.
+  for(let attempt=0; attempt<3; attempt++){
+    const log = await loadExportLog();
+    if(log.some(e=>e.id === entry.id)) return;
+    log.unshift(entry);
+    await saveExportLog(log.slice(0,200));
+    const check = await loadExportLog();
+    if(check.some(e=>e.id === entry.id)) return;
+  }
+  showToast('تعذر تسجيل عملية التصدير في السجل بسبب تعارض متزامن');
 }
 
 function formatDate(iso){
@@ -772,13 +1011,44 @@ $('#logModal').addEventListener('click', e=>{
   if(e.target.id === 'logModal') $('#logModal').classList.remove('open');
 });
 
+async function copyTextToClipboard(text){
+  try{
+    await navigator.clipboard.writeText(text);
+    return true;
+  }catch(e){
+    try{
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      const ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      return ok;
+    }catch(e2){
+      return false;
+    }
+  }
+}
+
 $('#copyJsonBtn').addEventListener('click', async ()=>{
   if(!validateBeforeExport()) return;
   const payload = buildExportPayload();
-  await navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
+  const ok = await copyTextToClipboard(JSON.stringify(payload, null, 2));
+  if(!ok){
+    showToast('تعذر النسخ إلى الحافظة — استخدم زر "تنزيل JSON" بدلًا من ذلك');
+    return;
+  }
   await logExport('نسخ JSON');
   showToast('تم نسخ JSON وتسجيله في السجل');
 });
+
+function sanitizeFilename(name){
+  const cleaned = (name || '').replace(/[\\/:*?"<>|]/g, '_').replace(/[\x00-\x1f]/g, '').replace(/\.+$/, '').trim();
+  return cleaned || 'التشريع';
+}
 
 $('#downloadJsonBtn').addEventListener('click', async ()=>{
   if(!validateBeforeExport()) return;
@@ -787,7 +1057,7 @@ $('#downloadJsonBtn').addEventListener('click', async ()=>{
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = (fileTitleInput.value.trim() || 'التشريع') + '.json';
+  a.download = sanitizeFilename(fileTitleInput.value.trim()) + '.json';
   a.click();
   URL.revokeObjectURL(url);
   await logExport('تنزيل JSON');
