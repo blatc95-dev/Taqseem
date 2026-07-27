@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>مقسّم التشريعات</title>
+<link rel="icon" type="image/svg+xml" href="logos/logo-color-mark.svg">
 <style>
   @font-face{
     font-family:"Ping AR + LT"; src:url("fonts/PingAR+LT-Regular.otf") format("opentype");
@@ -30,17 +31,17 @@
     --blue-bg-hover:#ced2e2;       /* color-brand-50 */
     --surface:#ffffff;
 
-    --lvl1-bg:#f2f5ff;    /* باب: عائلة البرند نيفي */
+    --lvl1-bg:#f2f5ff;    /* باب: عائلة البرند نيفي (أزرق داكن) */
     --lvl1-border:#9da4c5;
     --lvl1-text:#0a1c6d;
 
-    --lvl2-bg:#f5f8fd;    /* فصل: عائلة لوجو بلو */
-    --lvl2-border:#9fb5dc;
-    --lvl2-text:#194089;
+    --lvl2-bg:#fef3c7;    /* فصل: كهرماني amber */
+    --lvl2-border:#fbbf24;
+    --lvl2-text:#92400e;
 
-    --lvl3-bg:#f3f4f6;    /* مادة: رمادي محايد */
-    --lvl3-border:#d1d5db;
-    --lvl3-text:#374151;
+    --lvl3-bg:#dcfce7;    /* مادة: أخضر success */
+    --lvl3-border:#4ade80;
+    --lvl3-text:#166534;
 
     --danger:#dc2626;             /* color-red-600 */
     --radius:14px;
@@ -67,16 +68,16 @@
     --surface:#131a2e;
 
     --lvl1-bg:#1c1f3d;   --lvl1-border:#3b498a;  --lvl1-text:#b5bbd3;
-    --lvl2-bg:#16233f;   --lvl2-border:#1f50ab;  --lvl2-text:#9fb5dc;
-    --lvl3-bg:#1c2333;   --lvl3-border:#4b5563;  --lvl3-text:#d1d5db;
+    --lvl2-bg:#3a2f0e;   --lvl2-border:#92400e;  --lvl2-text:#fbbf24;
+    --lvl3-bg:#0f2818;   --lvl3-border:#16a34a;  --lvl3-text:#4ade80;
   }
   @media (prefers-color-scheme: dark){
     :root:not([data-theme="light"]):not([data-theme="dark"]){
       --bg:#0b1224; --bg-soft:#070c18; --border:#232b45; --text:#e8eaf3; --text-muted:#98a0bf;
       --blue:#7593cc; --blue-bg:#182047; --blue-bg-hover:#232b58; --surface:#131a2e;
       --lvl1-bg:#1c1f3d; --lvl1-border:#3b498a; --lvl1-text:#b5bbd3;
-      --lvl2-bg:#16233f; --lvl2-border:#1f50ab; --lvl2-text:#9fb5dc;
-      --lvl3-bg:#1c2333; --lvl3-border:#4b5563; --lvl3-text:#d1d5db;
+      --lvl2-bg:#3a2f0e; --lvl2-border:#92400e; --lvl2-text:#fbbf24;
+      --lvl3-bg:#0f2818; --lvl3-border:#16a34a; --lvl3-text:#4ade80;
     }
   }
 
@@ -90,8 +91,8 @@
     -webkit-font-smoothing:antialiased;
     transition:background-color .15s ease, color .15s ease;
   }
-  .wrap{max-width:1180px;margin:0 auto;padding:28px 20px 80px;margin-inline-end:var(--rail-w);transition:margin-inline-end .18s ease;}
-  body.rail-expanded .wrap{margin-inline-end:var(--rail-w-expanded);}
+  .wrap{max-width:1180px;margin:0 auto;padding:28px 20px 80px;margin-left:var(--rail-w);transition:margin-left .18s ease;}
+  body.rail-expanded .wrap{margin-left:var(--rail-w-expanded);}
 
   /* header */
   .header-top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;}
@@ -138,7 +139,7 @@
   textarea#rawInput{
     width:100%;min-height:320px;resize:vertical;
     border:1px solid var(--border);border-radius:10px;
-    padding:16px;font-size:14.5px;line-height:1.9;
+    padding:16px;font-size:var(--content-font-size);line-height:var(--content-line-height);
     font-family:inherit;color:var(--text);
     background:var(--bg-soft);
   }
@@ -193,7 +194,7 @@
 
   #contentView{
     white-space:pre-wrap;
-    font-size:14.5px;line-height:2;
+    font-size:var(--content-font-size);line-height:var(--content-line-height);
     max-height:520px;overflow-y:auto;
     padding:20px;border:1px solid var(--border);border-radius:12px;background:var(--surface);
     user-select:text;
@@ -252,7 +253,7 @@
   .breadcrumb{font-size:12px;color:var(--text-muted);margin-bottom:8px;}
   .breadcrumb b{color:var(--blue);font-weight:600;}
   .article-title{font-size:16px;font-weight:800;margin-bottom:10px;}
-  .article-content{font-size:14px;line-height:1.95;color:var(--text);white-space:pre-wrap;}
+  .article-content{font-size:var(--content-font-size);line-height:var(--content-line-height);color:var(--text);white-space:pre-wrap;}
   .article-actions{display:flex;gap:8px;margin-top:14px;}
   .pill-btn{
     display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;
@@ -293,7 +294,7 @@
     position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(20px);
     background:#0f172a;color:#fff;font-size:13.5px;font-weight:500;
     padding:11px 22px;border-radius:999px;opacity:0;pointer-events:none;
-    transition:.2s;z-index:60;
+    transition:.2s;z-index:80;
   }
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
@@ -329,8 +330,8 @@
 
   /* side navigation rail */
   .side-rail{
-    position:fixed;inset-inline-end:0;top:0;height:100vh;width:var(--rail-w);
-    background:var(--surface);border-inline-start:1px solid var(--border);
+    position:fixed;left:0;top:0;height:100vh;width:var(--rail-w);
+    background:var(--surface);border-right:1px solid var(--border);
     display:flex;flex-direction:column;align-items:stretch;z-index:50;
     overflow-x:hidden;overflow-y:auto;transition:width .18s ease;
   }
@@ -343,8 +344,8 @@
   .rail-toggle:hover{color:var(--text);}
 
   .rail-logo{display:flex;align-items:center;justify-content:center;padding:6px 12px 18px;flex-shrink:0;overflow:hidden;}
-  .rail-logo-mark{width:26px;height:33px;object-fit:contain;display:block;}
-  .rail-logo-full{width:100px;height:24px;object-fit:contain;object-position:right center;display:none;}
+  .rail-logo-mark{width:26px;height:auto;aspect-ratio:27/34;object-fit:contain;display:block;}
+  .rail-logo-full{width:auto;height:24px;aspect-ratio:95.9184/36.348;object-fit:contain;display:none;}
   body.rail-expanded .rail-logo-mark{display:none;}
   body.rail-expanded .rail-logo-full{display:block;}
 
@@ -425,8 +426,7 @@
         <input type="file" id="importJsonFile" accept="application/json" style="display:none;">
       </div>
       <textarea id="rawInput" placeholder="الصق هنا النص الكامل للتشريع أو اللائحة..."></textarea>
-      <div class="row-between">
-        <span class="hint">لا حاجة لتحديد مستوى التقسيم مسبقًا، حدّد الأبواب والفصول والمواد في الخطوة التالية بحسب ما يحتويه النص فعليًا</span>
+      <div class="row-between" style="justify-content:flex-end;">
         <button class="btn-primary" id="toStep2Btn" disabled>التالي: تحديد العناوين</button>
       </div>
     </div>
@@ -1125,9 +1125,7 @@ function chapterIntroHtml(content){
 }
 
 function articleCardHtml(title, content, parentPath, id){
-  const breadcrumb = parentPath
-    ? `<div class="breadcrumb"><b>${escapeHtml(parentPath)}</b> / ${escapeHtml(title)}</div>`
-    : `<div class="breadcrumb">${escapeHtml(title)}</div>`;
+  const breadcrumb = parentPath ? `<div class="breadcrumb">${escapeHtml(parentPath)}</div>` : '';
   return `<div class="article-card"${id ? ` id="${id}"` : ''}>
     ${breadcrumb}
     <div class="article-title">${escapeHtml(title)}</div>
@@ -1279,12 +1277,14 @@ $('#fontSizeOptions').addEventListener('click', async e=>{
   if(!btn) return;
   applyFontScale(btn.dataset.scale);
   await storageSet('pref-font-scale', btn.dataset.scale);
+  showToast('تم تحديث حجم الخط');
 });
 $('#themeOptions').addEventListener('click', async e=>{
   const btn = e.target.closest('button');
   if(!btn) return;
   applyTheme(btn.dataset.theme);
   await storageSet('pref-theme', btn.dataset.theme);
+  showToast('تم تحديث المظهر');
 });
 
 (async function initPrefs(){
