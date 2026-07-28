@@ -17,9 +17,18 @@ create policy "profiles are viewable by authenticated users"
   on public.profiles for select
   to authenticated
   using (true);
--- deliberately no insert/update/delete policy for the `authenticated` role:
--- the only writers are the trigger below (security definer) and the admin
+
+-- an employee picks their own display name once, from a fixed dropdown in
+-- the app, the first time they log in with no name set yet (this is more
+-- reliable than depending on the admin filling in user metadata correctly
+-- at account-creation time). No insert/delete policy is needed: rows are
+-- only ever created by the trigger below (security definer) or the admin
 -- via the Dashboard / service_role, both of which bypass RLS.
+create policy "users can set their own display name"
+  on public.profiles for update
+  to authenticated
+  using (id = auth.uid())
+  with check (id = auth.uid());
 
 create function public.handle_new_user()
 returns trigger

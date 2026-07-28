@@ -116,19 +116,22 @@
 
   .user-box{display:flex;flex-direction:column;gap:6px;min-width:220px;}
   .user-box label{font-size:12px;font-weight:600;color:var(--text-muted);}
-  .user-box input{
+  .user-box input, .user-box select{
     border:1px solid var(--border);border-radius:9px;padding:9px 12px;font-size:13.5px;
     font-family:inherit;background:var(--surface);color:var(--text);
   }
-  .user-box input:focus{outline:2px solid var(--blue-bg-hover);border-color:var(--blue);}
+  .user-box input:focus, .user-box select:focus{outline:2px solid var(--blue-bg-hover);border-color:var(--blue);}
 
-  /* login gate */
+  /* login gate / choose-name gate */
   body.pre-auth .side-rail{display:none;}
   body.pre-auth .wrap{margin-right:0;}
   .login-shell{min-height:80vh;display:flex;align-items:center;justify-content:center;}
   .login-card{width:100%;max-width:380px;}
-  .login-card .user-box input{width:100%;}
+  .login-card .user-box input, .login-card .user-box select{width:100%;}
   .login-error{color:var(--danger);font-size:12.5px;margin-top:10px;min-height:1px;}
+
+  /* home greeting */
+  .home-greeting{font-size:16px;font-weight:700;color:var(--blue);margin:0 0 8px;}
 
   /* sidebar account block */
   .rail-account{margin-top:auto;padding:10px 8px 14px;border-top:1px solid var(--border);}
@@ -498,11 +501,39 @@
     </div>
   </div>
 
+  <!-- CHOOSE NAME (shown once per account, right after first login) -->
+  <div class="view" id="viewChooseName">
+    <div class="login-shell">
+      <div class="card login-card">
+        <div class="eyebrow">أداة داخلية · إدخال البيانات</div>
+        <h1>مرحبًا بك</h1>
+        <p class="sub">اختر اسمك من القائمة للمتابعة.</p>
+        <form id="chooseNameForm">
+          <div class="user-box">
+            <label for="chooseNameSelect">الاسم</label>
+            <select id="chooseNameSelect" required>
+              <option value="" disabled selected>اختر اسمك</option>
+              <option value="عمر">عمر</option>
+              <option value="نجوى">نجوى</option>
+              <option value="نزار">نزار</option>
+              <option value="ذكرى">ذكرى</option>
+              <option value="ندى">ندى</option>
+              <option value="دانا">دانا</option>
+            </select>
+          </div>
+          <div class="login-error" id="chooseNameError"></div>
+          <button class="btn-primary" type="submit" id="chooseNameSubmitBtn" style="width:100%;justify-content:center;margin-top:16px;">متابعة</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <!-- HOME (stats + the log, merged into one landing page) -->
   <div class="view" id="viewHome">
     <div class="home-header">
       <span class="eyebrow">أداة داخلية · إدخال البيانات</span>
       <h1>مقسّم التشريعات</h1>
+      <p class="home-greeting" id="homeGreeting"></p>
       <p class="sub">ابدأ ملفًا جديدًا لتقسيم نص تشريع إلى أقسام وأبواب وفصول ومواد، أو تابع مسودة أو راجع الملفات المصدَّرة أدناه.</p>
     </div>
     <div class="home-stats">
@@ -934,6 +965,7 @@ function logCardHtml(rec, isDraft, isOwner){
   </div>`;
 }
 async function renderHome(){
+  $('#homeGreeting').textContent = `أهلا ${currentUser.fullName}، كيف أقدر أساعدك اليوم؟`;
   const records = await loadRecords();
   const completed = records.filter(r=>r.status === 'completed');
   const drafts = records.filter(r=>r.status === 'draft');
@@ -975,6 +1007,10 @@ const loginPassword = $('#loginPassword');
 const loginError = $('#loginError');
 const loginSubmitBtn = $('#loginSubmitBtn');
 const railAccountName = $('#railAccountName');
+const chooseNameForm = $('#chooseNameForm');
+const chooseNameSelect = $('#chooseNameSelect');
+const chooseNameError = $('#chooseNameError');
+const chooseNameSubmitBtn = $('#chooseNameSubmitBtn');
 
 function showLoginGate(){
   document.body.classList.add('pre-auth');
@@ -982,9 +1018,18 @@ function showLoginGate(){
 }
 
 async function enterApp(user){
-  document.body.classList.remove('pre-auth');
   const { data: profile, error } = await sb.from('profiles').select('full_name').eq('id', user.id).single();
-  currentUser = { id: user.id, fullName: (profile && profile.full_name) || user.email };
+  const fullName = (profile && profile.full_name) || '';
+  currentUser = { id: user.id, fullName };
+  if(!fullName){
+    // account has no display name yet (e.g. admin didn't set one at creation
+    // time) — ask the employee to pick their own name once, instead of
+    // relying on the admin having filled it in correctly.
+    document.body.classList.add('pre-auth');
+    goToView('chooseName');
+    return;
+  }
+  document.body.classList.remove('pre-auth');
   railAccountName.textContent = currentUser.fullName;
   goToView('home');
 }
@@ -1004,6 +1049,24 @@ loginForm.addEventListener('submit', async e=>{
   }
   loginPassword.value = '';
   await enterApp(data.user);
+});
+
+chooseNameForm.addEventListener('submit', async e=>{
+  e.preventDefault();
+  const name = chooseNameSelect.value;
+  if(!name) return;
+  chooseNameError.textContent = '';
+  chooseNameSubmitBtn.disabled = true;
+  const { error } = await sb.from('profiles').update({ full_name: name }).eq('id', currentUser.id);
+  chooseNameSubmitBtn.disabled = false;
+  if(error){
+    chooseNameError.textContent = 'تعذر حفظ الاسم، حاول مرة أخرى';
+    return;
+  }
+  currentUser.fullName = name;
+  document.body.classList.remove('pre-auth');
+  railAccountName.textContent = name;
+  goToView('home');
 });
 
 $('#navSignOut').addEventListener('click', async ()=>{
