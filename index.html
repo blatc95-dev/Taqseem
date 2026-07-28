@@ -688,8 +688,8 @@
    the anon/public key is meant to be public: every table policy is scoped
    `to authenticated`, so this key alone (without a signed-in session) grants
    no access at all. Never put the service_role key here. */
-const SUPABASE_URL = 'https://YOUR-PROJECT.supabase.co';
-const SUPABASE_ANON_KEY = 'YOUR-ANON-KEY';
+const SUPABASE_URL = 'https://bbzxicvyztxlddncalti.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJienhpY3Z5enR4bGRkbmNhbHRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyMjg3MjcsImV4cCI6MjEwMDgwNDcyN30.Xyhp0b-OdT8Q1SdogC9QVnd-ct2hr7VPnJCJbOxrPe0';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 /* ---------- level model ----------
