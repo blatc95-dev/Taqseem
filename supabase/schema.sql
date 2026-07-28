@@ -8,6 +8,9 @@ create extension if not exists pgcrypto;
 create table public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   full_name text not null default '',
+  -- true until the employee sets their own password, replacing the
+  -- admin-set temporary one; forced right after their first login.
+  must_reset_password boolean not null default true,
   created_at timestamptz not null default now()
 );
 
