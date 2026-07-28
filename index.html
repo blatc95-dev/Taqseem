@@ -361,6 +361,8 @@
   .log-title{font-weight:700;font-size:13.5px;}
   .log-meta{font-size:12px;color:var(--text-muted);margin-top:3px;}
   .log-card-actions{display:flex;gap:8px;flex-shrink:0;}
+  .log-danger{color:var(--danger);border-color:#fca5a5;}
+  .log-danger:hover{background:#fef2f2;}
 
   /* side navigation rail */
   .side-rail{
@@ -743,6 +745,11 @@ async function saveRecords(list){
   if(!ok) showToast('تعذر حفظ البيانات');
   return ok;
 }
+async function deleteRecord(id){
+  const records = await loadRecords();
+  await saveRecords(records.filter(r=>r.id !== id));
+  if(currentRecordId === id) currentRecordId = null;
+}
 function countMarksByLevel(list){
   const c = {0:0,1:0,2:0,3:0};
   list.forEach(m=>{ c[m.level] = (c[m.level]||0) + 1; });
@@ -810,7 +817,7 @@ async function openRecord(id, opts){
   renderMarkToolbar();
   renderContent();
   renderMarksList();
-  if(opts.finish){
+  if(opts.preview){
     renderPreview();
     goToStep(3);
   } else if(marks.length){
@@ -845,7 +852,7 @@ function countsSummary(counts){
 function logCardHtml(rec, isDraft){
   const actions = isDraft
     ? `<button class="btn-ghost log-open-btn" data-id="${rec.id}" data-action="continue">متابعة</button>
-       <button class="btn-ghost log-open-btn" data-id="${rec.id}" data-action="finish">إنهاء</button>`
+       <button class="btn-ghost log-open-btn log-danger" data-id="${rec.id}" data-action="delete">إنهاء</button>`
     : `<button class="btn-ghost log-open-btn" data-id="${rec.id}" data-action="view">عرض</button>`;
   return `<div class="log-card">
     <div class="log-card-main">
@@ -875,10 +882,19 @@ async function renderHome(){
   $('#logDrafts').innerHTML = draftsSorted.length ? draftsSorted.map(r=>logCardHtml(r,true)).join('') : '<div class="empty-hint">لا توجد مسودات حاليًا</div>';
   $('#logCompleted').innerHTML = completedSorted.length ? completedSorted.map(r=>logCardHtml(r,false)).join('') : '<div class="empty-hint">لا يوجد أي ملف مُصدَّر بعد</div>';
 }
-document.addEventListener('click', e=>{
+document.addEventListener('click', async e=>{
   const btn = e.target.closest('.log-open-btn');
   if(!btn) return;
-  openRecord(btn.dataset.id, { finish: btn.dataset.action === 'finish' });
+  const id = btn.dataset.id;
+  const action = btn.dataset.action;
+  if(action === 'delete'){
+    if(!confirm('هل تريد إنهاء هذه المسودة؟ سيتم حذفها نهائيًا من السجل ولا يمكن التراجع عن ذلك.')) return;
+    await deleteRecord(id);
+    await renderHome();
+    showToast('تم حذف المسودة');
+    return;
+  }
+  openRecord(id, { preview: action === 'view' });
 });
 
 /* ---------- app init: remember username ---------- */
