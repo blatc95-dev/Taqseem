@@ -31,6 +31,10 @@
     --blue-bg-hover:#ced2e2;       /* color-brand-50 */
     --surface:#ffffff;
 
+    --lvl0-bg:#f3e8ff;    /* قسم: بنفسجي، أعلى مستوى */
+    --lvl0-border:#c084fc;
+    --lvl0-text:#6b21a8;
+
     --lvl1-bg:#f2f5ff;    /* باب: عائلة البرند نيفي (أزرق داكن) */
     --lvl1-border:#9da4c5;
     --lvl1-text:#0a1c6d;
@@ -67,6 +71,7 @@
     --blue-bg-hover:#232b58;
     --surface:#131a2e;
 
+    --lvl0-bg:#2e1a47;   --lvl0-border:#8b5cf6;  --lvl0-text:#d8b4fe;
     --lvl1-bg:#1c1f3d;   --lvl1-border:#3b498a;  --lvl1-text:#b5bbd3;
     --lvl2-bg:#3a2f0e;   --lvl2-border:#92400e;  --lvl2-text:#fbbf24;
     --lvl3-bg:#0f2818;   --lvl3-border:#16a34a;  --lvl3-text:#4ade80;
@@ -75,6 +80,7 @@
     :root:not([data-theme="light"]):not([data-theme="dark"]){
       --bg:#0b1224; --bg-soft:#070c18; --border:#232b45; --text:#e8eaf3; --text-muted:#98a0bf;
       --blue:#7593cc; --blue-bg:#182047; --blue-bg-hover:#232b58; --surface:#131a2e;
+      --lvl0-bg:#2e1a47; --lvl0-border:#8b5cf6; --lvl0-text:#d8b4fe;
       --lvl1-bg:#1c1f3d; --lvl1-border:#3b498a; --lvl1-text:#b5bbd3;
       --lvl2-bg:#3a2f0e; --lvl2-border:#92400e; --lvl2-text:#fbbf24;
       --lvl3-bg:#0f2818; --lvl3-border:#16a34a; --lvl3-text:#4ade80;
@@ -91,8 +97,11 @@
     -webkit-font-smoothing:antialiased;
     transition:background-color .15s ease, color .15s ease;
   }
-  .wrap{max-width:1180px;margin:0 auto;padding:28px 20px 80px;margin-left:var(--rail-w);transition:margin-left .18s ease;}
-  body.rail-expanded .wrap{margin-left:var(--rail-w-expanded);}
+  .wrap{max-width:1180px;margin:0 auto;padding:28px 20px 80px;margin-right:var(--rail-w);transition:margin-right .18s ease;}
+  body.rail-expanded .wrap{margin-right:var(--rail-w-expanded);}
+
+  .view{display:none;}
+  .view.active{display:block;}
 
   /* header */
   .header-top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;}
@@ -145,6 +154,22 @@
   }
   textarea#rawInput:focus{outline:2px solid var(--blue-bg-hover);border-color:var(--blue);}
 
+  .checkbox-row{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:13px;color:var(--text-muted);cursor:pointer;user-select:none;}
+  .checkbox-row input{width:16px;height:16px;accent-color:var(--blue);cursor:pointer;flex-shrink:0;}
+
+  .level-picker{margin-top:18px;padding-top:16px;border-top:1px dashed var(--border);}
+  .level-picker-label{font-size:13.5px;font-weight:600;margin-bottom:10px;}
+  .level-picker-options{display:flex;gap:8px;flex-wrap:wrap;}
+  .level-picker-options button{
+    font-size:13px;font-weight:600;padding:9px 18px;border-radius:999px;
+    border:1px solid var(--border);background:var(--surface);color:var(--text-muted);
+  }
+  .level-picker-options button.lvl0.selected{background:var(--lvl0-bg);border-color:var(--lvl0-border);color:var(--lvl0-text);}
+  .level-picker-options button.lvl1.selected{background:var(--lvl1-bg);border-color:var(--lvl1-border);color:var(--lvl1-text);}
+  .level-picker-options button.lvl2.selected{background:var(--lvl2-bg);border-color:var(--lvl2-border);color:var(--lvl2-text);}
+  .level-picker-options button.lvl3.selected{background:var(--lvl3-bg);border-color:var(--lvl3-border);color:var(--lvl3-text);}
+  .level-picker-hint{font-size:12.5px;color:var(--text-muted);margin-top:8px;}
+
   .row-between{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:18px;flex-wrap:wrap;}
 
   .icon{
@@ -162,6 +187,7 @@
   .icon-back{-webkit-mask-image:url(icons/arrow-right.svg);mask-image:url(icons/arrow-right.svg);}
   .icon-download{-webkit-mask-image:url(icons/document-download.svg);mask-image:url(icons/document-download.svg);}
   .icon-copy{-webkit-mask-image:url(icons/copy.svg);mask-image:url(icons/copy.svg);}
+  .icon-home{-webkit-mask-image:url(icons/home-2.svg);mask-image:url(icons/home-2.svg);}
 
   button{font-family:inherit;cursor:pointer;border:none;}
   .btn-primary{
@@ -186,6 +212,7 @@
     display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600;
     padding:9px 16px;border-radius:999px;border:1px solid transparent;
   }
+  .mark-btn.lvl0{background:var(--lvl0-bg);color:var(--lvl0-text);border-color:var(--lvl0-border);}
   .mark-btn.lvl1{background:var(--lvl1-bg);color:var(--lvl1-text);border-color:var(--lvl1-border);}
   .mark-btn.lvl2{background:var(--lvl2-bg);color:var(--lvl2-text);border-color:var(--lvl2-border);}
   .mark-btn.lvl3{background:var(--lvl3-bg);color:var(--lvl3-text);border-color:var(--lvl3-border);}
@@ -200,6 +227,7 @@
     user-select:text;
   }
   #contentView mark{border-radius:5px;padding:1px 3px;cursor:pointer;font-weight:600;}
+  #contentView mark.lvl0{background:var(--lvl0-bg);color:var(--lvl0-text);box-shadow:inset 0 0 0 1px var(--lvl0-border);}
   #contentView mark.lvl1{background:var(--lvl1-bg);color:var(--lvl1-text);box-shadow:inset 0 0 0 1px var(--lvl1-border);}
   #contentView mark.lvl2{background:var(--lvl2-bg);color:var(--lvl2-text);box-shadow:inset 0 0 0 1px var(--lvl2-border);}
   #contentView mark.lvl3{background:var(--lvl3-bg);color:var(--lvl3-text);box-shadow:inset 0 0 0 1px var(--lvl3-border);}
@@ -215,6 +243,7 @@
     border:1px solid var(--border);
   }
   .mark-item .badge{font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:999px;flex-shrink:0;}
+  .mark-item .badge.lvl0{background:var(--lvl0-bg);color:var(--lvl0-text);}
   .mark-item .badge.lvl1{background:var(--lvl1-bg);color:var(--lvl1-text);}
   .mark-item .badge.lvl2{background:var(--lvl2-bg);color:var(--lvl2-text);}
   .mark-item .badge.lvl3{background:var(--lvl3-bg);color:var(--lvl3-text);}
@@ -237,6 +266,12 @@
     font-family:inherit;min-width:220px;background:var(--surface);color:var(--text);
   }
 
+  .section-heading{
+    font-family:var(--font);font-weight:800;font-size:23px;color:var(--lvl0-text);
+    margin:36px 0 8px;padding:12px 18px;background:var(--lvl0-bg);border-radius:12px;
+    box-shadow:inset 0 0 0 1px var(--lvl0-border);
+  }
+  .section-heading:first-child{margin-top:0;}
   .part-heading{
     font-family:var(--font);font-weight:800;font-size:21px;color:var(--lvl1-text);
     margin:32px 0 6px;padding:10px 16px;background:var(--lvl1-bg);border-radius:10px;
@@ -271,21 +306,15 @@
     font-size:13px;padding:12px 16px;border-radius:10px;margin-bottom:18px;
   }
 
-  .draft-banner{
-    display:flex;align-items:center;gap:10px;flex-wrap:wrap;
-    background:var(--blue-bg);border:1px solid var(--blue-bg-hover);color:var(--blue);
-    font-size:13px;font-weight:600;padding:12px 16px;border-radius:10px;margin-bottom:16px;
-  }
-  .draft-banner button{font-size:12.5px;padding:7px 14px;}
-
   .import-row{margin-bottom:14px;}
 
-  .lvl-switch{display:flex;gap:4px;flex-shrink:0;}
+  .lvl-switch{display:flex;gap:4px;flex-shrink:0;flex-wrap:wrap;}
   .lvl-switch-btn{
     font-size:10px;font-weight:700;padding:2px 6px;border-radius:999px;
     border:1px solid transparent;opacity:.8;
   }
   .lvl-switch-btn:hover{opacity:1;}
+  .lvl-switch-btn.lvl0{background:var(--lvl0-bg);color:var(--lvl0-text);border-color:var(--lvl0-border);}
   .lvl-switch-btn.lvl1{background:var(--lvl1-bg);color:var(--lvl1-text);border-color:var(--lvl1-border);}
   .lvl-switch-btn.lvl2{background:var(--lvl2-bg);color:var(--lvl2-text);border-color:var(--lvl2-border);}
   .lvl-switch-btn.lvl3{background:var(--lvl3-bg);color:var(--lvl3-text);border-color:var(--lvl3-border);}
@@ -304,34 +333,39 @@
   .section-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;}
   .section-top h2{font-size:16px;margin:0;}
 
-  /* export log modal */
-  .modal-backdrop{
-    position:fixed;inset:0;background:rgba(15,23,42,.45);display:none;
-    align-items:center;justify-content:center;z-index:70;padding:20px;
-  }
-  .modal-backdrop.open{display:flex;}
-  .modal{
-    background:var(--surface);border-radius:16px;max-width:560px;width:100%;
-    max-height:80vh;display:flex;flex-direction:column;overflow:hidden;
-  }
-  .modal-head{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--border);}
-  .modal-head h3{margin:0;font-size:15.5px;}
-  .modal-close{background:var(--bg-soft);border-radius:8px;padding:8px;display:inline-flex;color:var(--text);}
-  .modal-body{padding:10px 22px 22px;overflow-y:auto;}
-  .log-item{padding:12px 0;border-bottom:1px solid var(--border);}
-  .log-item:last-child{border-bottom:none;}
-  .log-title{font-weight:700;font-size:13.5px;}
-  .log-meta{font-size:12px;color:var(--text-muted);margin-top:3px;}
-
   .notice-banner{
     background:var(--blue-bg);border:1px solid var(--blue-bg-hover);color:var(--blue);
     font-size:13px;font-weight:600;padding:12px 16px;border-radius:10px;margin-bottom:18px;
   }
 
+  /* home page */
+  .home-header{margin-bottom:26px;}
+  .home-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:26px;}
+  @media (max-width:820px){.home-stats{grid-template-columns:repeat(2,1fr);}}
+  .stat-card{
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+    padding:20px;text-align:center;
+  }
+  .stat-num{font-size:28px;font-weight:800;color:var(--blue);margin-bottom:4px;}
+  .stat-label{font-size:12.5px;color:var(--text-muted);font-weight:600;}
+  .home-actions{display:flex;gap:10px;flex-wrap:wrap;}
+
+  /* log page */
+  .log-section{margin-bottom:30px;}
+  .log-section-title{font-size:14.5px;font-weight:700;margin-bottom:12px;}
+  .log-list{display:flex;flex-direction:column;gap:10px;}
+  .log-card{
+    display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;
+    background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 18px;
+  }
+  .log-card-main{min-width:0;}
+  .log-title{font-weight:700;font-size:13.5px;}
+  .log-meta{font-size:12px;color:var(--text-muted);margin-top:3px;}
+
   /* side navigation rail */
   .side-rail{
-    position:fixed;left:0;top:0;height:100vh;width:var(--rail-w);
-    background:var(--surface);border-right:1px solid var(--border);
+    position:fixed;right:0;top:0;height:100vh;width:var(--rail-w);
+    background:var(--surface);border-left:1px solid var(--border);
     display:flex;flex-direction:column;align-items:stretch;z-index:50;
     overflow-x:hidden;overflow-y:auto;transition:width .18s ease;
   }
@@ -356,6 +390,7 @@
     white-space:nowrap;overflow:hidden;
   }
   .rail-item:hover{background:var(--bg-soft);color:var(--text);}
+  .rail-item.active{background:var(--blue-bg);color:var(--blue);}
   .rail-item .icon{flex-shrink:0;}
   .rail-label{opacity:0;width:0;overflow:hidden;transition:opacity .15s ease;}
   body.rail-expanded .rail-label{opacity:1;width:auto;}
@@ -367,6 +402,21 @@
     :root:not([data-theme="light"]):not([data-theme="dark"]) .theme-light-only{display:none;}
     :root:not([data-theme="light"]):not([data-theme="dark"]) .theme-dark-only{display:block;}
   }
+
+  /* modals (settings) */
+  .modal-backdrop{
+    position:fixed;inset:0;background:rgba(15,23,42,.45);display:none;
+    align-items:center;justify-content:center;z-index:70;padding:20px;
+  }
+  .modal-backdrop.open{display:flex;}
+  .modal{
+    background:var(--surface);border-radius:16px;max-width:560px;width:100%;
+    max-height:80vh;display:flex;flex-direction:column;overflow:hidden;
+  }
+  .modal-head{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--border);}
+  .modal-head h3{margin:0;font-size:15.5px;}
+  .modal-close{background:var(--bg-soft);border-radius:8px;padding:8px;display:inline-flex;color:var(--text);}
+  .modal-body{padding:10px 22px 22px;overflow-y:auto;}
 
   /* settings modal */
   .settings-row{padding:14px 0;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
@@ -382,115 +432,178 @@
   .settings-lang-current{font-size:13px;font-weight:600;color:var(--text);}
   .soon-badge{font-size:11px;font-weight:600;color:var(--text-muted);background:var(--bg-soft);padding:3px 9px;border-radius:999px;}
 
-  /* step 3 table of contents sidebar */
+  /* step 3 table of contents sidebar: a nested tree with connecting lines
+     between levels (باب -> فصل -> مادة ...) instead of a flat indented list */
   .toc-card{position:sticky;top:20px;}
   .toc-card .marks-list{max-height:640px;}
-  .toc-item{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:8px;font-size:12.5px;cursor:pointer;}
+  .toc-item{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;font-size:12.5px;cursor:pointer;}
   .toc-item:hover{background:var(--bg-soft);}
   .toc-item .toc-label{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .toc-item.toc-orphan{outline:1px dashed var(--danger);}
-  .toc-item.toc-intro{color:var(--text-muted);}
+  .toc-item.toc-intro{color:var(--text-muted);margin-bottom:6px;}
+
+  .toc-tree{list-style:none;margin:0;padding:0;}
+  .toc-tree.lvl0-line{--toc-line-color:var(--lvl0-border);}
+  .toc-tree.lvl1-line{--toc-line-color:var(--lvl1-border);}
+  .toc-tree.lvl2-line{--toc-line-color:var(--lvl2-border);}
+  .toc-tree.lvl3-line{--toc-line-color:var(--lvl3-border);}
+  .toc-node{position:relative;}
+  .toc-node > .toc-tree{
+    margin-inline-start:10px;padding-inline-start:15px;margin-top:2px;margin-bottom:2px;
+    border-inline-start:2px solid var(--toc-line-color);
+  }
+  .toc-node > .toc-tree > .toc-node{position:relative;}
+  .toc-node > .toc-tree > .toc-node::before{
+    content:'';position:absolute;top:15px;inline-start:-15px;
+    width:11px;height:0;border-top:2px solid var(--toc-line-color);
+  }
 </style>
 </head>
 <body>
 <div class="wrap">
 
-  <div class="header-top">
-    <div>
+  <!-- HOME -->
+  <div class="view" id="viewHome">
+    <div class="home-header">
       <span class="eyebrow">أداة داخلية · إدخال البيانات</span>
       <h1>مقسّم التشريعات</h1>
-      <p class="sub">الصق النص الكامل للتشريع، ثم حدّد عناوين الأبواب والفصول والمواد بالماوس مباشرة داخل النص، والنظام يتكفّل بالباقي.</p>
+      <p class="sub">ابدأ ملفًا جديدًا لتقسيم نص تشريع إلى أقسام وأبواب وفصول ومواد، أو راجع سجل الملفات المصدَّرة والمسودات.</p>
     </div>
-    <div class="user-box">
-      <label for="usernameInput">اسم الموظف</label>
-      <input id="usernameInput" type="text" placeholder="اكتب اسمك">
+    <div class="home-stats">
+      <div class="stat-card"><div class="stat-num" id="statExported">0</div><div class="stat-label">ملف مُصدَّر</div></div>
+      <div class="stat-card"><div class="stat-num" id="statArticles">0</div><div class="stat-label">مادة مُصدَّرة</div></div>
+      <div class="stat-card"><div class="stat-num" id="statDrafts">0</div><div class="stat-label">مسودة قيد العمل</div></div>
+      <div class="stat-card"><div class="stat-num" id="statLastActivity">—</div><div class="stat-label">آخر نشاط</div></div>
     </div>
-  </div>
-
-  <div class="steps">
-    <div class="step-pill" data-step="1"><span class="n">1</span> لصق النص</div>
-    <div class="step-pill" data-step="2"><span class="n">2</span> تحديد العناوين</div>
-    <div class="step-pill" data-step="3"><span class="n">3</span> المعاينة والتصدير</div>
-  </div>
-
-  <!-- STEP 1 -->
-  <div class="step" id="step1">
-    <div class="card">
-      <div class="draft-banner" id="draftBanner" style="display:none;">
-        <span id="draftBannerText"></span>
-        <button class="btn-ghost" id="restoreDraftBtn">استعادة المسودة</button>
-        <button class="btn-ghost" id="discardDraftBtn">تجاهل</button>
-      </div>
-      <div class="import-row">
-        <button class="btn-ghost" id="importJsonBtn">استيراد من ملف JSON مُصدَّر سابقًا</button>
-        <input type="file" id="importJsonFile" accept="application/json" style="display:none;">
-      </div>
-      <textarea id="rawInput" placeholder="الصق هنا النص الكامل للتشريع أو اللائحة..."></textarea>
-      <div class="row-between" style="justify-content:flex-end;">
-        <button class="btn-primary" id="toStep2Btn" disabled>التالي: تحديد العناوين</button>
-      </div>
+    <div class="home-actions">
+      <button class="btn-primary" id="homeNewFileBtn"><span class="icon icon-document"></span> ملف جديد</button>
+      <button class="btn-ghost" id="homeLogBtn"><span class="icon icon-clock"></span> فتح السجل</button>
     </div>
   </div>
 
-  <!-- STEP 2 -->
-  <div class="step" id="step2">
+  <!-- LOG -->
+  <div class="view" id="viewLog">
     <div class="section-top">
-      <h2>حدّد النص الخاص بكل عنوان، ثم اضغط نوع العنوان</h2>
-      <button class="btn-ghost" id="backTo1Btn"><span class="icon icon-back"></span> رجوع لتعديل النص</button>
+      <h2>السجل</h2>
+      <button class="btn-ghost" id="logNewFileBtn"><span class="icon icon-document"></span> ملف جديد</button>
     </div>
+    <div class="log-section">
+      <div class="log-section-title">المسودات (متوقفة في المنتصف)</div>
+      <div class="log-list" id="logDrafts"></div>
+    </div>
+    <div class="log-section">
+      <div class="log-section-title">الملفات المكتملة</div>
+      <div class="log-list" id="logCompleted"></div>
+    </div>
+  </div>
 
-    <div class="grid2">
+  <!-- EDITOR -->
+  <div class="view" id="viewEditor">
+
+    <div class="header-top">
       <div>
-        <div class="toolbar">
-          <button class="mark-btn lvl1" id="markPartBtn"><span class="dot"></span> تحديد كعنوان باب</button>
-          <button class="mark-btn lvl2" id="markChapterBtn"><span class="dot"></span> تحديد كعنوان فصل</button>
-          <button class="mark-btn lvl3" id="markArticleBtn"><span class="dot"></span> تحديد كعنوان مادة</button>
-          <span class="hint">حدّد نص العنوان بالماوس أولًا ثم اضغط الزر (أو اختصار 1/2/3). اضغط على أي عنوان محدد لإزالته</span>
+        <span class="eyebrow">أداة داخلية · إدخال البيانات</span>
+        <h1>مقسّم التشريعات</h1>
+        <p class="sub">الصق النص الكامل للتشريع، ثم حدّد عناوين الأقسام والأبواب والفصول والمواد بالماوس مباشرة داخل النص، والنظام يتكفّل بالباقي.</p>
+      </div>
+      <div class="user-box">
+        <label for="usernameInput">اسم الموظف</label>
+        <input id="usernameInput" type="text" placeholder="اكتب اسمك">
+      </div>
+    </div>
+
+    <div class="steps">
+      <div class="step-pill" data-step="1"><span class="n">1</span> لصق النص</div>
+      <div class="step-pill" data-step="2"><span class="n">2</span> تحديد العناوين</div>
+      <div class="step-pill" data-step="3"><span class="n">3</span> المعاينة والتصدير</div>
+    </div>
+
+    <!-- STEP 1 -->
+    <div class="step" id="step1">
+      <div class="card">
+        <div class="import-row">
+          <button class="btn-ghost" id="importJsonBtn">استيراد من ملف JSON مُصدَّر سابقًا</button>
+          <input type="file" id="importJsonFile" accept="application/json" style="display:none;">
         </div>
-        <div id="contentView" tabindex="0"></div>
-      </div>
+        <textarea id="rawInput" placeholder="الصق هنا النص الكامل للتشريع أو اللائحة..."></textarea>
+        <label class="checkbox-row" for="stripBlankLinesToggle">
+          <input type="checkbox" id="stripBlankLinesToggle">
+          <span>حذف الأسطر الفارغة بين الفقرات تلقائيًا</span>
+        </label>
 
-      <div class="card sidebar-card">
-        <div class="sidebar-title">العناوين المحدَّدة</div>
-        <div class="marks-list" id="marksList"></div>
-        <div class="counts" id="counts"></div>
-      </div>
-    </div>
+        <div class="level-picker">
+          <div class="level-picker-label">ما أعلى مستوى تسلسلي موجود في هذا النص؟</div>
+          <div class="level-picker-options" id="levelPickerOptions">
+            <button class="lvl3" data-level="3">مادة</button>
+            <button class="lvl2" data-level="2">فصل</button>
+            <button class="lvl1" data-level="1">باب</button>
+            <button class="lvl0" data-level="0">قسم</button>
+          </div>
+          <div class="level-picker-hint">اختر أعلى مستوى تنظيمي موجود بالفعل في النص؛ الأدنى منه (وصولًا إلى المادة) سيكون متاحًا للتحديد في الخطوة التالية.</div>
+        </div>
 
-    <div class="row-between">
-      <button class="btn-ghost" id="clearMarksBtn">مسح كل التحديدات</button>
-      <button class="btn-primary" id="toStep3Btn" disabled>معاينة الهيكل النهائي</button>
-    </div>
-  </div>
-
-  <!-- STEP 3 -->
-  <div class="step" id="step3">
-    <div class="section-top">
-      <h2>الهيكل الناتج</h2>
-      <button class="btn-ghost" id="backTo2Btn"><span class="icon icon-back"></span> رجوع للتحديد</button>
-    </div>
-
-    <div class="export-bar">
-      <div class="field">
-        <label for="fileTitleInput">عنوان الملف / التشريع</label>
-        <input id="fileTitleInput" type="text" placeholder="مثال: نظام التعليم العام">
-      </div>
-      <button class="pill-btn blue" id="copyJsonBtn"><span class="icon icon-copy"></span> نسخ JSON</button>
-      <button class="pill-btn blue" id="downloadJsonBtn"><span class="icon icon-download"></span> تنزيل JSON</button>
-    </div>
-
-    <div class="notice-banner">يجب مراجعة هذه المخرجات جيدًا بعد رفعها ونشرها في المنصة، قبل اعتمادها نهائيًا.</div>
-
-    <div id="warnArea"></div>
-
-    <div class="grid2">
-      <div id="previewArea"></div>
-      <div class="card sidebar-card toc-card">
-        <div class="sidebar-title">فهرس العناوين</div>
-        <div class="marks-list" id="tocList"></div>
-        <div class="counts" id="tocCounts"></div>
+        <div class="row-between" style="justify-content:flex-end;">
+          <button class="btn-primary" id="toStep2Btn" disabled>التالي: تحديد العناوين</button>
+        </div>
       </div>
     </div>
+
+    <!-- STEP 2 -->
+    <div class="step" id="step2">
+      <div class="section-top">
+        <h2>حدّد النص الخاص بكل عنوان، ثم اضغط نوع العنوان</h2>
+        <button class="btn-ghost" id="backTo1Btn"><span class="icon icon-back"></span> رجوع لتعديل النص</button>
+      </div>
+
+      <div class="grid2">
+        <div>
+          <div class="toolbar" id="markToolbar"></div>
+          <div id="contentView" tabindex="0"></div>
+        </div>
+
+        <div class="card sidebar-card">
+          <div class="sidebar-title">العناوين المحدَّدة</div>
+          <div class="marks-list" id="marksList"></div>
+          <div class="counts" id="counts"></div>
+        </div>
+      </div>
+
+      <div class="row-between">
+        <button class="btn-ghost" id="clearMarksBtn">مسح كل التحديدات</button>
+        <button class="btn-primary" id="toStep3Btn" disabled>معاينة الهيكل النهائي</button>
+      </div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="step" id="step3">
+      <div class="section-top">
+        <h2>الهيكل الناتج</h2>
+        <button class="btn-ghost" id="backTo2Btn"><span class="icon icon-back"></span> رجوع للتحديد</button>
+      </div>
+
+      <div class="export-bar">
+        <div class="field">
+          <label for="fileTitleInput">عنوان الملف / التشريع</label>
+          <input id="fileTitleInput" type="text" placeholder="مثال: نظام التعليم العام">
+        </div>
+        <button class="pill-btn blue" id="copyJsonBtn"><span class="icon icon-copy"></span> نسخ JSON</button>
+        <button class="pill-btn blue" id="downloadJsonBtn"><span class="icon icon-download"></span> تنزيل JSON</button>
+      </div>
+
+      <div class="notice-banner">يجب مراجعة هذه المخرجات جيدًا بعد رفعها ونشرها في المنصة، قبل اعتمادها نهائيًا.</div>
+
+      <div id="warnArea"></div>
+
+      <div class="grid2">
+        <div id="previewArea"></div>
+        <div class="card sidebar-card toc-card">
+          <div class="sidebar-title">فهرس العناوين</div>
+          <div class="marks-list" id="tocList"></div>
+          <div class="counts" id="tocCounts"></div>
+        </div>
+      </div>
+    </div>
+
   </div>
 
 </div>
@@ -505,20 +618,11 @@
     <img src="logos/logo-white-horizontal.svg" class="rail-logo-full theme-dark-only" alt="قانونية">
   </div>
   <nav class="rail-nav">
+    <button class="rail-item" id="navHome" title="الرئيسية"><span class="icon icon-home"></span><span class="rail-label">الرئيسية</span></button>
     <button class="rail-item" id="navNewFile" title="ملف جديد"><span class="icon icon-document"></span><span class="rail-label">ملف جديد</span></button>
     <button class="rail-item" id="navLog" title="السجل"><span class="icon icon-clock"></span><span class="rail-label">السجل</span></button>
     <button class="rail-item" id="navSettings" title="الإعدادات"><span class="icon icon-setting"></span><span class="rail-label">الإعدادات</span></button>
   </nav>
-</div>
-
-<div class="modal-backdrop" id="logModal">
-  <div class="modal">
-    <div class="modal-head">
-      <h3>سجل التصدير</h3>
-      <button class="modal-close" id="closeLogBtn"><span class="icon icon-close"></span></button>
-    </div>
-    <div class="modal-body" id="logBody"></div>
-  </div>
 </div>
 
 <div class="modal-backdrop" id="settingsModal">
@@ -557,11 +661,23 @@
 <div class="toast" id="toast"></div>
 
 <script>
+/* ---------- level model ----------
+   levels are numbered 0..3 where a SMALLER number is a BIGGER/outer unit:
+   0 = قسم (section) · 1 = باب (part) · 2 = فصل (chapter) · 3 = مادة (article, always the leaf).
+   `topLevel` is the highest level actually present in the pasted text, chosen
+   explicitly by the user in step 1; only levels topLevel..3 are markable. */
+const levelLabel = {0:'قسم', 1:'باب', 2:'فصل', 3:'مادة'};
+const levelKey = ['sections','parts','chapters','articles']; // JSON key for a collection of nodes AT that level
+function keyForLevel(level){ return levelKey[level]; }
+function levelType(level){ return ['section','part','chapter','article'][level]; }
+
 let rawText = '';
-let mode = 'articles'; // derived automatically from the levels actually used in marks
-let marks = []; // {id, start, end, level} level 1=باب 2=فصل 3=مادة
+let topLevel = null; // 0..3, chosen in step 1; null until chosen
+let marks = []; // {id, start, end, level}
 let nextId = 1;
 let currentStep = 1;
+let currentView = 'home';
+let currentRecordId = null;
 
 const $ = sel => document.querySelector(sel);
 const rawInput = $('#rawInput');
@@ -573,10 +689,7 @@ const toStep3Btn = $('#toStep3Btn');
 const toast = $('#toast');
 const usernameInput = $('#usernameInput');
 const fileTitleInput = $('#fileTitleInput');
-const markPartBtn = $('#markPartBtn');
-const markChapterBtn = $('#markChapterBtn');
-const markArticleBtn = $('#markArticleBtn');
-[markPartBtn, markChapterBtn, markArticleBtn].forEach(b=>b.addEventListener('mousedown', e=>e.preventDefault()));
+const stripBlankLinesToggle = $('#stripBlankLinesToggle');
 fileTitleInput.addEventListener('input', scheduleDraftSave);
 
 function showToast(msg){
@@ -584,6 +697,28 @@ function showToast(msg){
   toast.classList.add('show');
   clearTimeout(showToast._t);
   showToast._t = setTimeout(()=>toast.classList.remove('show'), 1900);
+}
+
+function escapeHtml(str){
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function randomId(){
+  return Math.random().toString(36).slice(2) + '-' + Date.now().toString(36);
+}
+function formatDate(iso){
+  if(!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleString('ar-SA', { dateStyle:'medium', timeStyle:'short' });
+}
+
+/* ---------- view routing: home / log / editor(steps 1-3) ---------- */
+function goToView(view){
+  currentView = view;
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view' + view.charAt(0).toUpperCase() + view.slice(1)).classList.add('active');
+  document.querySelectorAll('.rail-item[data-view]').forEach(b=>b.classList.toggle('active', b.dataset.view === view));
+  if(view === 'home') renderHome();
+  if(view === 'log') renderLogPage();
 }
 
 function goToStep(n){
@@ -618,77 +753,212 @@ async function storageSet(key, value){
   catch(e){ return false; }
 }
 
-/* ---------- draft autosave (recovers in-progress work after a refresh/crash) ---------- */
-const DRAFT_KEY = 'draft-v1';
+/* ---------- unified records: every file lives here as a draft until it's
+   exported (copied/downloaded), at which point it flips to completed.
+   this single store backs autosave, the home stats, and the log page. ---------- */
+const RECORDS_KEY = 'records-v1';
+
+async function loadRecords(){
+  try{
+    const raw = await storageGet(RECORDS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  }catch(e){ return []; }
+}
+async function saveRecords(list){
+  const ok = await storageSet(RECORDS_KEY, JSON.stringify(list));
+  if(!ok) showToast('تعذر حفظ البيانات');
+  return ok;
+}
+function countMarksByLevel(list){
+  const c = {0:0,1:0,2:0,3:0};
+  list.forEach(m=>{ c[m.level] = (c[m.level]||0) + 1; });
+  return c;
+}
+function firstLineTitle(text){
+  const line = (text||'').split('\n').map(l=>l.trim()).find(l=>l.length>0);
+  if(!line) return '';
+  return line.length>80 ? line.slice(0,80)+'…' : line;
+}
+
 let draftDirty = false;
 function scheduleDraftSave(){
   draftDirty = true;
   clearTimeout(scheduleDraftSave._t);
-  scheduleDraftSave._t = setTimeout(saveDraftNow, 800);
+  scheduleDraftSave._t = setTimeout(()=>{ draftDirty=false; persistCurrentRecord(); }, 800);
 }
-async function saveDraftNow(){
-  if(!draftDirty) return;
-  draftDirty = false;
-  const draft = {
-    rawText, mode, marks, nextId,
-    fileTitle: fileTitleInput.value,
-    savedAt: new Date().toISOString()
-  };
-  await storageSet(DRAFT_KEY, JSON.stringify(draft));
-}
-async function loadDraft(){
-  const raw = await storageGet(DRAFT_KEY);
-  if(!raw) return null;
-  try{ return JSON.parse(raw); }catch(e){ return null; }
-}
-async function clearDraft(){ await storageSet(DRAFT_KEY, ''); }
 
-async function applyDraft(draft){
-  rawText = draft.rawText || '';
-  marks = Array.isArray(draft.marks) ? draft.marks : [];
-  nextId = draft.nextId || (marks.reduce((m,x)=>Math.max(m,x.id),0)+1);
+/* a record is only ever created/kept once there's real content, so an
+   untouched "new file" never litters the log with an empty draft */
+async function persistCurrentRecord(opts){
+  opts = opts || {};
+  if(!rawText.trim() && marks.length === 0 && !opts.complete) return null;
+  if(!currentRecordId) currentRecordId = randomId();
+  const records = await loadRecords();
+  let rec = records.find(r=>r.id === currentRecordId);
+  const now = new Date().toISOString();
+  if(!rec){
+    rec = { id: currentRecordId, createdAt: now, status: 'draft' };
+    records.unshift(rec);
+  }
+  rec.rawText = rawText;
+  rec.marks = marks;
+  rec.nextId = nextId;
+  rec.topLevel = topLevel;
+  rec.user = usernameInput.value.trim();
+  rec.updatedAt = now;
+  const explicitTitle = fileTitleInput.value.trim();
+  rec.title = explicitTitle || firstLineTitle(rawText) || 'بدون عنوان';
+  if(opts.complete){
+    rec.status = 'completed';
+    rec.exportedAt = now;
+    rec.exportAction = opts.action;
+    rec.counts = countMarksByLevel(marks);
+  }
+  await saveRecords(records);
+  return rec;
+}
+
+async function openRecord(id){
+  const records = await loadRecords();
+  const rec = records.find(r=>r.id === id);
+  if(!rec) return;
+  currentRecordId = rec.id;
+  rawText = rec.rawText || '';
+  marks = Array.isArray(rec.marks) ? rec.marks : [];
+  nextId = rec.nextId || (marks.reduce((m,x)=>Math.max(m,x.id),0)+1);
+  topLevel = (rec.topLevel !== undefined && rec.topLevel !== null) ? rec.topLevel : 1;
   rawInput.value = rawText;
-  if(draft.fileTitle) fileTitleInput.value = draft.fileTitle;
+  fileTitleInput.value = rec.title || '';
+  selectLevelButton(topLevel);
   checkStep1Ready();
+  goToView('editor');
   if(marks.length){
+    renderMarkToolbar();
     renderContent();
     renderMarksList();
     goToStep(2);
+  } else {
+    goToStep(1);
   }
 }
 
-/* ---------- app init: remember username + offer to restore autosaved draft ---------- */
+async function startNewFile(){
+  await persistCurrentRecord();
+  currentRecordId = null;
+  rawText = '';
+  marks = [];
+  nextId = 1;
+  topLevel = null;
+  rawInput.value = '';
+  fileTitleInput.value = '';
+  if(stripBlankLinesToggle) stripBlankLinesToggle.checked = false;
+  document.querySelectorAll('#levelPickerOptions button').forEach(b=>b.classList.remove('selected'));
+  checkStep1Ready();
+  goToView('editor');
+  goToStep(1);
+  showToast('بدأت ملفًا جديدًا');
+}
+
+/* ---------- home page ---------- */
+async function computeStats(){
+  const records = await loadRecords();
+  const completed = records.filter(r=>r.status === 'completed');
+  const drafts = records.filter(r=>r.status === 'draft');
+  const articleCount = completed.reduce((sum,r)=> sum + ((r.counts && r.counts[3]) || 0), 0);
+  let lastActivity = null;
+  records.forEach(r=>{
+    const t = r.updatedAt || r.exportedAt || r.createdAt;
+    if(t && (!lastActivity || t > lastActivity)) lastActivity = t;
+  });
+  return { exportedCount: completed.length, articleCount, draftCount: drafts.length, lastActivity };
+}
+async function renderHome(){
+  const stats = await computeStats();
+  $('#statExported').textContent = stats.exportedCount;
+  $('#statArticles').textContent = stats.articleCount;
+  $('#statDrafts').textContent = stats.draftCount;
+  $('#statLastActivity').textContent = stats.lastActivity ? formatDate(stats.lastActivity) : '—';
+}
+
+/* ---------- log page (full page, not a modal) ---------- */
+function countsSummary(counts){
+  if(!counts) return '';
+  return [0,1,2,3].filter(l=>counts[l]).map(l=>`${counts[l]} ${levelLabel[l]}`).join(' · ');
+}
+function logCardHtml(rec, isDraft){
+  return `<div class="log-card">
+    <div class="log-card-main">
+      <div class="log-title">${escapeHtml(rec.title || 'بدون عنوان')}</div>
+      <div class="log-meta">${escapeHtml(rec.user || 'غير معروف')} · ${formatDate(rec.updatedAt || rec.createdAt)}${rec.counts ? ' · ' + countsSummary(rec.counts) : ''}</div>
+    </div>
+    <button class="btn-ghost log-open-btn" data-id="${rec.id}">${isDraft ? 'متابعة' : 'عرض'}</button>
+  </div>`;
+}
+async function renderLogPage(){
+  const records = await loadRecords();
+  const drafts = records.filter(r=>r.status === 'draft').sort((a,b)=>(b.updatedAt||'').localeCompare(a.updatedAt||''));
+  const completed = records.filter(r=>r.status === 'completed').sort((a,b)=>(b.exportedAt||'').localeCompare(a.exportedAt||''));
+  $('#logDrafts').innerHTML = drafts.length ? drafts.map(r=>logCardHtml(r,true)).join('') : '<div class="empty-hint">لا توجد مسودات حاليًا</div>';
+  $('#logCompleted').innerHTML = completed.length ? completed.map(r=>logCardHtml(r,false)).join('') : '<div class="empty-hint">لا يوجد أي ملف مُصدَّر بعد</div>';
+}
+document.addEventListener('click', e=>{
+  const btn = e.target.closest('.log-open-btn');
+  if(!btn) return;
+  openRecord(btn.dataset.id);
+});
+
+/* ---------- app init: remember username ---------- */
 (async function initApp(){
   try{
     const savedName = await storageGet('entry-username');
     if(savedName) usernameInput.value = savedName;
   }catch(e){ /* no stored value yet */ }
-
-  const draft = await loadDraft();
-  if(draft && draft.rawText && draft.rawText.trim()){
-    $('#draftBannerText').textContent = 'توجد مسودة محفوظة تلقائيًا من ' + formatDate(draft.savedAt) + '. هل تريد استعادتها؟';
-    $('#draftBanner').style.display = 'flex';
-    $('#restoreDraftBtn').addEventListener('click', async ()=>{
-      $('#draftBanner').style.display = 'none';
-      await applyDraft(draft);
-      showToast('تم استعادة المسودة');
-    });
-    $('#discardDraftBtn').addEventListener('click', async ()=>{
-      $('#draftBanner').style.display = 'none';
-      await clearDraft();
-    });
-  }
 })();
 usernameInput.addEventListener('change', async ()=>{
   await storageSet('entry-username', usernameInput.value.trim());
 });
 
-/* ---------- STEP 1 : text ---------- */
+/* ---------- STEP 1 : text + top-level choice ---------- */
 function checkStep1Ready(){
-  toStep2Btn.disabled = !(rawInput.value.trim().length > 0);
+  toStep2Btn.disabled = !(rawInput.value.trim().length > 0 && topLevel !== null);
 }
+function stripBlankLines(text){
+  return text.split('\n').map(l=>l.trim()).filter(l=>l.length>0).join('\n');
+}
+function selectLevelButton(level){
+  topLevel = level;
+  document.querySelectorAll('#levelPickerOptions button').forEach(b=>{
+    b.classList.toggle('selected', parseInt(b.dataset.level) === level);
+  });
+}
+
 rawInput.addEventListener('input', ()=>{
   rawText = rawInput.value;
+  checkStep1Ready();
+  scheduleDraftSave();
+});
+rawInput.addEventListener('paste', ()=>{
+  if(!stripBlankLinesToggle.checked) return;
+  setTimeout(()=>{
+    rawInput.value = stripBlankLines(rawInput.value);
+    rawText = rawInput.value;
+    checkStep1Ready();
+    scheduleDraftSave();
+  }, 0);
+});
+stripBlankLinesToggle.addEventListener('change', ()=>{
+  if(stripBlankLinesToggle.checked){
+    rawInput.value = stripBlankLines(rawInput.value);
+    rawText = rawInput.value;
+    checkStep1Ready();
+    scheduleDraftSave();
+  }
+});
+
+$('#levelPickerOptions').addEventListener('click', e=>{
+  const btn = e.target.closest('button');
+  if(!btn) return;
+  selectLevelButton(parseInt(btn.dataset.level));
   checkStep1Ready();
   scheduleDraftSave();
 });
@@ -697,6 +967,7 @@ toStep2Btn.addEventListener('click', ()=>{
   rawText = rawInput.value;
   marks = [];
   nextId = 1;
+  renderMarkToolbar();
   renderContent();
   renderMarksList();
   goToStep(2);
@@ -709,8 +980,12 @@ $('#backTo1Btn').addEventListener('click', ()=>{
 
 /* ---------- import a previously exported JSON to resume editing ---------- */
 function reconstructFromPayload(payload){
-  const importMode = payload.parts ? 'parts' : payload.chapters ? 'chapters' : (payload.articles ? 'articles' : null);
-  if(!importMode) throw new Error('صيغة غير معروفة');
+  let topLvl;
+  if(payload.sections) topLvl = 0;
+  else if(payload.parts) topLvl = 1;
+  else if(payload.chapters) topLvl = 2;
+  else if(payload.articles) topLvl = 3;
+  else throw new Error('صيغة غير معروفة');
 
   let buf = '';
   const importedMarks = [];
@@ -728,29 +1003,23 @@ function reconstructFromPayload(payload){
     if(!t) return;
     buf += '\n' + t;
   }
+  function walkNodes(nodes, level){
+    if(!nodes) return;
+    nodes.forEach(n=>{
+      if(!n.orphan) addHeading(n.title, level);
+      addContent(n.content);
+      if(level < 3) walkNodes(n[keyForLevel(level+1)], level+1);
+    });
+  }
 
   if(payload.intro) addContent(payload.intro);
 
-  if(importMode === 'articles'){
+  if(topLvl === 3){
     payload.articles.forEach(a=>{ addHeading(a.title, 3); addContent(a.content); });
-  } else if(importMode === 'chapters'){
-    payload.chapters.forEach(ch=>{
-      if(!ch.orphan) addHeading(ch.title, 2);
-      addContent(ch.content);
-      ch.articles.forEach(a=>{ addHeading(a.title, 3); addContent(a.content); });
-    });
   } else {
-    payload.parts.forEach(p=>{
-      if(!p.orphan) addHeading(p.title, 1);
-      addContent(p.content);
-      p.chapters.forEach(ch=>{
-        if(!ch.orphan) addHeading(ch.title, 2);
-        addContent(ch.content);
-        ch.articles.forEach(a=>{ addHeading(a.title, 3); addContent(a.content); });
-      });
-    });
+    walkNodes(payload[keyForLevel(topLvl)], topLvl);
   }
-  return { rawText: buf, mode: importMode, marks: importedMarks, nextId: id, fileTitle: payload.meta && payload.meta.fileTitle };
+  return { rawText: buf, topLevel: topLvl, marks: importedMarks, nextId: id, fileTitle: payload.meta && payload.meta.fileTitle };
 }
 
 $('#importJsonBtn').addEventListener('click', ()=>$('#importJsonFile').click());
@@ -762,18 +1031,30 @@ $('#importJsonFile').addEventListener('change', async e=>{
     const text = await file.text();
     const payload = JSON.parse(text);
     const rebuilt = reconstructFromPayload(payload);
-    await applyDraft(rebuilt);
+    currentRecordId = null;
+    rawText = rebuilt.rawText || '';
+    marks = Array.isArray(rebuilt.marks) ? rebuilt.marks : [];
+    nextId = rebuilt.nextId || (marks.reduce((m,x)=>Math.max(m,x.id),0)+1);
+    rawInput.value = rawText;
+    if(rebuilt.fileTitle) fileTitleInput.value = rebuilt.fileTitle;
+    selectLevelButton(rebuilt.topLevel);
+    checkStep1Ready();
+    if(marks.length){
+      renderMarkToolbar();
+      renderContent();
+      renderMarksList();
+      goToStep(2);
+    } else {
+      goToStep(1);
+    }
     showToast('تم استيراد الملف. راجع التحديدات قبل المتابعة');
+    scheduleDraftSave();
   }catch(err){
     showToast('تعذر قراءة الملف: تأكد أنه ملف JSON مُصدَّر من هذه الأداة');
   }
 });
 
 /* ---------- STEP 2 : marking ---------- */
-function escapeHtml(str){
-  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
-
 function getOffset(root, node, offsetInNode){
   if(node.nodeType === Node.TEXT_NODE){
     let total = 0;
@@ -795,6 +1076,24 @@ function getOffset(root, node, offsetInNode){
     }
     return total;
   }
+}
+
+function levelsInUse(){
+  const arr = [];
+  for(let l=topLevel; l<=3; l++) arr.push(l);
+  return arr;
+}
+
+function renderMarkToolbar(){
+  const container = $('#markToolbar');
+  const levels = levelsInUse();
+  container.innerHTML = levels.map(l=>
+    `<button class="mark-btn lvl${l}" data-level="${l}"><span class="dot"></span> تحديد كعنوان ${levelLabel[l]}</button>`
+  ).join('') + `<span class="hint">حدّد نص العنوان بالماوس أولًا ثم اضغط الزر (أو اختصار رقم الترتيب). اضغط على أي عنوان محدد لإزالته</span>`;
+  container.querySelectorAll('.mark-btn').forEach(b=>{
+    b.addEventListener('mousedown', e=>e.preventDefault());
+    b.addEventListener('click', ()=>markSelection(parseInt(b.dataset.level)));
+  });
 }
 
 function renderContent(){
@@ -843,17 +1142,16 @@ function markSelection(level){
   scheduleDraftSave();
 }
 
-markPartBtn.addEventListener('click', ()=>markSelection(1));
-markChapterBtn.addEventListener('click', ()=>markSelection(2));
-markArticleBtn.addEventListener('click', ()=>markSelection(3));
-
 document.addEventListener('keydown', e=>{
-  if(currentStep !== 2) return;
-  if(e.key !== '1' && e.key !== '2' && e.key !== '3') return;
+  if(currentView !== 'editor' || currentStep !== 2) return;
+  const idx = parseInt(e.key) - 1;
+  if(isNaN(idx)) return;
+  const levels = levelsInUse();
+  if(idx < 0 || idx >= levels.length) return;
   const sel = window.getSelection();
   if(!sel || sel.isCollapsed || !contentView.contains(sel.anchorNode)) return;
   e.preventDefault();
-  markSelection(parseInt(e.key));
+  markSelection(levels[idx]);
 });
 
 contentView.addEventListener('click', e=>{
@@ -866,23 +1164,12 @@ contentView.addEventListener('click', e=>{
   scheduleDraftSave();
 });
 
-const levelLabel = {1:'باب', 2:'فصل', 3:'مادة'};
-
-/* the structure (مواد فقط / فصول ومواد / أبواب وفصول ومواد) is inferred from
-   whichever levels the user actually marked, instead of a separate up-front choice */
-function computeMode(){
-  if(marks.some(m=>m.level===1)) return 'parts';
-  if(marks.some(m=>m.level===2)) return 'chapters';
-  return 'articles';
-}
-
 function renderMarksList(){
-  mode = computeMode();
   const sorted = [...marks].sort((a,b)=>a.start-b.start);
   if(sorted.length === 0){
     marksList.innerHTML = '<div class="empty-hint">لم يتم تحديد أي عنوان بعد</div>';
   } else {
-    const options = [1,2,3];
+    const options = levelsInUse();
     marksList.innerHTML = sorted.map(m=>{
       const snippet = rawText.slice(m.start, m.end).trim();
       const switchBtns = options.filter(l=>l!==m.level).map(l=>
@@ -896,10 +1183,8 @@ function renderMarksList(){
       </div>`;
     }).join('');
   }
-  const parts = marks.filter(m=>m.level===1).length;
-  const chapters = marks.filter(m=>m.level===2).length;
-  const articles = marks.filter(m=>m.level===3).length;
-  countsEl.textContent = `${parts} باب · ${chapters} فصل · ${articles} مادة`;
+  const levels = levelsInUse();
+  countsEl.textContent = levels.map(l=>`${marks.filter(m=>m.level===l).length} ${levelLabel[l]}`).join(' · ');
   toStep3Btn.disabled = marks.length === 0;
 }
 
@@ -935,7 +1220,9 @@ $('#clearMarksBtn').addEventListener('click', ()=>{
   scheduleDraftSave();
 });
 
-/* ---------- STEP 3 : build tree (up to 3 levels) ---------- */
+/* ---------- STEP 3 : build tree (arbitrary depth topLevel..3) ---------- */
+function orphanTitleForLevel(level){ return 'بدون ' + levelLabel[level]; }
+
 function buildTree(){
   const sorted = [...marks].sort((a,b)=>a.start-b.start);
   const intro = (sorted.length ? rawText.slice(0, sorted[0].start) : rawText).trim();
@@ -948,70 +1235,37 @@ function buildTree(){
     };
   });
 
-  if(mode === 'articles'){
-    return { hasOrphans:false, intro, parts:null, chapters:null,
-      articles: items.map(a=>({title:a.title, content:a.content})) };
+  if(topLevel === 3){
+    const root = { articles: items.map(a=>({title:a.title, content:a.content})) };
+    return { hasOrphans:false, intro, root };
   }
 
-  if(mode === 'chapters'){
-    const chapters = [];
-    let current = null;
-    let hasOrphans = false;
-    for(const item of items){
-      if(item.level === 2){
-        current = { title:item.title, content:item.content, articles:[] };
-        chapters.push(current);
-      } else if(item.level === 3){
-        if(!current){
-          hasOrphans = true;
-          current = { title:'بدون فصل', content:'', articles:[], orphan:true };
-          chapters.unshift(current);
-        }
-        current.articles.push({ title:item.title, content:item.content });
-      }
-    }
-    return { hasOrphans, intro, parts:null, chapters, articles:null };
-  }
-
-  // mode === 'parts'  ->  باب > فصل > مادة
-  const parts = [];
-  let currentPart = null;
-  let currentChapter = null;
   let hasOrphans = false;
-
-  function ensurePart(){
-    if(!currentPart){
-      hasOrphans = true;
-      currentPart = { title:'بدون باب', content:'', chapters:[], orphan:true };
-      parts.unshift(currentPart);
-    }
-    return currentPart;
-  }
-  function ensureChapter(){
-    ensurePart();
-    if(!currentChapter){
-      hasOrphans = true;
-      currentChapter = { title:'بدون فصل', content:'', articles:[], orphan:true };
-      currentPart.chapters.unshift(currentChapter);
-    }
-    return currentChapter;
-  }
+  const rootChildren = [];
+  const stack = []; // {level, node} ancestors currently open, outermost first
 
   for(const item of items){
-    if(item.level === 1){
-      currentPart = { title:item.title, content:item.content, chapters:[] };
-      parts.push(currentPart);
-      currentChapter = null;
-    } else if(item.level === 2){
-      ensurePart();
-      currentChapter = { title:item.title, content:item.content, articles:[] };
-      currentPart.chapters.push(currentChapter);
-    } else if(item.level === 3){
-      const ch = ensureChapter();
-      ch.articles.push({ title:item.title, content:item.content });
+    while(stack.length && stack[stack.length-1].level >= item.level) stack.pop();
+    let expectedLevel = stack.length ? stack[stack.length-1].level + 1 : topLevel;
+    while(expectedLevel < item.level){
+      hasOrphans = true;
+      const orphanNode = { title: orphanTitleForLevel(expectedLevel), content:'', orphan:true };
+      orphanNode[keyForLevel(expectedLevel+1)] = [];
+      const parentArr = stack.length ? stack[stack.length-1].node[keyForLevel(expectedLevel)] : rootChildren;
+      parentArr.push(orphanNode);
+      stack.push({ level: expectedLevel, node: orphanNode });
+      expectedLevel++;
     }
+    const node = { title: item.title, content: item.content };
+    if(item.level < 3) node[keyForLevel(item.level+1)] = [];
+    const parentArr = stack.length ? stack[stack.length-1].node[keyForLevel(item.level)] : rootChildren;
+    parentArr.push(node);
+    if(item.level < 3) stack.push({ level: item.level, node });
   }
-  return { hasOrphans, intro, parts, chapters:null, articles:null };
+
+  const root = {};
+  root[keyForLevel(topLevel)] = rootChildren;
+  return { hasOrphans, intro, root };
 }
 
 $('#toStep3Btn').addEventListener('click', ()=>{
@@ -1020,36 +1274,35 @@ $('#toStep3Btn').addEventListener('click', ()=>{
 });
 $('#backTo2Btn').addEventListener('click', ()=>goToStep(2));
 
-/* flattens the tree into one ordered list, shared by the full preview and the
-   TOC sidebar so both stay perfectly in sync via the same generated element ids */
+/* flattens the tree into one ordered list (also stamping each tree node with
+   its generated element id) shared by the full preview and the TOC sidebar
+   so both stay perfectly in sync */
 function flattenTree(tree){
   const flat = [];
   let i = 0;
-  const nextId = () => 'toc-item-' + (i++);
+  const nextTocId = () => 'toc-item-' + (i++);
 
-  if(tree.intro) flat.push({ type:'intro', id:nextId(), title:'تمهيد', content:tree.intro });
+  if(tree.intro) flat.push({ type:'intro', id:nextTocId(), title:'تمهيد', content:tree.intro, level:-1, parentPath:null });
 
-  if(mode === 'articles'){
-    tree.articles.forEach(a=>{
-      flat.push({ type:'article', id:nextId(), title:a.title, content:a.content, parentPath:null });
+  function walk(nodes, level, parentPathParts){
+    if(!nodes) return;
+    nodes.forEach(n=>{
+      const id = nextTocId();
+      n._tocId = id;
+      flat.push({ type:levelType(level), id, title:n.title, content:n.content, orphan:!!n.orphan, level,
+        parentPath: parentPathParts.length ? parentPathParts.join(' / ') : null });
+      if(level < 3) walk(n[keyForLevel(level+1)], level+1, [...parentPathParts, n.title]);
     });
-  } else if(mode === 'chapters'){
-    tree.chapters.forEach(ch=>{
-      flat.push({ type:'chapter', id:nextId(), title:ch.title, content:ch.content, orphan:ch.orphan });
-      ch.articles.forEach(a=>{
-        flat.push({ type:'article', id:nextId(), title:a.title, content:a.content, parentPath:ch.title });
-      });
+  }
+
+  if(topLevel === 3){
+    tree.root.articles.forEach(a=>{
+      const id = nextTocId();
+      a._tocId = id;
+      flat.push({ type:'article', id, title:a.title, content:a.content, level:3, parentPath:null });
     });
   } else {
-    tree.parts.forEach(p=>{
-      flat.push({ type:'part', id:nextId(), title:p.title, content:p.content, orphan:p.orphan });
-      p.chapters.forEach(ch=>{
-        flat.push({ type:'chapter', id:nextId(), title:ch.title, content:ch.content, orphan:ch.orphan });
-        ch.articles.forEach(a=>{
-          flat.push({ type:'article', id:nextId(), title:a.title, content:a.content, parentPath:p.title+' / '+ch.title });
-        });
-      });
-    });
+    walk(tree.root[keyForLevel(topLevel)], topLevel, []);
   }
   return flat;
 }
@@ -1070,6 +1323,9 @@ function renderPreview(){
   flat.forEach(item=>{
     if(item.type === 'intro'){
       html += `<div class="chapter-heading" id="${item.id}">تمهيد (نص ورد قبل أول عنوان محدَّد)</div>` + chapterIntroHtml(item.content);
+    } else if(item.type === 'section'){
+      html += `<div class="section-heading" id="${item.id}">${escapeHtml(item.title)}</div>`;
+      if(item.content) html += chapterIntroHtml(item.content);
     } else if(item.type === 'part'){
       html += `<div class="part-heading" id="${item.id}">${escapeHtml(item.title)}</div>`;
       if(item.content) html += chapterIntroHtml(item.content);
@@ -1081,36 +1337,44 @@ function renderPreview(){
     }
   });
   $('#previewArea').innerHTML = html || '<div class="empty-hint">لا توجد عناصر لعرضها</div>';
-  renderToc(flat);
+  renderToc(tree, flat);
 }
 
-function renderToc(flat){
+/* nested tree render for the TOC sidebar: each level gets a colored vertical
+   guide line with a small connector tick per item, so the hierarchy (قسم -> باب
+   -> فصل -> مادة) reads visually instead of only through indentation */
+function renderTocTree(nodes, level){
+  if(!nodes || !nodes.length) return '';
+  const isLeaf = level === 3;
+  return `<ul class="toc-tree lvl${level}-line">` + nodes.map(n=>{
+    const children = !isLeaf ? renderTocTree(n[keyForLevel(level+1)], level+1) : '';
+    return `<li class="toc-node">
+      <div class="toc-item ${n.orphan ? 'toc-orphan' : ''}" data-target="${n._tocId}">
+        <span class="badge lvl${level}">${levelLabel[level]}</span><span class="toc-label">${escapeHtml(n.title)}</span>
+      </div>
+      ${children}
+    </li>`;
+  }).join('') + `</ul>`;
+}
+
+function renderToc(tree, flat){
   const tocList = $('#tocList');
   if(!flat.length){
     tocList.innerHTML = '<div class="empty-hint">لا توجد عناصر</div>';
     $('#tocCounts').textContent = '';
     return;
   }
-  const indentFor = item=>{
-    if(item.type !== 'article') return item.type === 'chapter' && mode === 'parts' ? 14 : 0;
-    return mode === 'parts' ? 28 : mode === 'chapters' ? 14 : 0;
-  };
-  const badgeFor = item=>{
-    if(item.type === 'part') return '<span class="badge lvl1">باب</span>';
-    if(item.type === 'chapter') return '<span class="badge lvl2">فصل</span>';
-    if(item.type === 'article') return '<span class="badge lvl3">مادة</span>';
-    return '';
-  };
-  tocList.innerHTML = flat.map(item=>`
-    <div class="toc-item ${item.type==='intro' ? 'toc-intro' : ''} ${item.orphan ? 'toc-orphan' : ''}" style="padding-inline-start:${indentFor(item)}px" data-target="${item.id}">
-      ${badgeFor(item)}<span class="toc-label">${escapeHtml(item.title)}</span>
-    </div>
-  `).join('');
+  let introHtml = '';
+  const introItem = flat.find(f=>f.type==='intro');
+  if(introItem){
+    introHtml = `<div class="toc-item toc-intro" data-target="${introItem.id}"><span class="toc-label">تمهيد</span></div>`;
+  }
+  const topNodes = topLevel === 3 ? tree.root.articles : tree.root[keyForLevel(topLevel)];
+  tocList.innerHTML = introHtml + renderTocTree(topNodes, topLevel);
 
-  const parts = flat.filter(i=>i.type==='part').length;
-  const chapters = flat.filter(i=>i.type==='chapter').length;
-  const articles = flat.filter(i=>i.type==='article').length;
-  $('#tocCounts').textContent = `${parts} باب · ${chapters} فصل · ${articles} مادة`;
+  const counts = {};
+  flat.forEach(f=>{ if(f.type !== 'intro') counts[f.level] = (counts[f.level]||0) + 1; });
+  $('#tocCounts').textContent = [0,1,2,3].filter(l=>l>=topLevel).map(l=>`${counts[l]||0} ${levelLabel[l]}`).join(' · ');
 }
 
 $('#tocList').addEventListener('click', e=>{
@@ -1145,7 +1409,7 @@ document.addEventListener('click', async e=>{
   showToast(ok ? 'تم نسخ المحتوى' : 'تعذر النسخ إلى الحافظة');
 });
 
-/* ---------- export + export log (shared storage) ---------- */
+/* ---------- export ---------- */
 function buildExportPayload(){
   const tree = buildTree();
   const meta = {
@@ -1154,9 +1418,7 @@ function buildExportPayload(){
     exportedAt: new Date().toISOString()
   };
   const base = tree.intro ? { meta, intro: tree.intro } : { meta };
-  if(mode === 'articles') return { ...base, articles: tree.articles };
-  if(mode === 'chapters') return { ...base, chapters: tree.chapters };
-  return { ...base, parts: tree.parts };
+  return { ...base, ...tree.root };
 }
 
 function validateBeforeExport(){
@@ -1173,90 +1435,75 @@ function validateBeforeExport(){
   return true;
 }
 
-async function loadExportLog(){
-  try{
-    const raw = await storageGet('export-log');
-    return raw ? JSON.parse(raw) : [];
-  }catch(e){ return []; }
-}
-async function saveExportLog(list){
-  const ok = await storageSet('export-log', JSON.stringify(list));
-  if(!ok) showToast('تعذر حفظ سجل التصدير');
-  return ok;
-}
-function randomId(){
-  return Math.random().toString(36).slice(2) + '-' + Date.now().toString(36);
-}
-async function logExport(action){
-  const entry = {
-    id: randomId(),
-    user: usernameInput.value.trim(),
-    title: fileTitleInput.value.trim(),
-    date: new Date().toISOString(),
-    action
-  };
-  // read-modify-write isn't atomic against concurrent users, so re-read
-  // right before writing and verify afterwards, retrying a few times.
-  for(let attempt=0; attempt<3; attempt++){
-    const log = await loadExportLog();
-    if(log.some(e=>e.id === entry.id)) return;
-    log.unshift(entry);
-    await saveExportLog(log.slice(0,200));
-    const check = await loadExportLog();
-    if(check.some(e=>e.id === entry.id)) return;
-  }
-  showToast('تعذر تسجيل عملية التصدير في السجل بسبب تعارض متزامن');
+function sanitizeFilename(name){
+  const cleaned = (name || '').replace(/[\\/:*?"<>|]/g, '_').replace(/[\x00-\x1f]/g, '').replace(/\.+$/, '').trim();
+  return cleaned || 'التشريع';
 }
 
-function formatDate(iso){
-  const d = new Date(iso);
-  return d.toLocaleString('ar-SA', { dateStyle:'medium', timeStyle:'short' });
-}
-
-async function renderLogModal(){
-  const body = $('#logBody');
-  body.innerHTML = '<div class="empty-hint">جارِ التحميل...</div>';
-  const log = await loadExportLog();
-  if(!log.length){
-    body.innerHTML = '<div class="empty-hint">لا يوجد أي تصدير مسجَّل بعد</div>';
+$('#copyJsonBtn').addEventListener('click', async ()=>{
+  if(!validateBeforeExport()) return;
+  const payload = buildExportPayload();
+  const ok = await copyTextToClipboard(JSON.stringify(payload, null, 2));
+  if(!ok){
+    showToast('تعذر النسخ إلى الحافظة. استخدم زر "تنزيل JSON" بدلًا من ذلك');
     return;
   }
-  body.innerHTML = log.map(e=>`
-    <div class="log-item">
-      <div class="log-title">${escapeHtml(e.title || 'بدون عنوان')}</div>
-      <div class="log-meta">${escapeHtml(e.user || 'غير معروف')} · ${e.action || ''} · ${formatDate(e.date)}</div>
-    </div>
-  `).join('');
+  await persistCurrentRecord({ complete:true, action:'نسخ JSON' });
+  showToast('تم نسخ JSON وحفظ الملف في السجل');
+  goToView('home');
+});
+
+$('#downloadJsonBtn').addEventListener('click', async ()=>{
+  if(!validateBeforeExport()) return;
+  const payload = buildExportPayload();
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = sanitizeFilename(fileTitleInput.value.trim()) + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  await persistCurrentRecord({ complete:true, action:'تنزيل JSON' });
+  showToast('تم تنزيل الملف وحفظه في السجل');
+  goToView('home');
+});
+
+async function copyTextToClipboard(text){
+  try{
+    await navigator.clipboard.writeText(text);
+    return true;
+  }catch(e){
+    try{
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      const ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      return ok;
+    }catch(e2){
+      return false;
+    }
+  }
 }
 
-$('#navLog').addEventListener('click', ()=>{
-  $('#logModal').classList.add('open');
-  renderLogModal();
-});
-$('#closeLogBtn').addEventListener('click', ()=>$('#logModal').classList.remove('open'));
-$('#logModal').addEventListener('click', e=>{
-  if(e.target.id === 'logModal') $('#logModal').classList.remove('open');
-});
-
-/* ---------- side rail: expand/collapse, new file, settings ---------- */
+/* ---------- side rail: expand/collapse, navigation, settings ---------- */
 $('#railToggle').addEventListener('click', async ()=>{
   document.body.classList.toggle('rail-expanded');
   await storageSet('pref-rail-expanded', document.body.classList.contains('rail-expanded') ? '1' : '0');
 });
 
-$('#navNewFile').addEventListener('click', async ()=>{
-  if((rawText.trim() || marks.length) && !confirm('بدء ملف جديد سيمسح العمل الحالي غير المُصدَّر، هل تريد المتابعة؟')) return;
-  rawText = '';
-  marks = [];
-  nextId = 1;
-  mode = 'articles';
-  rawInput.value = '';
-  fileTitleInput.value = '';
-  await clearDraft();
-  checkStep1Ready();
-  goToStep(1);
-  showToast('بدأت ملفًا جديدًا');
-});
+$('#navHome').dataset.view = 'home';
+$('#navLog').dataset.view = 'log';
+$('#navHome').addEventListener('click', ()=>goToView('home'));
+$('#navNewFile').addEventListener('click', startNewFile);
+$('#navLog').addEventListener('click', ()=>goToView('log'));
+$('#homeNewFileBtn').addEventListener('click', startNewFile);
+$('#homeLogBtn').addEventListener('click', ()=>goToView('log'));
+$('#logNewFileBtn').addEventListener('click', startNewFile);
 
 $('#navSettings').addEventListener('click', ()=>$('#settingsModal').classList.add('open'));
 $('#closeSettingsBtn').addEventListener('click', ()=>$('#settingsModal').classList.remove('open'));
@@ -1297,60 +1544,7 @@ $('#themeOptions').addEventListener('click', async e=>{
   if(savedRail === '1') document.body.classList.add('rail-expanded');
 })();
 
-async function copyTextToClipboard(text){
-  try{
-    await navigator.clipboard.writeText(text);
-    return true;
-  }catch(e){
-    try{
-      const ta = document.createElement('textarea');
-      ta.value = text;
-      ta.style.position = 'fixed';
-      ta.style.opacity = '0';
-      document.body.appendChild(ta);
-      ta.focus();
-      ta.select();
-      const ok = document.execCommand('copy');
-      document.body.removeChild(ta);
-      return ok;
-    }catch(e2){
-      return false;
-    }
-  }
-}
-
-$('#copyJsonBtn').addEventListener('click', async ()=>{
-  if(!validateBeforeExport()) return;
-  const payload = buildExportPayload();
-  const ok = await copyTextToClipboard(JSON.stringify(payload, null, 2));
-  if(!ok){
-    showToast('تعذر النسخ إلى الحافظة. استخدم زر "تنزيل JSON" بدلًا من ذلك');
-    return;
-  }
-  await logExport('نسخ JSON');
-  showToast('تم نسخ JSON وتسجيله في السجل');
-});
-
-function sanitizeFilename(name){
-  const cleaned = (name || '').replace(/[\\/:*?"<>|]/g, '_').replace(/[\x00-\x1f]/g, '').replace(/\.+$/, '').trim();
-  return cleaned || 'التشريع';
-}
-
-$('#downloadJsonBtn').addEventListener('click', async ()=>{
-  if(!validateBeforeExport()) return;
-  const payload = buildExportPayload();
-  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = sanitizeFilename(fileTitleInput.value.trim()) + '.json';
-  a.click();
-  URL.revokeObjectURL(url);
-  await logExport('تنزيل JSON');
-  showToast('تم تنزيل الملف وتسجيله في السجل');
-});
-
-goToStep(1);
+goToView('home');
 </script>
 </body>
 </html>
