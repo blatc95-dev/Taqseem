@@ -122,6 +122,23 @@
   }
   .user-box input:focus{outline:2px solid var(--blue-bg-hover);border-color:var(--blue);}
 
+  /* login gate */
+  body.pre-auth .side-rail{display:none;}
+  body.pre-auth .wrap{margin-right:0;}
+  .login-shell{min-height:80vh;display:flex;align-items:center;justify-content:center;}
+  .login-card{width:100%;max-width:380px;}
+  .login-card .user-box input{width:100%;}
+  .login-error{color:var(--danger);font-size:12.5px;margin-top:10px;min-height:1px;}
+
+  /* sidebar account block */
+  .rail-account{margin-top:auto;padding:10px 8px 14px;border-top:1px solid var(--border);}
+  .rail-account-name{
+    font-size:12px;font-weight:600;color:var(--text-muted);padding:0 10px 6px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    opacity:0;height:0;transition:opacity .15s ease;
+  }
+  body.rail-expanded .rail-account-name{opacity:1;height:auto;padding:0 10px 6px;}
+
   /* step indicator */
   .steps{display:flex;gap:10px;margin-bottom:28px;flex-wrap:wrap;}
   .step-pill{
@@ -333,6 +350,15 @@
   .section-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;}
   .section-top h2{font-size:16px;margin:0;}
 
+  body.readonly-record .export-bar,
+  body.readonly-record #backTo2Btn,
+  body.readonly-record #backTo1Btn{display:none;}
+  .readonly-banner{display:none;}
+  body.readonly-record .readonly-banner{
+    display:block;background:var(--bg-soft);border:1px solid var(--border);color:var(--text-muted);
+    font-size:13px;font-weight:600;padding:12px 16px;border-radius:10px;margin-bottom:18px;
+  }
+
   .notice-banner{
     background:var(--blue-bg);border:1px solid var(--blue-bg-hover);color:var(--blue);
     font-size:13px;font-weight:600;padding:12px 16px;border-radius:10px;margin-bottom:18px;
@@ -449,6 +475,29 @@
 <body>
 <div class="wrap">
 
+  <!-- LOGIN -->
+  <div class="view" id="viewLogin">
+    <div class="login-shell">
+      <div class="card login-card">
+        <div class="eyebrow">أداة داخلية · إدخال البيانات</div>
+        <h1>مقسّم التشريعات</h1>
+        <p class="sub">سجّل الدخول بالبيانات التي زوّدك بها المسؤول.</p>
+        <form id="loginForm">
+          <div class="user-box">
+            <label for="loginEmail">البريد الإلكتروني</label>
+            <input id="loginEmail" type="email" autocomplete="username" required>
+          </div>
+          <div class="user-box" style="margin-top:12px;">
+            <label for="loginPassword">كلمة المرور</label>
+            <input id="loginPassword" type="password" autocomplete="current-password" required>
+          </div>
+          <div class="login-error" id="loginError"></div>
+          <button class="btn-primary" type="submit" id="loginSubmitBtn" style="width:100%;justify-content:center;margin-top:16px;">دخول</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <!-- HOME (stats + the log, merged into one landing page) -->
   <div class="view" id="viewHome">
     <div class="home-header">
@@ -480,10 +529,6 @@
         <span class="eyebrow">أداة داخلية · إدخال البيانات</span>
         <h1>مقسّم التشريعات</h1>
         <p class="sub">الصق النص الكامل للتشريع، ثم حدّد عناوين الأقسام والأبواب والفصول والمواد بالماوس مباشرة داخل النص، والنظام يتكفّل بالباقي.</p>
-      </div>
-      <div class="user-box">
-        <label for="usernameInput">اسم الموظف</label>
-        <input id="usernameInput" type="text" placeholder="اكتب اسمك">
       </div>
     </div>
 
@@ -566,6 +611,7 @@
       </div>
 
       <div class="notice-banner">يجب مراجعة هذه المخرجات جيدًا بعد رفعها ونشرها في المنصة، قبل اعتمادها نهائيًا.</div>
+      <div class="readonly-banner">هذا ملف تابع لموظف آخر — للعرض فقط، ولا يمكن تعديله أو تصديره من هنا.</div>
 
       <div id="warnArea"></div>
 
@@ -628,11 +674,24 @@
     <button class="rail-item" id="navNewFile" title="ملف جديد"><span class="icon icon-document"></span><span class="rail-label">ملف جديد</span></button>
     <button class="rail-item" id="navSettings" title="الإعدادات"><span class="icon icon-setting"></span><span class="rail-label">الإعدادات</span></button>
   </nav>
+  <div class="rail-account">
+    <div class="rail-account-name" id="railAccountName"></div>
+    <button class="rail-item" id="navSignOut" title="تسجيل الخروج"><span class="icon icon-close"></span><span class="rail-label">تسجيل الخروج</span></button>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
+/* ---------- supabase project config ----------
+   the anon/public key is meant to be public: every table policy is scoped
+   `to authenticated`, so this key alone (without a signed-in session) grants
+   no access at all. Never put the service_role key here. */
+const SUPABASE_URL = 'https://YOUR-PROJECT.supabase.co';
+const SUPABASE_ANON_KEY = 'YOUR-ANON-KEY';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 /* ---------- level model ----------
    levels are numbered 0..3 where a SMALLER number is a BIGGER/outer unit:
    0 = قسم (section) · 1 = باب (part) · 2 = فصل (chapter) · 3 = مادة (article, always the leaf).
@@ -650,6 +709,8 @@ let nextId = 1;
 let currentStep = 1;
 let currentView = 'home';
 let currentRecordId = null;
+let currentUser = null; // {id, fullName}
+let viewingReadOnly = false; // true while looking at someone else's record (or "عرض" preview)
 
 const $ = sel => document.querySelector(sel);
 const rawInput = $('#rawInput');
@@ -659,7 +720,6 @@ const marksList = $('#marksList');
 const countsEl = $('#counts');
 const toStep3Btn = $('#toStep3Btn');
 const toast = $('#toast');
-const usernameInput = $('#usernameInput');
 const fileTitleInput = $('#fileTitleInput');
 const stripBlankLinesToggle = $('#stripBlankLinesToggle');
 fileTitleInput.addEventListener('input', scheduleDraftSave);
@@ -673,9 +733,6 @@ function showToast(msg){
 
 function escapeHtml(str){
   return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
-function randomId(){
-  return Math.random().toString(36).slice(2) + '-' + Date.now().toString(36);
 }
 function formatDate(iso){
   if(!iso) return '';
@@ -731,23 +788,35 @@ async function storageSet(key, value){
 
 /* ---------- unified records: every file lives here as a draft until it's
    exported (copied/downloaded), at which point it flips to completed.
-   this single store backs autosave, the home stats, and the log page. ---------- */
-const RECORDS_KEY = 'records-v1';
-
-async function loadRecords(){
-  try{
-    const raw = await storageGet(RECORDS_KEY);
-    return raw ? JSON.parse(raw) : [];
-  }catch(e){ return []; }
+   one row per record in Supabase — every save touches only its own row, so
+   two people saving different files at the same time can never clobber
+   each other (unlike the old single-blob localStorage store). ---------- */
+function mapRowToRecord(row){
+  return {
+    id: row.id,
+    ownerId: row.owner_id,
+    user: row.owner_name,
+    status: row.status,
+    title: row.title,
+    rawText: row.raw_text,
+    marks: Array.isArray(row.marks) ? row.marks : [],
+    nextId: row.next_id,
+    topLevel: row.top_level,
+    counts: row.counts,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    exportedAt: row.exported_at,
+    exportAction: row.export_action
+  };
 }
-async function saveRecords(list){
-  const ok = await storageSet(RECORDS_KEY, JSON.stringify(list));
-  if(!ok) showToast('تعذر حفظ البيانات');
-  return ok;
+async function loadRecords(){
+  const { data, error } = await sb.from('records').select('*').order('updated_at', { ascending:false });
+  if(error){ showToast('تعذر تحميل السجل'); return []; }
+  return data.map(mapRowToRecord);
 }
 async function deleteRecord(id){
-  const records = await loadRecords();
-  await saveRecords(records.filter(r=>r.id !== id));
+  const { error } = await sb.from('records').delete().eq('id', id);
+  if(error){ showToast('تعذر حذف المسودة'); return; }
   if(currentRecordId === id) currentRecordId = null;
 }
 function countMarksByLevel(list){
@@ -772,39 +841,38 @@ function scheduleDraftSave(){
    untouched "new file" never litters the log with an empty draft */
 async function persistCurrentRecord(opts){
   opts = opts || {};
+  if(viewingReadOnly) return null; // never write while looking at someone else's record
   if(!rawText.trim() && marks.length === 0 && !opts.complete) return null;
-  if(!currentRecordId) currentRecordId = randomId();
-  const records = await loadRecords();
-  let rec = records.find(r=>r.id === currentRecordId);
-  const now = new Date().toISOString();
-  if(!rec){
-    rec = { id: currentRecordId, createdAt: now, status: 'draft' };
-    records.unshift(rec);
-  }
-  rec.rawText = rawText;
-  rec.marks = marks;
-  rec.nextId = nextId;
-  rec.topLevel = topLevel;
-  rec.user = usernameInput.value.trim();
-  rec.updatedAt = now;
+  if(!currentRecordId) currentRecordId = crypto.randomUUID();
   const explicitTitle = fileTitleInput.value.trim();
-  rec.title = explicitTitle || firstLineTitle(rawText) || 'بدون عنوان';
+  const row = {
+    id: currentRecordId,
+    owner_id: currentUser.id,
+    owner_name: currentUser.fullName,
+    status: opts.complete ? 'completed' : 'draft',
+    title: explicitTitle || firstLineTitle(rawText) || 'بدون عنوان',
+    raw_text: rawText,
+    marks: marks,
+    next_id: nextId,
+    top_level: topLevel
+  };
   if(opts.complete){
-    rec.status = 'completed';
-    rec.exportedAt = now;
-    rec.exportAction = opts.action;
-    rec.counts = countMarksByLevel(marks);
+    row.exported_at = new Date().toISOString();
+    row.export_action = opts.action;
+    row.counts = countMarksByLevel(marks);
   }
-  await saveRecords(records);
-  return rec;
+  const { data, error } = await sb.from('records').upsert(row).select().single();
+  if(error){ showToast('تعذر حفظ البيانات'); return null; }
+  return mapRowToRecord(data);
 }
 
 async function openRecord(id, opts){
   opts = opts || {};
-  const records = await loadRecords();
-  const rec = records.find(r=>r.id === id);
-  if(!rec) return;
+  const { data, error } = await sb.from('records').select('*').eq('id', id).single();
+  if(error || !data){ showToast('تعذر فتح الملف'); return; }
+  const rec = mapRowToRecord(data);
   currentRecordId = rec.id;
+  viewingReadOnly = !!opts.preview || rec.ownerId !== currentUser.id;
   rawText = rec.rawText || '';
   marks = Array.isArray(rec.marks) ? rec.marks : [];
   nextId = rec.nextId || (marks.reduce((m,x)=>Math.max(m,x.id),0)+1);
@@ -813,11 +881,12 @@ async function openRecord(id, opts){
   fileTitleInput.value = rec.title || '';
   selectLevelButton(topLevel);
   checkStep1Ready();
+  document.body.classList.toggle('readonly-record', viewingReadOnly);
   goToView('editor');
   renderMarkToolbar();
   renderContent();
   renderMarksList();
-  if(opts.preview){
+  if(opts.preview || viewingReadOnly){
     renderPreview();
     goToStep(3);
   } else if(marks.length){
@@ -830,6 +899,8 @@ async function openRecord(id, opts){
 async function startNewFile(){
   await persistCurrentRecord();
   currentRecordId = null;
+  viewingReadOnly = false;
+  document.body.classList.remove('readonly-record');
   rawText = '';
   marks = [];
   nextId = 1;
@@ -849,8 +920,8 @@ function countsSummary(counts){
   if(!counts) return '';
   return [0,1,2,3].filter(l=>counts[l]).map(l=>`${counts[l]} ${levelLabel[l]}`).join(' · ');
 }
-function logCardHtml(rec, isDraft){
-  const actions = isDraft
+function logCardHtml(rec, isDraft, isOwner){
+  const actions = (isDraft && isOwner)
     ? `<button class="btn-ghost log-open-btn" data-id="${rec.id}" data-action="continue">متابعة</button>
        <button class="btn-ghost log-open-btn log-danger" data-id="${rec.id}" data-action="delete">إنهاء</button>`
     : `<button class="btn-ghost log-open-btn" data-id="${rec.id}" data-action="view">عرض</button>`;
@@ -879,8 +950,8 @@ async function renderHome(){
 
   const draftsSorted = [...drafts].sort((a,b)=>(b.updatedAt||'').localeCompare(a.updatedAt||''));
   const completedSorted = [...completed].sort((a,b)=>(b.exportedAt||'').localeCompare(a.exportedAt||''));
-  $('#logDrafts').innerHTML = draftsSorted.length ? draftsSorted.map(r=>logCardHtml(r,true)).join('') : '<div class="empty-hint">لا توجد مسودات حاليًا</div>';
-  $('#logCompleted').innerHTML = completedSorted.length ? completedSorted.map(r=>logCardHtml(r,false)).join('') : '<div class="empty-hint">لا يوجد أي ملف مُصدَّر بعد</div>';
+  $('#logDrafts').innerHTML = draftsSorted.length ? draftsSorted.map(r=>logCardHtml(r,true,r.ownerId===currentUser.id)).join('') : '<div class="empty-hint">لا توجد مسودات حاليًا</div>';
+  $('#logCompleted').innerHTML = completedSorted.length ? completedSorted.map(r=>logCardHtml(r,false,r.ownerId===currentUser.id)).join('') : '<div class="empty-hint">لا يوجد أي ملف مُصدَّر بعد</div>';
 }
 document.addEventListener('click', async e=>{
   const btn = e.target.closest('.log-open-btn');
@@ -897,16 +968,59 @@ document.addEventListener('click', async e=>{
   openRecord(id, { preview: action === 'view' });
 });
 
-/* ---------- app init: remember username ---------- */
-(async function initApp(){
-  try{
-    const savedName = await storageGet('entry-username');
-    if(savedName) usernameInput.value = savedName;
-  }catch(e){ /* no stored value yet */ }
-})();
-usernameInput.addEventListener('change', async ()=>{
-  await storageSet('entry-username', usernameInput.value.trim());
+/* ---------- auth: login gate + session bootstrap ---------- */
+const loginForm = $('#loginForm');
+const loginEmail = $('#loginEmail');
+const loginPassword = $('#loginPassword');
+const loginError = $('#loginError');
+const loginSubmitBtn = $('#loginSubmitBtn');
+const railAccountName = $('#railAccountName');
+
+function showLoginGate(){
+  document.body.classList.add('pre-auth');
+  goToView('login');
+}
+
+async function enterApp(user){
+  document.body.classList.remove('pre-auth');
+  const { data: profile, error } = await sb.from('profiles').select('full_name').eq('id', user.id).single();
+  currentUser = { id: user.id, fullName: (profile && profile.full_name) || user.email };
+  railAccountName.textContent = currentUser.fullName;
+  goToView('home');
+}
+
+loginForm.addEventListener('submit', async e=>{
+  e.preventDefault();
+  loginError.textContent = '';
+  loginSubmitBtn.disabled = true;
+  const { data, error } = await sb.auth.signInWithPassword({
+    email: loginEmail.value.trim(),
+    password: loginPassword.value
+  });
+  loginSubmitBtn.disabled = false;
+  if(error){
+    loginError.textContent = 'تعذر تسجيل الدخول: تأكد من البريد الإلكتروني وكلمة المرور';
+    return;
+  }
+  loginPassword.value = '';
+  await enterApp(data.user);
 });
+
+$('#navSignOut').addEventListener('click', async ()=>{
+  await sb.auth.signOut();
+});
+
+(async function initAuth(){
+  const { data:{ session } } = await sb.auth.getSession();
+  if(session && session.user) await enterApp(session.user);
+  else showLoginGate();
+  sb.auth.onAuthStateChange((event)=>{
+    if(event === 'SIGNED_OUT'){
+      currentUser = null;
+      showLoginGate();
+    }
+  });
+})();
 
 /* ---------- STEP 1 : text + top-level choice ---------- */
 function checkStep1Ready(){
@@ -1022,6 +1136,8 @@ $('#importJsonFile').addEventListener('change', async e=>{
     const payload = JSON.parse(text);
     const rebuilt = reconstructFromPayload(payload);
     currentRecordId = null;
+    viewingReadOnly = false;
+    document.body.classList.remove('readonly-record');
     rawText = rebuilt.rawText || '';
     marks = Array.isArray(rebuilt.marks) ? rebuilt.marks : [];
     nextId = rebuilt.nextId || (marks.reduce((m,x)=>Math.max(m,x.id),0)+1);
@@ -1404,7 +1520,7 @@ function buildExportPayload(){
   const tree = buildTree();
   const meta = {
     fileTitle: fileTitleInput.value.trim(),
-    exportedBy: usernameInput.value.trim(),
+    exportedBy: currentUser.fullName,
     exportedAt: new Date().toISOString()
   };
   const base = tree.intro ? { meta, intro: tree.intro } : { meta };
@@ -1412,11 +1528,6 @@ function buildExportPayload(){
 }
 
 function validateBeforeExport(){
-  if(!usernameInput.value.trim()){
-    showToast('يرجى إدخال اسم الموظف أعلى الصفحة أولًا');
-    usernameInput.focus();
-    return false;
-  }
   if(!fileTitleInput.value.trim()){
     showToast('يرجى إدخال عنوان الملف / التشريع أولًا');
     fileTitleInput.focus();
@@ -1524,8 +1635,6 @@ $('#themeOptions').addEventListener('click', async e=>{
   const savedRail = await storageGet('pref-rail-expanded');
   if(savedRail === '1') document.body.classList.add('rail-expanded');
 })();
-
-goToView('home');
 </script>
 </body>
 </html>

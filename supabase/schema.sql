@@ -1,0 +1,97 @@
+-- Taqseem — Supabase schema (Auth + Postgres)
+-- Run this once in the Supabase SQL Editor for a new project.
+
+create extension if not exists pgcrypto;
+
+-- ---------- profiles ----------
+-- one row per employee, auto-populated when the admin creates the auth user
+create table public.profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  full_name text not null default '',
+  created_at timestamptz not null default now()
+);
+
+alter table public.profiles enable row level security;
+
+create policy "profiles are viewable by authenticated users"
+  on public.profiles for select
+  to authenticated
+  using (true);
+-- deliberately no insert/update/delete policy for the `authenticated` role:
+-- the only writers are the trigger below (security definer) and the admin
+-- via the Dashboard / service_role, both of which bypass RLS.
+
+create function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer set search_path = public
+as $$
+begin
+  insert into public.profiles (id, full_name)
+  values (new.id, coalesce(new.raw_user_meta_data->>'full_name', new.email));
+  return new;
+end;
+$$;
+
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute procedure public.handle_new_user();
+
+-- ---------- records ----------
+-- one row per file (draft or completed); replaces the old single localStorage blob.
+-- one row per save = one person's save can never touch another person's record.
+create table public.records (
+  id uuid primary key default gen_random_uuid(),
+  owner_id uuid not null references auth.users(id) on delete cascade,
+  owner_name text not null default '',
+  status text not null default 'draft' check (status in ('draft','completed')),
+  title text not null default '',
+  raw_text text not null default '',
+  marks jsonb not null default '[]'::jsonb,
+  next_id integer not null default 1,
+  top_level integer,
+  counts jsonb,
+  exported_at timestamptz,
+  export_action text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index records_owner_id_idx on public.records(owner_id);
+create index records_status_idx on public.records(status);
+create index records_updated_at_idx on public.records(updated_at desc);
+
+create function public.set_updated_at()
+returns trigger language plpgsql as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+create trigger records_set_updated_at
+  before update on public.records
+  for each row execute procedure public.set_updated_at();
+
+alter table public.records enable row level security;
+
+create policy "records are viewable by authenticated users"
+  on public.records for select
+  to authenticated
+  using (true);
+
+create policy "owners can insert their own records"
+  on public.records for insert
+  to authenticated
+  with check (owner_id = auth.uid());
+
+create policy "owners can update their own records"
+  on public.records for update
+  to authenticated
+  using (owner_id = auth.uid())
+  with check (owner_id = auth.uid());
+
+create policy "owners can delete their own records"
+  on public.records for delete
+  to authenticated
+  using (owner_id = auth.uid());
