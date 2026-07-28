@@ -36,8 +36,10 @@ language plpgsql
 security definer set search_path = public
 as $$
 begin
+  -- left blank (not the email) when no metadata is set, so the app's
+  -- "choose your name" gate reliably knows a name is still needed.
   insert into public.profiles (id, full_name)
-  values (new.id, coalesce(new.raw_user_meta_data->>'full_name', new.email));
+  values (new.id, coalesce(new.raw_user_meta_data->>'full_name', ''));
   return new;
 end;
 $$;

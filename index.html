@@ -1017,14 +1017,20 @@ function showLoginGate(){
   goToView('login');
 }
 
+const NAME_OPTIONS = ['عمر','نجوى','نزار','ذكرى','ندى','دانا'];
+
 async function enterApp(user){
   const { data: profile, error } = await sb.from('profiles').select('full_name').eq('id', user.id).single();
-  const fullName = (profile && profile.full_name) || '';
+  const storedName = (profile && profile.full_name) || '';
+  // only trust a name that's actually one of the fixed options — older
+  // accounts may have a leftover email address in this column (the DB
+  // trigger used to fall back to the email when no name was set), which
+  // must still be treated as "no name chosen yet".
+  const fullName = NAME_OPTIONS.includes(storedName) ? storedName : '';
   currentUser = { id: user.id, fullName };
   if(!fullName){
-    // account has no display name yet (e.g. admin didn't set one at creation
-    // time) — ask the employee to pick their own name once, instead of
-    // relying on the admin having filled it in correctly.
+    // ask the employee to pick their own name once, instead of relying on
+    // the admin having filled it in correctly at account-creation time.
     document.body.classList.add('pre-auth');
     goToView('chooseName');
     return;
