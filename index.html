@@ -348,9 +348,8 @@
   }
   .stat-num{font-size:28px;font-weight:800;color:var(--blue);margin-bottom:4px;}
   .stat-label{font-size:12.5px;color:var(--text-muted);font-weight:600;}
-  .home-actions{display:flex;gap:10px;flex-wrap:wrap;}
 
-  /* log page */
+  /* log sections (embedded in the home page) */
   .log-section{margin-bottom:30px;}
   .log-section-title{font-size:14.5px;font-weight:700;margin-bottom:12px;}
   .log-list{display:flex;flex-direction:column;gap:10px;}
@@ -361,6 +360,7 @@
   .log-card-main{min-width:0;}
   .log-title{font-weight:700;font-size:13.5px;}
   .log-meta{font-size:12px;color:var(--text-muted);margin-top:3px;}
+  .log-card-actions{display:flex;gap:8px;flex-shrink:0;}
 
   /* side navigation rail */
   .side-rail{
@@ -403,22 +403,7 @@
     :root:not([data-theme="light"]):not([data-theme="dark"]) .theme-dark-only{display:block;}
   }
 
-  /* modals (settings) */
-  .modal-backdrop{
-    position:fixed;inset:0;background:rgba(15,23,42,.45);display:none;
-    align-items:center;justify-content:center;z-index:70;padding:20px;
-  }
-  .modal-backdrop.open{display:flex;}
-  .modal{
-    background:var(--surface);border-radius:16px;max-width:560px;width:100%;
-    max-height:80vh;display:flex;flex-direction:column;overflow:hidden;
-  }
-  .modal-head{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--border);}
-  .modal-head h3{margin:0;font-size:15.5px;}
-  .modal-close{background:var(--bg-soft);border-radius:8px;padding:8px;display:inline-flex;color:var(--text);}
-  .modal-body{padding:10px 22px 22px;overflow-y:auto;}
-
-  /* settings modal */
+  /* settings page */
   .settings-row{padding:14px 0;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
   .settings-row:last-child{border-bottom:none;}
   .settings-row label{font-size:13.5px;font-weight:600;}
@@ -462,30 +447,18 @@
 <body>
 <div class="wrap">
 
-  <!-- HOME -->
+  <!-- HOME (stats + the log, merged into one landing page) -->
   <div class="view" id="viewHome">
     <div class="home-header">
       <span class="eyebrow">أداة داخلية · إدخال البيانات</span>
       <h1>مقسّم التشريعات</h1>
-      <p class="sub">ابدأ ملفًا جديدًا لتقسيم نص تشريع إلى أقسام وأبواب وفصول ومواد، أو راجع سجل الملفات المصدَّرة والمسودات.</p>
+      <p class="sub">ابدأ ملفًا جديدًا لتقسيم نص تشريع إلى أقسام وأبواب وفصول ومواد، أو تابع مسودة أو راجع الملفات المصدَّرة أدناه.</p>
     </div>
     <div class="home-stats">
       <div class="stat-card"><div class="stat-num" id="statExported">0</div><div class="stat-label">ملف مُصدَّر</div></div>
       <div class="stat-card"><div class="stat-num" id="statArticles">0</div><div class="stat-label">مادة مُصدَّرة</div></div>
       <div class="stat-card"><div class="stat-num" id="statDrafts">0</div><div class="stat-label">مسودة قيد العمل</div></div>
       <div class="stat-card"><div class="stat-num" id="statLastActivity">—</div><div class="stat-label">آخر نشاط</div></div>
-    </div>
-    <div class="home-actions">
-      <button class="btn-primary" id="homeNewFileBtn"><span class="icon icon-document"></span> ملف جديد</button>
-      <button class="btn-ghost" id="homeLogBtn"><span class="icon icon-clock"></span> فتح السجل</button>
-    </div>
-  </div>
-
-  <!-- LOG -->
-  <div class="view" id="viewLog">
-    <div class="section-top">
-      <h2>السجل</h2>
-      <button class="btn-ghost" id="logNewFileBtn"><span class="icon icon-document"></span> ملف جديد</button>
     </div>
     <div class="log-section">
       <div class="log-section-title">المسودات (متوقفة في المنتصف)</div>
@@ -606,32 +579,12 @@
 
   </div>
 
-</div>
-
-<!-- side navigation rail -->
-<div class="side-rail" id="sideRail">
-  <button class="rail-toggle" id="railToggle" title="القائمة"><span class="icon icon-menu"></span></button>
-  <div class="rail-logo">
-    <img src="logos/logo-color-mark.svg" class="rail-logo-mark theme-light-only" alt="قانونية">
-    <img src="logos/logo-white-mark.svg" class="rail-logo-mark theme-dark-only" alt="قانونية">
-    <img src="logos/logo-color-horizontal.svg" class="rail-logo-full theme-light-only" alt="قانونية">
-    <img src="logos/logo-white-horizontal.svg" class="rail-logo-full theme-dark-only" alt="قانونية">
-  </div>
-  <nav class="rail-nav">
-    <button class="rail-item" id="navHome" title="الرئيسية"><span class="icon icon-home"></span><span class="rail-label">الرئيسية</span></button>
-    <button class="rail-item" id="navNewFile" title="ملف جديد"><span class="icon icon-document"></span><span class="rail-label">ملف جديد</span></button>
-    <button class="rail-item" id="navLog" title="السجل"><span class="icon icon-clock"></span><span class="rail-label">السجل</span></button>
-    <button class="rail-item" id="navSettings" title="الإعدادات"><span class="icon icon-setting"></span><span class="rail-label">الإعدادات</span></button>
-  </nav>
-</div>
-
-<div class="modal-backdrop" id="settingsModal">
-  <div class="modal">
-    <div class="modal-head">
-      <h3>الإعدادات</h3>
-      <button class="modal-close" id="closeSettingsBtn"><span class="icon icon-close"></span></button>
+  <!-- SETTINGS -->
+  <div class="view" id="viewSettings">
+    <div class="section-top">
+      <h2>الإعدادات</h2>
     </div>
-    <div class="modal-body">
+    <div class="card">
       <div class="settings-row">
         <label>حجم الخط</label>
         <div class="settings-options" id="fontSizeOptions">
@@ -656,6 +609,23 @@
       </div>
     </div>
   </div>
+
+</div>
+
+<!-- side navigation rail -->
+<div class="side-rail" id="sideRail">
+  <button class="rail-toggle" id="railToggle" title="القائمة"><span class="icon icon-menu"></span></button>
+  <div class="rail-logo">
+    <img src="logos/logo-color-mark.svg" class="rail-logo-mark theme-light-only" alt="قانونية">
+    <img src="logos/logo-white-mark.svg" class="rail-logo-mark theme-dark-only" alt="قانونية">
+    <img src="logos/logo-color-horizontal.svg" class="rail-logo-full theme-light-only" alt="قانونية">
+    <img src="logos/logo-white-horizontal.svg" class="rail-logo-full theme-dark-only" alt="قانونية">
+  </div>
+  <nav class="rail-nav">
+    <button class="rail-item" id="navHome" title="الرئيسية"><span class="icon icon-home"></span><span class="rail-label">الرئيسية</span></button>
+    <button class="rail-item" id="navNewFile" title="ملف جديد"><span class="icon icon-document"></span><span class="rail-label">ملف جديد</span></button>
+    <button class="rail-item" id="navSettings" title="الإعدادات"><span class="icon icon-setting"></span><span class="rail-label">الإعدادات</span></button>
+  </nav>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -710,15 +680,19 @@ function formatDate(iso){
   const d = new Date(iso);
   return d.toLocaleString('ar-SA', { dateStyle:'medium', timeStyle:'short' });
 }
+function formatDateOnly(iso){
+  if(!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleDateString('ar-SA', { dateStyle:'medium' });
+}
 
-/* ---------- view routing: home / log / editor(steps 1-3) ---------- */
+/* ---------- view routing: home (stats + log) / editor(steps 1-3) / settings ---------- */
 function goToView(view){
   currentView = view;
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById('view' + view.charAt(0).toUpperCase() + view.slice(1)).classList.add('active');
   document.querySelectorAll('.rail-item[data-view]').forEach(b=>b.classList.toggle('active', b.dataset.view === view));
   if(view === 'home') renderHome();
-  if(view === 'log') renderLogPage();
 }
 
 function goToStep(n){
@@ -818,7 +792,8 @@ async function persistCurrentRecord(opts){
   return rec;
 }
 
-async function openRecord(id){
+async function openRecord(id, opts){
+  opts = opts || {};
   const records = await loadRecords();
   const rec = records.find(r=>r.id === id);
   if(!rec) return;
@@ -832,10 +807,13 @@ async function openRecord(id){
   selectLevelButton(topLevel);
   checkStep1Ready();
   goToView('editor');
-  if(marks.length){
-    renderMarkToolbar();
-    renderContent();
-    renderMarksList();
+  renderMarkToolbar();
+  renderContent();
+  renderMarksList();
+  if(opts.finish){
+    renderPreview();
+    goToStep(3);
+  } else if(marks.length){
     goToStep(2);
   } else {
     goToStep(1);
@@ -859,8 +837,25 @@ async function startNewFile(){
   showToast('بدأت ملفًا جديدًا');
 }
 
-/* ---------- home page ---------- */
-async function computeStats(){
+/* ---------- home page (also doubles as the log) ---------- */
+function countsSummary(counts){
+  if(!counts) return '';
+  return [0,1,2,3].filter(l=>counts[l]).map(l=>`${counts[l]} ${levelLabel[l]}`).join(' · ');
+}
+function logCardHtml(rec, isDraft){
+  const actions = isDraft
+    ? `<button class="btn-ghost log-open-btn" data-id="${rec.id}" data-action="continue">متابعة</button>
+       <button class="btn-ghost log-open-btn" data-id="${rec.id}" data-action="finish">إنهاء</button>`
+    : `<button class="btn-ghost log-open-btn" data-id="${rec.id}" data-action="view">عرض</button>`;
+  return `<div class="log-card">
+    <div class="log-card-main">
+      <div class="log-title">${escapeHtml(rec.title || 'بدون عنوان')}</div>
+      <div class="log-meta">${escapeHtml(rec.user || 'غير معروف')} · ${formatDate(rec.updatedAt || rec.createdAt)}${rec.counts ? ' · ' + countsSummary(rec.counts) : ''}</div>
+    </div>
+    <div class="log-card-actions">${actions}</div>
+  </div>`;
+}
+async function renderHome(){
   const records = await loadRecords();
   const completed = records.filter(r=>r.status === 'completed');
   const drafts = records.filter(r=>r.status === 'draft');
@@ -870,41 +865,20 @@ async function computeStats(){
     const t = r.updatedAt || r.exportedAt || r.createdAt;
     if(t && (!lastActivity || t > lastActivity)) lastActivity = t;
   });
-  return { exportedCount: completed.length, articleCount, draftCount: drafts.length, lastActivity };
-}
-async function renderHome(){
-  const stats = await computeStats();
-  $('#statExported').textContent = stats.exportedCount;
-  $('#statArticles').textContent = stats.articleCount;
-  $('#statDrafts').textContent = stats.draftCount;
-  $('#statLastActivity').textContent = stats.lastActivity ? formatDate(stats.lastActivity) : '—';
-}
+  $('#statExported').textContent = completed.length;
+  $('#statArticles').textContent = articleCount;
+  $('#statDrafts').textContent = drafts.length;
+  $('#statLastActivity').textContent = lastActivity ? formatDateOnly(lastActivity) : '—';
 
-/* ---------- log page (full page, not a modal) ---------- */
-function countsSummary(counts){
-  if(!counts) return '';
-  return [0,1,2,3].filter(l=>counts[l]).map(l=>`${counts[l]} ${levelLabel[l]}`).join(' · ');
-}
-function logCardHtml(rec, isDraft){
-  return `<div class="log-card">
-    <div class="log-card-main">
-      <div class="log-title">${escapeHtml(rec.title || 'بدون عنوان')}</div>
-      <div class="log-meta">${escapeHtml(rec.user || 'غير معروف')} · ${formatDate(rec.updatedAt || rec.createdAt)}${rec.counts ? ' · ' + countsSummary(rec.counts) : ''}</div>
-    </div>
-    <button class="btn-ghost log-open-btn" data-id="${rec.id}">${isDraft ? 'متابعة' : 'عرض'}</button>
-  </div>`;
-}
-async function renderLogPage(){
-  const records = await loadRecords();
-  const drafts = records.filter(r=>r.status === 'draft').sort((a,b)=>(b.updatedAt||'').localeCompare(a.updatedAt||''));
-  const completed = records.filter(r=>r.status === 'completed').sort((a,b)=>(b.exportedAt||'').localeCompare(a.exportedAt||''));
-  $('#logDrafts').innerHTML = drafts.length ? drafts.map(r=>logCardHtml(r,true)).join('') : '<div class="empty-hint">لا توجد مسودات حاليًا</div>';
-  $('#logCompleted').innerHTML = completed.length ? completed.map(r=>logCardHtml(r,false)).join('') : '<div class="empty-hint">لا يوجد أي ملف مُصدَّر بعد</div>';
+  const draftsSorted = [...drafts].sort((a,b)=>(b.updatedAt||'').localeCompare(a.updatedAt||''));
+  const completedSorted = [...completed].sort((a,b)=>(b.exportedAt||'').localeCompare(a.exportedAt||''));
+  $('#logDrafts').innerHTML = draftsSorted.length ? draftsSorted.map(r=>logCardHtml(r,true)).join('') : '<div class="empty-hint">لا توجد مسودات حاليًا</div>';
+  $('#logCompleted').innerHTML = completedSorted.length ? completedSorted.map(r=>logCardHtml(r,false)).join('') : '<div class="empty-hint">لا يوجد أي ملف مُصدَّر بعد</div>';
 }
 document.addEventListener('click', e=>{
   const btn = e.target.closest('.log-open-btn');
   if(!btn) return;
-  openRecord(btn.dataset.id);
+  openRecord(btn.dataset.id, { finish: btn.dataset.action === 'finish' });
 });
 
 /* ---------- app init: remember username ---------- */
@@ -1497,19 +1471,10 @@ $('#railToggle').addEventListener('click', async ()=>{
 });
 
 $('#navHome').dataset.view = 'home';
-$('#navLog').dataset.view = 'log';
+$('#navSettings').dataset.view = 'settings';
 $('#navHome').addEventListener('click', ()=>goToView('home'));
 $('#navNewFile').addEventListener('click', startNewFile);
-$('#navLog').addEventListener('click', ()=>goToView('log'));
-$('#homeNewFileBtn').addEventListener('click', startNewFile);
-$('#homeLogBtn').addEventListener('click', ()=>goToView('log'));
-$('#logNewFileBtn').addEventListener('click', startNewFile);
-
-$('#navSettings').addEventListener('click', ()=>$('#settingsModal').classList.add('open'));
-$('#closeSettingsBtn').addEventListener('click', ()=>$('#settingsModal').classList.remove('open'));
-$('#settingsModal').addEventListener('click', e=>{
-  if(e.target.id === 'settingsModal') $('#settingsModal').classList.remove('open');
-});
+$('#navSettings').addEventListener('click', ()=>goToView('settings'));
 
 function applyFontScale(scale){
   document.documentElement.setAttribute('data-font-scale', scale);
