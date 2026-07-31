@@ -209,6 +209,7 @@
   .icon-copy{-webkit-mask-image:url(icons/copy.svg);mask-image:url(icons/copy.svg);}
   .icon-home{-webkit-mask-image:url(icons/home-2.svg);mask-image:url(icons/home-2.svg);}
   .icon-newspaper{-webkit-mask-image:url(icons/newspaper.svg);mask-image:url(icons/newspaper.svg);}
+  .icon-globe{-webkit-mask-image:url(icons/globe.svg);mask-image:url(icons/globe.svg);}
 
   button{font-family:inherit;cursor:pointer;border:none;}
   .btn-primary{
@@ -475,78 +476,121 @@
     width:11px;height:0;border-top:2px solid var(--toc-line-color);
   }
 
-  /* ---------- أم القرى extraction tab ---------- */
-  .uqn-fields{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;}
-  .uqn-field{display:flex;flex-direction:column;gap:6px;}
-  .uqn-field > label{font-size:12px;font-weight:600;color:var(--text-muted);}
-  .uqn-field input, .uqn-field select{
+  /* ---------- source-extraction tabs (أم القرى · تحديثات المواقع) ----------
+     both tabs are the same shape — a small form on top, a status line, then a
+     result table over a log — so the presentation lives here once, under a
+     neutral `src-` prefix, and only the parts unique to one tab are prefixed
+     with that tab's own name. */
+  .src-fields{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;}
+  .src-field{display:flex;flex-direction:column;gap:6px;}
+  .src-field > label{font-size:12px;font-weight:600;color:var(--text-muted);}
+  .src-field input, .src-field select{
     border:1px solid var(--border);border-radius:9px;padding:9px 12px;font-size:13.5px;
     font-family:inherit;background:var(--surface);color:var(--text);
   }
-  .uqn-field input:focus, .uqn-field select:focus{outline:2px solid var(--blue-bg-hover);border-color:var(--blue);}
+  .src-field input:focus, .src-field select:focus{outline:2px solid var(--blue-bg-hover);border-color:var(--blue);}
   .uqn-hijri{display:flex;gap:6px;}
   .uqn-hijri input[type="number"]{width:74px;}
   .uqn-hijri select{min-width:118px;}
   /* derived, non-editable fields: the date is the only real input */
-  .uqn-field input[readonly]{background:var(--bg-soft);color:var(--text-muted);cursor:default;}
-  .uqn-field input#uqnIssueNo{width:110px;font-weight:700;text-align:center;}
+  .src-field input[readonly]{background:var(--bg-soft);color:var(--text-muted);cursor:default;}
+  .src-field input#uqnIssueNo{width:110px;font-weight:700;text-align:center;}
   .uqn-greg-hint{font-size:12px;color:var(--text-muted);margin-top:10px;}
   .uqn-greg-hint b{color:var(--blue);font-weight:700;}
 
-  .uqn-status{font-size:12.5px;color:var(--text-muted);margin-top:14px;min-height:18px;}
-  .uqn-status.error{color:var(--danger);font-weight:600;}
-  .uqn-spinner{
+  .src-status{font-size:12.5px;color:var(--text-muted);margin-top:14px;min-height:18px;}
+  .src-status.error{color:var(--danger);font-weight:600;}
+  .src-spinner{
     display:inline-block;width:12px;height:12px;margin-inline-end:7px;vertical-align:-1px;
     border:2px solid var(--blue-bg-hover);border-top-color:var(--blue);border-radius:50%;
-    animation:uqn-spin .7s linear infinite;
+    animation:src-spin .7s linear infinite;
   }
-  @keyframes uqn-spin{to{transform:rotate(360deg);}}
+  @keyframes src-spin{to{transform:rotate(360deg);}}
 
-  .uqn-result{margin-top:26px;}
-  .uqn-result-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px;}
-  .uqn-result-title{font-size:14.5px;font-weight:700;}
-  .uqn-result-title span{color:var(--text-muted);font-weight:600;font-size:12.5px;}
+  .src-result{margin-top:26px;}
+  .src-result-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px;}
+  .src-result-title{font-size:14.5px;font-weight:700;}
+  .src-result-title span{color:var(--text-muted);font-weight:600;font-size:12.5px;}
 
-  .uqn-table-wrap{
+  .src-table-wrap{
     overflow-x:auto;background:var(--surface);
     border:1px solid var(--border);border-radius:12px;
   }
-  table.uqn-table{width:100%;border-collapse:collapse;font-size:13px;}
-  table.uqn-table th, table.uqn-table td{
+  table.src-table{width:100%;border-collapse:collapse;font-size:13px;}
+  table.src-table th, table.src-table td{
     padding:11px 13px;text-align:right;vertical-align:top;
     border-bottom:1px solid var(--border);line-height:1.65;
   }
-  table.uqn-table th{
+  table.src-table th{
     background:var(--bg-soft);font-weight:700;font-size:12px;color:var(--text-muted);
     white-space:nowrap;position:sticky;top:0;
   }
-  table.uqn-table tr:last-child td{border-bottom:none;}
-  table.uqn-table tbody tr:hover{background:var(--bg-soft);}
-  table.uqn-table .col-idx{width:38px;color:var(--text-muted);text-align:center;}
-  table.uqn-table .col-name{min-width:250px;font-weight:600;}
-  table.uqn-table .col-no{min-width:258px;}
-  table.uqn-table .col-authority{min-width:160px;}
-  table.uqn-table .col-link{white-space:nowrap;text-align:center;}
-  table.uqn-table td.col-no.muted{color:var(--text-muted);}
-  .uqn-sub{display:block;font-size:11.5px;color:var(--text-muted);font-weight:400;margin-top:3px;}
-  .uqn-link{color:var(--blue);font-weight:600;font-size:12px;text-decoration:none;}
-  .uqn-link:hover{text-decoration:underline;}
+  table.src-table tr:last-child td{border-bottom:none;}
+  table.src-table tbody tr:hover{background:var(--bg-soft);}
+  table.src-table .col-idx{width:38px;color:var(--text-muted);text-align:center;}
+  table.src-table .col-name{min-width:250px;font-weight:600;}
+  table.src-table .col-no{min-width:258px;}
+  table.src-table .col-authority{min-width:160px;}
+  table.src-table .col-link{white-space:nowrap;text-align:center;}
+  table.src-table td.col-no.muted{color:var(--text-muted);}
+  .src-sub{display:block;font-size:11.5px;color:var(--text-muted);font-weight:400;margin-top:3px;}
+  .src-link{color:var(--blue);font-weight:600;font-size:12px;text-decoration:none;}
+  .src-link:hover{text-decoration:underline;}
 
   /* one-time setup card, shown in place of the log until the table exists */
-  .uqn-setup{
+  .src-setup{
     background:var(--surface);border:1px solid var(--lvl2-border);border-radius:12px;padding:18px;
   }
-  .uqn-setup-title{font-size:13.5px;font-weight:700;color:var(--lvl2-text);margin-bottom:6px;}
-  .uqn-setup-body{font-size:12.5px;color:var(--text-muted);line-height:1.8;margin-bottom:12px;}
-  .uqn-setup-body b{color:var(--text);}
-  .uqn-setup-actions{display:flex;gap:8px;flex-wrap:wrap;}
-  .uqn-setup pre{
+  .src-setup-title{font-size:13.5px;font-weight:700;color:var(--lvl2-text);margin-bottom:6px;}
+  .src-setup-body{font-size:12.5px;color:var(--text-muted);line-height:1.8;margin-bottom:12px;}
+  .src-setup-body b{color:var(--text);}
+  .src-setup-actions{display:flex;gap:8px;flex-wrap:wrap;}
+  .src-setup pre{
     margin:12px 0 0;padding:12px;border-radius:9px;background:var(--bg-soft);
     border:1px solid var(--border);overflow-x:auto;max-height:190px;
     font-size:11.5px;line-height:1.65;direction:ltr;text-align:left;
     font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--text-muted);
     cursor:pointer;
   }
+  /* the setup card can carry two steps (table + edge function), so a step
+     inside it gets its own heading and code block */
+  .src-setup-step{margin-top:16px;padding-top:14px;border-top:1px solid var(--border);}
+  .src-setup-step:first-of-type{margin-top:0;padding-top:0;border-top:none;}
+  .src-setup-step-title{font-size:12.5px;font-weight:700;margin-bottom:6px;}
+
+  /* ---------- تحديثات المواقع tab ---------- */
+  .su-field input[type="date"]{min-width:158px;font-family:inherit;}
+  .su-field select{min-width:300px;max-width:100%;}
+  .su-range-note{font-size:12px;color:var(--text-muted);margin-top:10px;line-height:1.9;}
+  .su-range-note b{color:var(--blue);font-weight:700;}
+  .su-preset{
+    background:none;border:none;padding:0;font:inherit;font-size:12px;font-weight:700;
+    color:var(--blue);text-decoration:underline;cursor:pointer;
+  }
+  /* the refusal is the tab's main rule, so it reads as a blocked action
+     rather than as one more grey hint under the form */
+  .su-conflict{
+    margin-top:14px;padding:12px 14px;border-radius:10px;
+    background:var(--lvl2-bg);border:1px solid var(--lvl2-border);
+    font-size:12.5px;line-height:1.9;color:var(--lvl2-text);
+  }
+  .su-conflict b{font-weight:700;}
+  .su-conflict ul{margin:6px 0 0;padding-inline-start:18px;}
+  .su-covered{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
+  .su-covered-chip{
+    font-size:11.5px;font-weight:600;color:var(--text-muted);
+    background:var(--bg-soft);border:1px solid var(--border);
+    border-radius:999px;padding:4px 10px;
+  }
+  table.src-table .col-date{min-width:104px;white-space:nowrap;}
+  table.src-table .col-type{min-width:96px;}
+  .su-undated{
+    margin-top:14px;padding:12px 14px;border-radius:10px;
+    background:var(--bg-soft);border:1px solid var(--border);
+    font-size:12.5px;color:var(--text-muted);line-height:1.9;
+  }
+  .su-undated-title{font-weight:700;color:var(--text);margin-bottom:4px;}
+  .su-undated ul{margin:0;padding-inline-start:18px;}
 </style>
 </head>
 <body>
@@ -765,8 +809,8 @@
     </div>
 
     <div class="card">
-      <div class="uqn-fields">
-        <div class="uqn-field">
+      <div class="src-fields">
+        <div class="src-field">
           <label for="uqnDay">التاريخ المطلوب (هجري)</label>
           <div class="uqn-hijri">
             <input id="uqnDay" type="number" min="1" max="30" placeholder="يوم" aria-label="اليوم">
@@ -774,21 +818,60 @@
             <input id="uqnYear" type="number" min="1430" max="1500" placeholder="سنة" aria-label="السنة">
           </div>
         </div>
-        <div class="uqn-field">
+        <div class="src-field">
           <label for="uqnIssueNo">رقم العدد</label>
           <input id="uqnIssueNo" type="text" readonly placeholder="—" title="يُستنتج من التاريخ">
         </div>
         <button class="btn-primary" id="uqnFetchBtn">استخراج الجدول</button>
       </div>
       <div class="uqn-greg-hint" id="uqnGregHint"></div>
-      <div class="uqn-status" id="uqnStatus"></div>
+      <div class="src-status" id="uqnStatus"></div>
     </div>
 
-    <div class="uqn-result" id="uqnResult"></div>
+    <div class="src-result" id="uqnResult"></div>
 
     <div class="log-section" id="uqnLogSection" style="margin-top:34px;">
       <div class="log-section-title">سجل الاستخراجات</div>
       <div class="log-list" id="uqnLogList"></div>
+    </div>
+  </div>
+
+  <!-- ============ SITE UPDATES: what a source site published inside a date range ============ -->
+  <div class="view" id="viewSiteUpdates">
+    <div class="home-header">
+      <div class="eyebrow">أداة داخلية · استخراج من المصدر</div>
+      <h1>تحديثات المواقع</h1>
+      <p class="sub">اختر الموقع ونطاق التواريخ، ويُستخرج ما نُشر أو حُدِّث على الموقع خلال تلك الفترة. النطاق الافتراضي دائمًا آخر سبعة أيام، وأي نطاق يتداخل مع بحث سابق على الموقع نفسه يُرفض حتى لا يتكرر العمل.</p>
+    </div>
+
+    <div class="card">
+      <div class="src-fields">
+        <div class="src-field su-field">
+          <label for="suSite">الموقع</label>
+          <select id="suSite"></select>
+        </div>
+        <div class="src-field su-field">
+          <label for="suFrom">من تاريخ</label>
+          <input id="suFrom" type="date">
+        </div>
+        <div class="src-field su-field">
+          <label for="suTo">إلى تاريخ</label>
+          <input id="suTo" type="date">
+        </div>
+        <button class="btn-primary" id="suFetchBtn">بحث عن التحديثات</button>
+      </div>
+      <div class="su-range-note" id="suRangeNote"></div>
+      <div id="suConflict"></div>
+      <div class="src-status" id="suStatus"></div>
+    </div>
+
+    <div class="src-result" id="suResult"></div>
+
+    <div id="suSetup" style="margin-top:26px;"></div>
+
+    <div class="log-section" id="suLogSection" style="margin-top:34px;">
+      <div class="log-section-title">سجل عمليات البحث</div>
+      <div class="log-list" id="suLogList"></div>
     </div>
   </div>
 
@@ -837,6 +920,7 @@
     <button class="rail-item" id="navHome" title="الرئيسية"><span class="icon icon-home"></span><span class="rail-label">الرئيسية</span></button>
     <button class="rail-item" id="navNewFile" title="ملف جديد"><span class="icon icon-document"></span><span class="rail-label">ملف جديد</span></button>
     <button class="rail-item" id="navUqn" title="تشريعات أم القرى"><span class="icon icon-newspaper"></span><span class="rail-label">تشريعات أم القرى</span></button>
+    <button class="rail-item" id="navSiteUpdates" title="تحديثات المواقع"><span class="icon icon-globe"></span><span class="rail-label">تحديثات المواقع</span></button>
     <button class="rail-item" id="navSettings" title="الإعدادات"><span class="icon icon-setting"></span><span class="rail-label">الإعدادات</span></button>
   </nav>
   <div class="rail-account">
@@ -918,6 +1002,7 @@ function goToView(view){
   document.querySelectorAll('.rail-item[data-view]').forEach(b=>b.classList.toggle('active', b.dataset.view === view));
   if(view === 'home') renderHome();
   if(view === 'uqn') uqnRenderLog();
+  if(view === 'siteUpdates') suOnEnter();
 }
 
 function goToStep(n){
@@ -2217,12 +2302,12 @@ function uqnBuildRows(items){
 function uqnRowsTableHtml(rows){
   const body = rows.map((r,i) => `<tr>
     <td class="col-idx">${i+1}</td>
-    <td class="col-name">${escapeHtml(r.title)}${r.sub ? `<span class="uqn-sub">${escapeHtml(r.sub)}</span>` : ''}</td>
-    <td class="col-no${r.decisionNo === '—' ? ' muted' : ''}">${escapeHtml(r.decisionNo)}${r.note ? `<span class="uqn-sub">${escapeHtml(r.note)}</span>` : ''}</td>
+    <td class="col-name">${escapeHtml(r.title)}${r.sub ? `<span class="src-sub">${escapeHtml(r.sub)}</span>` : ''}</td>
+    <td class="col-no${r.decisionNo === '—' ? ' muted' : ''}">${escapeHtml(r.decisionNo)}${r.note ? `<span class="src-sub">${escapeHtml(r.note)}</span>` : ''}</td>
     <td class="col-authority">${escapeHtml(r.authority)}</td>
-    <td class="col-link"><a class="uqn-link" href="${escapeHtml(r.link)}" target="_blank" rel="noopener noreferrer">فتح</a></td>
+    <td class="col-link"><a class="src-link" href="${escapeHtml(r.link)}" target="_blank" rel="noopener noreferrer">فتح</a></td>
   </tr>`).join('');
-  return `<div class="uqn-table-wrap"><table class="uqn-table">
+  return `<div class="src-table-wrap"><table class="src-table">
     <thead><tr>
       <th class="col-idx">#</th>
       <th class="col-name">اسم التشريع</th>
@@ -2235,8 +2320,8 @@ function uqnRowsTableHtml(rows){
 }
 function uqnRenderResult(meta, rows){
   $('#uqnResult').innerHTML = `
-    <div class="uqn-result-top">
-      <div class="uqn-result-title">
+    <div class="src-result-top">
+      <div class="src-result-title">
         تشريعات ${escapeHtml(meta.hijriLabel)}
         <span>· العدد ${escapeHtml(meta.issueNumber || '—')} · ${escapeHtml(meta.iso)} · ${rows.length} تشريعًا</span>
       </div>
@@ -2323,14 +2408,14 @@ function uqnSqlEditorUrl(){
   return ref ? `https://supabase.com/dashboard/project/${ref}/sql/new` : 'https://supabase.com/dashboard';
 }
 function uqnSetupCardHtml(){
-  return `<div class="uqn-setup">
-    <div class="uqn-setup-title">السجل يحتاج تجهيزة واحدة (مرة واحدة فقط)</div>
-    <div class="uqn-setup-body">
+  return `<div class="src-setup">
+    <div class="src-setup-title">السجل يحتاج تجهيزة واحدة (مرة واحدة فقط)</div>
+    <div class="src-setup-body">
       جدول <b>uqn_extractions</b> غير موجود في Supabase، ولهذا لا يُحفظ أي استخراج.
       انسخ الأوامر أدناه والصقها في SQL Editor ثم اضغط Run.
       <br>مهم: الصق <b>هذا المقطع وحده</b> — لصق ملف schema.sql كاملًا يتوقف عند الجداول الموجودة أصلًا ولا يُنشئ شيئًا.
     </div>
-    <div class="uqn-setup-actions">
+    <div class="src-setup-actions">
       <button class="pill-btn blue" id="uqnCopySqlBtn"><span class="icon icon-copy"></span> نسخ الأوامر</button>
       <a class="pill-btn" href="${uqnSqlEditorUrl()}" target="_blank" rel="noopener noreferrer">فتح SQL Editor</a>
       <button class="pill-btn" id="uqnRecheckBtn">تحقّق مرة أخرى</button>
@@ -2440,7 +2525,7 @@ async function uqnExtract(){
   const hLabel = hijriLabel(picked.hy, picked.hm, picked.hd);
 
   try{
-    uqnSetStatus('<span class="uqn-spinner"></span>جاري تحديد رقم العدد…');
+    uqnSetStatus('<span class="src-spinner"></span>جاري تحديد رقم العدد…');
     const issueNumber = await uqnIssueForDate(picked.iso);
     $('#uqnIssueNo').value = issueNumber || '—';
     /* kept on the saved record as the issue's own page, even though the tab
@@ -2449,9 +2534,9 @@ async function uqnExtract(){
       ? `https://www.uqn.gov.sa/digital?date=${picked.iso}`
       : UQN_DECISIONS_URL;
 
-    uqnSetStatus('<span class="uqn-spinner"></span>جاري البحث عن تشريعات هذا التاريخ…');
+    uqnSetStatus('<span class="src-spinner"></span>جاري البحث عن تشريعات هذا التاريخ…');
     const articles = await uqnCollectForDate(picked.iso, n => {
-      uqnSetStatus(`<span class="uqn-spinner"></span>جاري البحث في قائمة القرارات… (${n} صفحة)`);
+      uqnSetStatus(`<span class="src-spinner"></span>جاري البحث في قائمة القرارات… (${n} صفحة)`);
     });
 
     if(!articles.length){
@@ -2470,7 +2555,7 @@ async function uqnExtract(){
         const i = cursor++;
         items[i] = { article: articles[i], detail: await uqnDetail(articles[i]) };
         done++;
-        uqnSetStatus(`<span class="uqn-spinner"></span>جاري قراءة التشريعات… (${done}/${articles.length})`);
+        uqnSetStatus(`<span class="src-spinner"></span>جاري قراءة التشريعات… (${done}/${articles.length})`);
       }
     }
     await Promise.all(Array.from({ length: Math.min(2, articles.length) }, worker));
@@ -2520,6 +2605,738 @@ async function uqnExtract(){
   });
 })();
 
+/* ==================================================================
+   تحديثات المواقع tab: what a source site published inside a date range.
+
+   Unlike أم القرى — whose /api/* routes answer with
+   Access-Control-Allow-Origin — the sites read here send no CORS header at
+   all, so the browser is not allowed to read their responses directly.
+   Every request goes through the `site-proxy` edge function, which fetches
+   an allow-listed URL server-side and hands it back with CORS enabled.
+
+   The rule that shapes the tab: a search covers a date range, that range is
+   recorded, and a later range touching a recorded one is refused — which is
+   what keeps two employees from sweeping the same days twice.
+   ================================================================== */
+const SU_PROXY_FN = 'site-proxy';
+const SU_DEFAULT_DAYS = 7;          // "الافتراضي دائمًا آخر سبع أيام"
+/* the source sites publish on Riyadh time, so a file's Last-Modified is
+   folded into the Saudi calendar day rather than the UTC one */
+const SU_TZ_OFFSET_MS = 3 * 3600 * 1000;
+
+/* ---------- dates: plain YYYY-MM-DD strings, compared as text ---------- */
+function suTodayIso(){
+  const now = new Date();
+  return new Date(now.getTime() - now.getTimezoneOffset()*60000).toISOString().slice(0,10);
+}
+function suShiftIso(iso, days){
+  const d = new Date(iso + 'T00:00:00Z');
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0,10);
+}
+function suHttpDateToIso(httpDate){
+  const t = Date.parse(httpDate || '');
+  return isNaN(t) ? '' : new Date(t + SU_TZ_OFFSET_MS).toISOString().slice(0,10);
+}
+/* 'ar' (not 'ar-SA', which would switch to the hijri calendar) */
+function suFormatIso(iso){
+  if(!iso) return '';
+  return new Date(iso + 'T12:00:00Z')
+    .toLocaleDateString('ar', { day:'numeric', month:'long', year:'numeric', timeZone:'UTC' });
+}
+function suHijriOf(iso){
+  const h = gregToHijri(new Date(iso + 'T12:00:00Z'));
+  return hijriLabel(h.y, h.m, h.d);
+}
+function suRangesOverlap(a, b){
+  return a.from <= b.to && a.to >= b.from;
+}
+
+/* ---------- the proxy ---------- */
+/* Errors are never swallowed: a page that silently came back empty would
+   render as "no updates in this range", which is a claim we did not verify
+   and which the log would then freeze in place. */
+/* anything that came back *from* the function is proof it is deployed, so the
+   "not deployed" setup step retires itself the moment that proof arrives */
+function suMarkProxyAlive(){
+  if(!suSetupState.fn) return;
+  suSetupState.fn = false;
+  suSetupState.detail = '';
+  suRenderSetup();
+}
+async function suProxyFetch(urls, method){
+  const { data, error } = await sb.functions.invoke(SU_PROXY_FN, {
+    body: { urls, method: method || 'GET' }
+  });
+  if(error){
+    const status = (error.context && error.context.status) || 0;
+    const err = new Error(error.message || 'تعذر الاتصال بوسيط القراءة');
+    /* 404 from the functions gateway, or a request that never landed at all,
+       both mean there is nothing deployed to talk to — the fix is the setup
+       card. Any other status came from the function itself, so it is running
+       and the setup card would only mislead. */
+    err.proxyMissing = status === 404 || !status;
+    if(!err.proxyMissing) suMarkProxyAlive();
+    throw err;
+  }
+  suMarkProxyAlive();
+  if(!data || !Array.isArray(data.results)){
+    throw new Error((data && data.error) || 'رد غير متوقع من وسيط القراءة');
+  }
+  return data.results;
+}
+
+/* ---------- adapter: وزارة البلديات والإسكان — الأنظمة واللوائح ----------
+   The listing is a plain server-rendered table (10 rows per page, ordered by
+   the entry's own "last changed" newest-first) and it shows no date column.
+   What it does give is the link to each regulation's published file, and the
+   file carries a real Last-Modified — so that header is the entry's date. */
+const MOMAH_ORIGIN = 'https://momah.gov.sa';
+const MOMAH_LIST_URL = MOMAH_ORIGIN + '/ar/regulations';
+const MOMAH_MAX_PAGES = 40;   // the list runs ~21 pages today; this is the guard
+/* pages run newest-changed first and publishing a file bumps its entry to the
+   top, so anything dated inside the window sits near the front. Three pages
+   in a row with nothing at or after `from` means the rest is older still. */
+const MOMAH_LOOKAHEAD = 3;
+
+function momahParseListPage(html){
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const table = doc.getElementById('table_regulations');
+  if(!table) return null;   // past the last page — the view renders no table
+  return Array.from(table.querySelectorAll('tr')).map(tr => {
+    const titleCell = tr.querySelector('[data-label="العنوان"]');
+    if(!titleCell) return null;   // the header row
+    const typeCell = tr.querySelector('[data-label="النوع"]');
+    const link = tr.querySelector('a[href]');
+    let fileUrl = '';
+    if(link){
+      try{
+        const u = new URL(link.getAttribute('href'), MOMAH_ORIGIN);
+        if(u.origin === MOMAH_ORIGIN) fileUrl = u.href;
+      }catch(e){ /* a malformed href just leaves the entry undated */ }
+    }
+    const clean = el => (el ? (el.textContent || '') : '').replace(/\s+/g,' ').trim();
+    return { title: clean(titleCell), type: clean(typeCell), fileUrl };
+  }).filter(Boolean);
+}
+
+async function momahScanRegulations(range, onProgress){
+  const rows = [], undated = [];
+  let scanned = 0, quietPages = 0, pagesRead = 0;
+
+  for(let pg = 1; pg <= MOMAH_MAX_PAGES; pg++){
+    onProgress(`جاري قراءة الصفحة ${pg} من قائمة الأنظمة واللوائح…`);
+    const [page] = await suProxyFetch([`${MOMAH_LIST_URL}?pageNumber=${pg}`], 'GET');
+    if(!page.ok) throw new Error(`تعذر فتح الصفحة ${pg} من الموقع (${page.status || page.error || 'خطأ'})`);
+    const entries = momahParseListPage(page.body);
+    if(!entries || !entries.length) break;
+    pagesRead = pg;
+
+    /* one HEAD per file, batched into a single proxy call per page */
+    const withFile = entries.filter(e => e.fileUrl);
+    onProgress(`جاري قراءة تواريخ الملفات… (الصفحة ${pg} · ${scanned + entries.length} عنصرًا)`);
+    const heads = withFile.length ? await suProxyFetch(withFile.map(e => e.fileUrl), 'HEAD') : [];
+    const dateFor = new Map(heads.map(h => [h.url, h.ok ? suHttpDateToIso(h.lastModified) : '']));
+
+    let touchedWindow = false;
+    entries.forEach(entry => {
+      scanned++;
+      const date = entry.fileUrl ? (dateFor.get(entry.fileUrl) || '') : '';
+      /* an entry with no published file has no date to test against. Guessing
+         one from its place in the list would be a claim we cannot back, so it
+         is set aside to be reported rather than dropped or dated. */
+      if(!date){ undated.push({ ...entry, undated:true }); return; }
+      if(date >= range.from){
+        touchedWindow = true;
+        if(date <= range.to) rows.push({ ...entry, date });
+      }
+    });
+
+    quietPages = touchedWindow ? 0 : quietPages + 1;
+    if(quietPages >= MOMAH_LOOKAHEAD) break;
+  }
+
+  return { rows, undated, scanned, pagesRead };
+}
+
+/* ---------- the site registry ---------- */
+const SU_SITES = [
+  {
+    key: 'momah-regulations',
+    name: 'وزارة البلديات والإسكان',
+    section: 'الأنظمة واللوائح',
+    home: MOMAH_LIST_URL,
+    dateMeaning: 'تاريخ نشر ملف التشريع على الموقع (Last-Modified للملف)',
+    scan: momahScanRegulations
+  }
+];
+function suSiteByKey(key){ return SU_SITES.find(s => s.key === key) || SU_SITES[0]; }
+
+/* ---------- rendering the result ---------- */
+function suRowsTableHtml(rows){
+  const body = rows.map((r,i) => `<tr>
+    <td class="col-idx">${i+1}</td>
+    <td class="col-name">${escapeHtml(r.title)}</td>
+    <td class="col-type">${escapeHtml(r.type || '—')}</td>
+    <td class="col-date">${escapeHtml(r.date)}<span class="src-sub">${escapeHtml(suHijriOf(r.date))}</span></td>
+    <td class="col-link">${r.fileUrl
+      ? `<a class="src-link" href="${escapeHtml(r.fileUrl)}" target="_blank" rel="noopener noreferrer">فتح</a>`
+      : '—'}</td>
+  </tr>`).join('');
+  return `<div class="src-table-wrap"><table class="src-table">
+    <thead><tr>
+      <th class="col-idx">#</th>
+      <th class="col-name">العنوان</th>
+      <th class="col-type">النوع</th>
+      <th class="col-date">تاريخ النشر</th>
+      <th class="col-link">الملف</th>
+    </tr></thead>
+    <tbody>${body}</tbody>
+  </table></div>`;
+}
+/* undated entries are not a result — they are the part of the sweep that
+   could not be answered, so they sit under the table as their own list
+   instead of being mixed into it with a dash for a date */
+function suUndatedHtml(undated){
+  if(!undated.length) return '';
+  return `<div class="su-undated">
+    <div class="su-undated-title">${undated.length} عنصرًا على الصفحات المفحوصة بلا ملف منشور — لا يمكن تأريخه، ويُراجع يدويًا</div>
+    <ul>${undated.map(u => `<li>${escapeHtml(u.title)}${u.type ? ` <span>· ${escapeHtml(u.type)}</span>` : ''}</li>`).join('')}</ul>
+  </div>`;
+}
+function suRenderResult(meta, items){
+  const rows = items.filter(i => !i.undated);
+  const undated = items.filter(i => i.undated);
+  const head = rows.length
+    ? `تحديثات ${escapeHtml(meta.siteName)}
+       <span>· من ${escapeHtml(meta.from)} إلى ${escapeHtml(meta.to)} · ${rows.length} عنصرًا</span>`
+    : `لا تحديثات على ${escapeHtml(meta.siteName)}
+       <span>· من ${escapeHtml(meta.from)} إلى ${escapeHtml(meta.to)}</span>`;
+  $('#suResult').innerHTML = `
+    <div class="src-result-top"><div class="src-result-title">${head}</div></div>
+    ${rows.length
+      ? suRowsTableHtml(rows)
+      : '<div class="empty-hint">لم يُنشر أي تشريع على الموقع خلال هذه الفترة</div>'}
+    ${suUndatedHtml(undated)}`;
+}
+
+/* ---------- persistence: the log of past searches ---------- */
+function suMapRow(row){
+  return {
+    id: row.id,
+    ownerId: row.owner_id,
+    user: row.owner_name,
+    siteKey: row.site_key,
+    siteName: row.site_name,
+    from: row.range_from,
+    to: row.range_to,
+    sourceUrl: row.source_url,
+    scannedCount: row.scanned_count,
+    itemCount: row.item_count,
+    items: Array.isArray(row.items) ? row.items : [],
+    createdAt: row.created_at
+  };
+}
+async function suSaveSearch(site, range, result){
+  if(!currentUser) return { error:{ message:'no session' } };
+  const { data, error } = await sb.from('site_updates').insert({
+    owner_id: currentUser.id,
+    owner_name: currentUser.fullName,
+    site_key: site.key,
+    site_name: `${site.name} — ${site.section}`,
+    range_from: range.from,
+    range_to: range.to,
+    source_url: site.home,
+    scanned_count: result.scanned,
+    item_count: result.rows.length,
+    /* the undated entries ride along flagged, so re-opening a past search
+       still shows what that sweep could not answer */
+    items: result.rows.concat(result.undated)
+  }).select().single();
+  if(error) return { error };
+  return { row: suMapRow(data) };
+}
+async function suLoadSearches(){
+  const { data, error } = await sb.from('site_updates')
+    .select('*').order('created_at', { ascending:false }).limit(200);
+  if(error) return { error };
+  return { rows: data.map(suMapRow) };
+}
+
+/* ---------- the two one-time setup steps ----------
+   Neither can be done from here: the table needs an owner in the SQL editor,
+   and the proxy needs a function deployed. So the tab hands over exactly what
+   to paste instead of only reporting that something is missing. */
+const SU_TABLE_SQL = `create extension if not exists btree_gist;
+
+create table public.site_updates (
+  id uuid primary key default gen_random_uuid(),
+  owner_id uuid not null references auth.users(id) on delete cascade,
+  owner_name text not null default '',
+  site_key text not null,
+  site_name text not null default '',
+  range_from date not null,
+  range_to date not null,
+  source_url text not null default '',
+  scanned_count integer not null default 0,
+  item_count integer not null default 0,
+  items jsonb not null default '[]'::jsonb,
+  created_at timestamptz not null default now(),
+  constraint site_updates_range_order check (range_from <= range_to),
+  constraint site_updates_no_overlap exclude using gist (
+    site_key with =,
+    daterange(range_from, range_to, '[]') with &&
+  )
+);
+
+create index site_updates_created_at_idx on public.site_updates(created_at desc);
+create index site_updates_owner_id_idx on public.site_updates(owner_id);
+
+alter table public.site_updates enable row level security;
+
+create policy "site updates are viewable by authenticated users"
+  on public.site_updates for select
+  to authenticated
+  using (true);
+
+create policy "owners can insert their own site updates"
+  on public.site_updates for insert
+  to authenticated
+  with check (owner_id = auth.uid());
+
+create policy "owners can delete their own site updates"
+  on public.site_updates for delete
+  to authenticated
+  using (owner_id = auth.uid());`;
+
+/* the same function as supabase/functions/site-proxy/index.ts, with the type
+   annotations dropped so it pastes cleanly into the Dashboard editor. That
+   file is what `supabase functions deploy` ships and is the one to edit
+   first; this copy exists so the setup card can hand over something runnable
+   without the repo. Keep the two in step. */
+const SU_PROXY_SOURCE = `// Taqseem — site-proxy
+// Fetches an allow-listed public page server-side and returns it with CORS
+// enabled, because the source sites send no Access-Control-Allow-Origin.
+// Only ALLOWED_HOSTS are reachable and only GET/HEAD are issued, so this can
+// never be pointed at internal services nor change anything upstream.
+
+const ALLOWED_HOSTS = new Set([
+  'momah.gov.sa',
+  'www.momah.gov.sa',
+]);
+
+const CORS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+};
+
+const MAX_URLS = 24;
+const MAX_BODY = 4_000_000;
+const POOL = 6;
+
+function resolveTarget(raw) {
+  if (typeof raw !== 'string') return null;
+  let u;
+  try { u = new URL(raw); } catch { return null; }
+  if (u.protocol !== 'https:') return null;
+  return ALLOWED_HOSTS.has(u.hostname) ? u : null;
+}
+
+async function fetchOne(raw, method) {
+  const target = resolveTarget(raw);
+  if (!target) return { url: raw, ok: false, status: 0, error: 'host not allowed' };
+  try {
+    const res = await fetch(target, {
+      method,
+      redirect: 'follow',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; TaqseemBot/1.0)',
+        'Accept-Language': 'ar',
+      },
+    });
+    const out = {
+      url: raw,
+      finalUrl: res.url,
+      ok: res.ok,
+      status: res.status,
+      lastModified: res.headers.get('last-modified') || '',
+      contentType: res.headers.get('content-type') || '',
+      contentLength: res.headers.get('content-length') || '',
+    };
+    if (method === 'GET') {
+      if (Number(out.contentLength || 0) > MAX_BODY) {
+        return { ...out, ok: false, error: 'response too large' };
+      }
+      out.body = (await res.text()).slice(0, MAX_BODY);
+    } else {
+      await res.body?.cancel();
+    }
+    return out;
+  } catch (e) {
+    return { url: raw, ok: false, status: 0, error: String(e?.message || e) };
+  }
+}
+
+async function fetchAll(urls, method) {
+  const out = new Array(urls.length);
+  let cursor = 0;
+  async function worker() {
+    while (cursor < urls.length) {
+      const i = cursor++;
+      out[i] = await fetchOne(urls[i], method);
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(POOL, urls.length) }, worker));
+  return out;
+}
+
+function json(payload, status = 200) {
+  return new Response(JSON.stringify(payload), {
+    status,
+    headers: { ...CORS, 'Content-Type': 'application/json' },
+  });
+}
+
+Deno.serve(async (req) => {
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
+  if (req.method !== 'POST') return json({ error: 'use POST' }, 405);
+
+  let payload;
+  try {
+    payload = await req.json();
+  } catch {
+    return json({ error: 'body must be JSON' }, 400);
+  }
+
+  const method = payload.method === 'HEAD' ? 'HEAD' : 'GET';
+  const urls = Array.isArray(payload.urls)
+    ? payload.urls
+    : (payload.url !== undefined ? [payload.url] : []);
+
+  if (!urls.length) return json({ error: 'no url given' }, 400);
+  if (urls.length > MAX_URLS) return json({ error: 'at most ' + MAX_URLS + ' urls per call' }, 400);
+
+  return json({ results: await fetchAll(urls, method) });
+});`;
+
+function suFunctionsUrl(){
+  const ref = (SUPABASE_URL.match(/\/\/([^.]+)\./) || [])[1];
+  return ref ? `https://supabase.com/dashboard/project/${ref}/functions` : 'https://supabase.com/dashboard';
+}
+
+const suSetupState = { table:false, fn:false, detail:'' };
+function suRenderSetup(){
+  const host = $('#suSetup');
+  if(!suSetupState.table && !suSetupState.fn){ host.innerHTML = ''; return; }
+  const steps = [];
+  if(suSetupState.table){
+    steps.push(`<div class="src-setup-step">
+      <div class="src-setup-step-title">١ · جدول <b>site_updates</b> غير موجود في Supabase</div>
+      <div class="src-setup-body">
+        بدونه لا يُحفظ أي بحث، ولا تعمل قاعدة منع تداخل النطاقات.
+        انسخ الأوامر أدناه والصقها في SQL Editor ثم اضغط Run.
+        <br>مهم: الصق <b>هذا المقطع وحده</b> — لصق ملف schema.sql كاملًا يتوقف عند الجداول الموجودة أصلًا ولا يُنشئ شيئًا.
+      </div>
+      <div class="src-setup-actions">
+        <button class="pill-btn blue" data-su-copy="sql"><span class="icon icon-copy"></span> نسخ الأوامر</button>
+        <a class="pill-btn" href="${uqnSqlEditorUrl()}" target="_blank" rel="noopener noreferrer">فتح SQL Editor</a>
+      </div>
+      <pre data-su-select title="اضغط لتحديد الأوامر كاملة">${escapeHtml(SU_TABLE_SQL)}</pre>
+    </div>`);
+  }
+  if(suSetupState.fn){
+    steps.push(`<div class="src-setup-step">
+      <div class="src-setup-step-title">٢ · دالة <b>site-proxy</b> غير منشورة</div>
+      <div class="src-setup-body">
+        مواقع الجهات لا ترسل ترويسة CORS، فلا يستطيع المتصفح قراءتها مباشرة؛ هذه الدالة هي الوسيط الذي يقرأها.
+        من لوحة Supabase: <b>Edge Functions</b> ثم <b>Deploy a new function</b> ثم <b>Via Editor</b>،
+        وسمِّ الدالة <b>site-proxy</b> بالضبط، والصق الكود أدناه ثم اضغط Deploy.
+        ${suSetupState.detail ? `<br>الخطأ الحالي: ${escapeHtml(suSetupState.detail)}` : ''}
+      </div>
+      <div class="src-setup-actions">
+        <button class="pill-btn blue" data-su-copy="fn"><span class="icon icon-copy"></span> نسخ الكود</button>
+        <a class="pill-btn" href="${suFunctionsUrl()}" target="_blank" rel="noopener noreferrer">فتح Edge Functions</a>
+      </div>
+      <pre data-su-select title="اضغط لتحديد الكود كاملًا">${escapeHtml(SU_PROXY_SOURCE)}</pre>
+    </div>`);
+  }
+  host.innerHTML = `<div class="src-setup">
+    <div class="src-setup-title">هذه الصفحة تحتاج تجهيزة (مرة واحدة فقط)</div>
+    ${steps.join('')}
+    <div class="src-setup-actions" style="margin-top:14px;">
+      <button class="pill-btn" data-su-recheck>تحقّق مرة أخرى</button>
+    </div>
+  </div>`;
+}
+
+/* ---------- the log ---------- */
+let suLogCache = [];
+async function suRenderLog(){
+  const list = $('#suLogList');
+  const res = await suLoadSearches();
+  if(res.error){
+    const msg = res.error.message || '';
+    const missing = /site_updates/.test(msg) || res.error.code === 'PGRST205' || /42P01/.test(res.error.code || '');
+    suSetupState.table = missing;
+    suRenderSetup();
+    suLogCache = [];
+    list.innerHTML = missing
+      ? '<div class="empty-hint">السجل غير متاح حتى تكتمل التجهيزة أعلاه</div>'
+      : `<div class="empty-hint">تعذر تحميل السجل — ${escapeHtml(msg || 'خطأ غير معروف')}</div>`;
+    return;
+  }
+  suSetupState.table = false;
+  suRenderSetup();
+  suLogCache = res.rows;
+  list.innerHTML = res.rows.length
+    ? res.rows.map(r => `<div class="log-card">
+        <div class="log-card-main">
+          <div class="log-title">${escapeHtml(r.siteName || '')} · من ${escapeHtml(r.from)} إلى ${escapeHtml(r.to)}</div>
+          <div class="log-meta">${escapeHtml(r.user || 'غير معروف')} · ${formatDate(r.createdAt)} · ${r.itemCount} تحديثًا من ${r.scannedCount} عنصرًا مفحوصًا</div>
+        </div>
+        <div class="log-card-actions">
+          <button class="btn-ghost su-log-btn" data-id="${r.id}" data-action="view">عرض</button>
+          ${r.ownerId === currentUser.id ? `<button class="btn-ghost su-log-btn log-danger" data-id="${r.id}" data-action="delete">حذف</button>` : ''}
+        </div>
+      </div>`).join('')
+    : '<div class="empty-hint">لا يوجد أي بحث محفوظ بعد</div>';
+}
+
+/* ---------- the range: default, coverage, and the overlap refusal ---------- */
+function suReadRange(){
+  const from = $('#suFrom').value, to = $('#suTo').value;
+  return (from && to) ? { from, to } : null;
+}
+function suApplyDefaultRange(){
+  const today = suTodayIso();
+  $('#suTo').value = today;
+  $('#suFrom').value = suShiftIso(today, -(SU_DEFAULT_DAYS - 1));
+}
+function suCoveredFor(siteKey){
+  return suLogCache.filter(r => r.siteKey === siteKey)
+    .slice().sort((a,b) => (a.from < b.from ? 1 : -1));
+}
+function suConflictsFor(siteKey, range){
+  return suCoveredFor(siteKey).filter(r => suRangesOverlap(range, r));
+}
+/* the natural next sweep: pick up the day after the newest day the team has
+   already covered on this site, and run to today */
+function suFreeRangeFor(siteKey){
+  const covered = suCoveredFor(siteKey);
+  if(!covered.length) return null;
+  const newest = covered.reduce((max, r) => (r.to > max ? r.to : max), '');
+  const from = suShiftIso(newest, 1);
+  const to = suTodayIso();
+  return from <= to ? { from, to } : null;
+}
+
+function suRenderRangeNote(){
+  const site = suSiteByKey($('#suSite').value);
+  const range = suReadRange();
+  const covered = suCoveredFor(site.key);
+  const parts = [];
+  if(range && range.from <= range.to){
+    parts.push(`النطاق المحدد <b>${escapeHtml(suFormatIso(range.from))}</b> — <b>${escapeHtml(suFormatIso(range.to))}</b> (${escapeHtml(suHijriOf(range.from))} — ${escapeHtml(suHijriOf(range.to))})`);
+  }
+  parts.push(`التاريخ المعتمد لكل عنصر: ${escapeHtml(site.dateMeaning)}`);
+  /* "من X إلى Y" rather than an arrow: a bare → between two latin-digit dates
+     flips under RTL and reads as if the range ran backwards */
+  const chips = covered.length
+    ? `<div class="su-covered">${covered.slice(0,8)
+        .map(r => `<span class="su-covered-chip">من ${escapeHtml(r.from)} إلى ${escapeHtml(r.to)}</span>`).join('')}${
+        covered.length > 8 ? `<span class="su-covered-chip">و${covered.length - 8} نطاقًا آخر</span>` : ''}</div>`
+    : '';
+  $('#suRangeNote').innerHTML = parts.join('<br>') +
+    (covered.length ? `<br>نطاقات مغطاة سابقًا على هذا الموقع:${chips}` : '');
+}
+
+function suRenderConflict(){
+  const host = $('#suConflict');
+  const site = suSiteByKey($('#suSite').value);
+  const range = suReadRange();
+  /* a running search owns the button; this function is also called from the
+     pre-flight check inside it, and must not hand it back mid-scan */
+  const setDisabled = on => { if(!suBusy) $('#suFetchBtn').disabled = on; };
+  setDisabled(false);
+  if(!range){ host.innerHTML = ''; return null; }
+  if(range.from > range.to){
+    host.innerHTML = `<div class="su-conflict">تاريخ البداية بعد تاريخ النهاية — صحّح النطاق قبل البحث.</div>`;
+    setDisabled(true);
+    return null;
+  }
+  const clashes = suConflictsFor(site.key, range);
+  if(!clashes.length){ host.innerHTML = ''; return null; }
+  const free = suFreeRangeFor(site.key);
+  host.innerHTML = `<div class="su-conflict">
+    <b>البحث ممتنع:</b> هذا النطاق يتداخل مع ${clashes.length === 1 ? 'بحث سابق' : clashes.length + ' عمليات بحث سابقة'} على الموقع نفسه.
+    <ul>${clashes.map(c => `<li>من ${escapeHtml(c.from)} إلى ${escapeHtml(c.to)} — ${escapeHtml(c.user || 'غير معروف')} · ${escapeHtml(formatDateOnly(c.createdAt))}</li>`).join('')}</ul>
+    ${free
+      ? `<button class="su-preset" data-su-usefree>استخدم النطاق المتاح: من ${escapeHtml(free.from)} إلى ${escapeHtml(free.to)}</button>`
+      : 'كل الأيام حتى اليوم مغطاة على هذا الموقع.'}
+  </div>`;
+  setDisabled(true);
+  return clashes;
+}
+
+/* ---------- the search flow ---------- */
+function suSetStatus(msg, isError){
+  const el = $('#suStatus');
+  el.classList.toggle('error', !!isError);
+  el.innerHTML = msg;
+}
+
+let suBusy = false;
+async function suSearch(){
+  if(suBusy) return;
+  const site = suSiteByKey($('#suSite').value);
+  const range = suReadRange();
+  if(!range || range.from > range.to){
+    suSetStatus('حدّد نطاقًا صحيحًا (من تاريخ / إلى تاريخ).', true);
+    return;
+  }
+
+  suBusy = true;
+  const btn = $('#suFetchBtn');
+  btn.disabled = true;
+  $('#suResult').innerHTML = '';
+
+  try{
+    /* re-read the log first: another employee may have covered these days
+       while this tab sat open, and the refusal has to account for that */
+    suSetStatus('<span class="src-spinner"></span>جاري التحقق من النطاقات المغطاة سابقًا…');
+    await suRenderLog();
+    const clashes = suRenderConflict();
+    if(clashes && clashes.length){
+      suSetStatus('لم يبدأ البحث — النطاق يتداخل مع بحث سابق على هذا الموقع.', true);
+      return;
+    }
+    if(suSetupState.table){
+      suSetStatus('لم يبدأ البحث — أكمل تجهيزة الجدول أدناه أولًا، وإلا لن يُحفظ البحث ولن تعمل قاعدة منع التداخل.', true);
+      return;
+    }
+
+    const result = await site.scan(range, msg => suSetStatus(`<span class="src-spinner"></span>${msg}`));
+
+    const meta = { siteName:`${site.name} — ${site.section}`, from:range.from, to:range.to };
+    suRenderResult(meta, result.rows.concat(result.undated));
+
+    const saved = await suSaveSearch(site, range, result);
+    const undatedNote = result.undated.length
+      ? ` (${result.undated.length} عنصرًا بلا ملف منشور لا يمكن تأريخه)`
+      : '';
+    const summary = `فُحص ${result.scanned} عنصرًا على الموقع خلال ${result.pagesRead} صفحة، منها ${result.rows.length} ضمن النطاق.${undatedNote}`;
+    if(saved.row){
+      suSetStatus(`${summary} وسُجّل النطاق في السجل.`);
+      await suRenderLog();
+      suRenderRangeNote();
+    }else{
+      /* 23P01 = the no-overlap exclusion constraint: someone saved a touching
+         range between the check above and this insert */
+      const clash = (saved.error || {}).code === '23P01';
+      suSetStatus(`${summary} لكن لم يُحفظ البحث — ${clash
+        ? 'سجّل موظف آخر نطاقًا متداخلًا في اللحظة نفسها، فالنتيجة أعلاه للاطلاع فقط.'
+        : escapeHtml((saved.error || {}).message || 'خطأ غير معروف')}`, true);
+      await suRenderLog();
+    }
+  }catch(err){
+    /* a half-finished sweep is not a result: nothing is saved, so the range
+       stays open and the next attempt starts clean */
+    if(err && err.proxyMissing){
+      suSetupState.fn = true;
+      suSetupState.detail = (err.message && !/Failed to send/i.test(err.message)) ? err.message : '';
+      suRenderSetup();
+      suSetStatus('وسيط القراءة (site-proxy) غير منشور أو غير قابل للوصول — أكمل التجهيزة أدناه ثم أعد المحاولة.', true);
+    }else{
+      suSetStatus(`تعذر إتمام البحث ولم يُحفظ شيء — ${escapeHtml((err && err.message) || 'خطأ غير معروف')}`, true);
+    }
+  }finally{
+    suBusy = false;
+    suRenderConflict();   // restores the button unless a conflict still stands
+  }
+}
+
+/* ---------- wiring ---------- */
+async function suOnEnter(){
+  /* "الافتراضي دائمًا آخر سبع أيام" — the range resets on every visit rather
+     than keeping whatever the last search left behind */
+  suApplyDefaultRange();
+  $('#suResult').innerHTML = '';
+  suSetStatus('');
+  await suRenderLog();
+  suRenderRangeNote();
+  suRenderConflict();
+}
+
+(function initSiteUpdatesTab(){
+  $('#suSite').innerHTML = SU_SITES
+    .map(s => `<option value="${escapeHtml(s.key)}">${escapeHtml(s.name)} — ${escapeHtml(s.section)}</option>`).join('');
+  suApplyDefaultRange();
+
+  ['#suSite','#suFrom','#suTo'].forEach(sel => $(sel).addEventListener('change', ()=>{
+    /* the previous search's outcome does not describe the new range, and
+       leaving it up would read as a verdict on it */
+    if(!suBusy) suSetStatus('');
+    suRenderRangeNote();
+    suRenderConflict();
+  }));
+  $('#suFetchBtn').addEventListener('click', suSearch);
+
+  $('#suConflict').addEventListener('click', e => {
+    if(!e.target.closest('[data-su-usefree]')) return;
+    const free = suFreeRangeFor($('#suSite').value);
+    if(!free) return;
+    $('#suFrom').value = free.from;
+    $('#suTo').value = free.to;
+    suRenderRangeNote();
+    suRenderConflict();
+  });
+
+  $('#suSetup').addEventListener('click', async e => {
+    const copy = e.target.closest('[data-su-copy]');
+    if(copy){
+      const text = copy.dataset.suCopy === 'sql' ? SU_TABLE_SQL : SU_PROXY_SOURCE;
+      showToast(await copyTextToClipboard(text) ? 'تم النسخ' : 'تعذر النسخ، حدّد النص يدويًا');
+      return;
+    }
+    if(e.target.closest('[data-su-recheck]')){
+      suSetupState.fn = false;   // only a fresh search can prove the proxy works
+      await suRenderLog();
+      suRenderRangeNote();
+      suRenderConflict();
+      return;
+    }
+    /* clipboard writes can be refused by the browser; selecting the block
+       makes the manual path a single click away */
+    const block = e.target.closest('[data-su-select]');
+    if(block){
+      const range = document.createRange();
+      range.selectNodeContents(block);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+  });
+
+  $('#suLogList').addEventListener('click', async e => {
+    const btn = e.target.closest('.su-log-btn');
+    if(!btn) return;
+    const rec = suLogCache.find(r => r.id === btn.dataset.id);
+    if(!rec) return;
+    if(btn.dataset.action === 'view'){
+      suRenderResult({ siteName:rec.siteName, from:rec.from, to:rec.to }, rec.items);
+      $('#suResult').scrollIntoView({ behavior:'smooth', block:'start' });
+      return;
+    }
+    const { error } = await sb.from('site_updates').delete().eq('id', rec.id);
+    if(error){ showToast('تعذر حذف البحث'); return; }
+    showToast('تم الحذف — صار نطاقه متاحًا للبحث من جديد');
+    await suRenderLog();
+    suRenderRangeNote();
+    suRenderConflict();
+  });
+})();
+
 /* ---------- side rail: expand/collapse, navigation, settings ---------- */
 $('#railToggle').addEventListener('click', async ()=>{
   document.body.classList.toggle('rail-expanded');
@@ -2528,10 +3345,12 @@ $('#railToggle').addEventListener('click', async ()=>{
 
 $('#navHome').dataset.view = 'home';
 $('#navUqn').dataset.view = 'uqn';
+$('#navSiteUpdates').dataset.view = 'siteUpdates';
 $('#navSettings').dataset.view = 'settings';
 $('#navHome').addEventListener('click', ()=>goToView('home'));
 $('#navNewFile').addEventListener('click', startNewFile);
 $('#navUqn').addEventListener('click', ()=>goToView('uqn'));
+$('#navSiteUpdates').addEventListener('click', ()=>goToView('siteUpdates'));
 $('#navSettings').addEventListener('click', ()=>goToView('settings'));
 
 function applyFontScale(scale){

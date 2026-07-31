@@ -148,3 +148,55 @@ create policy "owners can delete their own extractions"
   on public.uqn_extractions for delete
   to authenticated
   using (owner_id = auth.uid());
+
+-- ---------- site_updates ----------
+-- one row per "تحديثات المواقع" search: the date range an employee already
+-- swept on one source site, plus what that sweep found. The rows are what
+-- makes the range rule work — a new search whose range touches a range
+-- already recorded for the same site is refused, so no two employees cover
+-- the same days twice. `items` keeps the result as rendered, so a historical
+-- search stays readable even after the source site edits the page.
+create extension if not exists btree_gist;
+
+create table public.site_updates (
+  id uuid primary key default gen_random_uuid(),
+  owner_id uuid not null references auth.users(id) on delete cascade,
+  owner_name text not null default '',
+  site_key text not null,                    -- e.g. 'momah-regulations'
+  site_name text not null default '',
+  range_from date not null,
+  range_to date not null,
+  source_url text not null default '',
+  scanned_count integer not null default 0,  -- entries examined on the site
+  item_count integer not null default 0,     -- of those, entries in range
+  items jsonb not null default '[]'::jsonb,
+  created_at timestamptz not null default now(),
+  constraint site_updates_range_order check (range_from <= range_to),
+  -- the app refuses an overlapping range before it starts scanning; this is
+  -- what still holds the rule when two employees search at the same moment.
+  -- Deleting a search from the log frees its range again, as it should.
+  constraint site_updates_no_overlap exclude using gist (
+    site_key with =,
+    daterange(range_from, range_to, '[]') with &&
+  )
+);
+
+create index site_updates_created_at_idx on public.site_updates(created_at desc);
+create index site_updates_owner_id_idx on public.site_updates(owner_id);
+
+alter table public.site_updates enable row level security;
+
+create policy "site updates are viewable by authenticated users"
+  on public.site_updates for select
+  to authenticated
+  using (true);
+
+create policy "owners can insert their own site updates"
+  on public.site_updates for insert
+  to authenticated
+  with check (owner_id = auth.uid());
+
+create policy "owners can delete their own site updates"
+  on public.site_updates for delete
+  to authenticated
+  using (owner_id = auth.uid());

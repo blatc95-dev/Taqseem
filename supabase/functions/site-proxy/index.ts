@@ -1,0 +1,129 @@
+// Taqseem — site-proxy
+//
+// The "تحديثات المواقع" tab reads public pages on government sites. Those
+// sites send no `Access-Control-Allow-Origin` header (unlike uqn.gov.sa's
+// /api/* routes, which the أم القرى tab calls straight from the browser), so
+// the browser is not allowed to read their responses at all. This function is
+// the one hop that can: it fetches an allow-listed public URL server-side and
+// hands the result back with CORS enabled.
+//
+// Deploy from the Dashboard (no CLI needed):
+//   Edge Functions -> Deploy a new function -> Via Editor
+//   -> name it exactly `site-proxy` -> paste this file -> Deploy.
+// index.html carries a copy of this source for the tab's setup card; keep the
+// two in step when editing.
+//
+// Safety:
+//   * only ALLOWED_HOSTS are reachable, so the function can never be pointed
+//     at the project's own services or at a cloud metadata endpoint
+//   * only GET and HEAD, so it can never change anything upstream
+//   * JWT verification stays on (Supabase's default), so only a signed-in
+//     employee can drive it
+
+const ALLOWED_HOSTS = new Set([
+  'momah.gov.sa',
+  'www.momah.gov.sa',
+]);
+
+const CORS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+};
+
+const MAX_URLS = 24;          // one listing page's worth of files, plus slack
+const MAX_BODY = 4_000_000;   // bytes; the listing pages run ~300 KB
+const POOL = 6;               // parallel upstream requests per call
+
+type Result = Record<string, unknown>;
+
+function resolveTarget(raw: unknown): URL | null {
+  if (typeof raw !== 'string') return null;
+  let u: URL;
+  try { u = new URL(raw); } catch { return null; }
+  if (u.protocol !== 'https:') return null;
+  return ALLOWED_HOSTS.has(u.hostname) ? u : null;
+}
+
+async function fetchOne(raw: unknown, method: 'GET' | 'HEAD'): Promise<Result> {
+  const target = resolveTarget(raw);
+  if (!target) return { url: raw, ok: false, status: 0, error: 'host not allowed' };
+  try {
+    const res = await fetch(target, {
+      method,
+      redirect: 'follow',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; TaqseemBot/1.0)',
+        'Accept-Language': 'ar',
+      },
+    });
+    const out: Result = {
+      url: raw,
+      finalUrl: res.url,
+      ok: res.ok,
+      status: res.status,
+      lastModified: res.headers.get('last-modified') || '',
+      contentType: res.headers.get('content-type') || '',
+      contentLength: res.headers.get('content-length') || '',
+    };
+    if (method === 'GET') {
+      // refuse before buffering when the upstream declares an oversized body,
+      // and still clamp afterwards for the chunked responses that declare none
+      if (Number(out.contentLength || 0) > MAX_BODY) {
+        return { ...out, ok: false, error: 'response too large' };
+      }
+      out.body = (await res.text()).slice(0, MAX_BODY);
+    } else {
+      // a HEAD is only worth making when the upstream answers it honestly;
+      // some servers do not, which shows up as a missing lastModified
+      await res.body?.cancel();
+    }
+    return out;
+  } catch (e) {
+    return { url: raw, ok: false, status: 0, error: String((e as Error)?.message || e) };
+  }
+}
+
+async function fetchAll(urls: unknown[], method: 'GET' | 'HEAD'): Promise<Result[]> {
+  const out = new Array<Result>(urls.length);
+  let cursor = 0;
+  async function worker() {
+    while (cursor < urls.length) {
+      const i = cursor++;
+      out[i] = await fetchOne(urls[i], method);
+    }
+  }
+  await Promise.all(
+    Array.from({ length: Math.min(POOL, urls.length) }, worker),
+  );
+  return out;
+}
+
+function json(payload: unknown, status = 200): Response {
+  return new Response(JSON.stringify(payload), {
+    status,
+    headers: { ...CORS, 'Content-Type': 'application/json' },
+  });
+}
+
+Deno.serve(async (req: Request) => {
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
+  if (req.method !== 'POST') return json({ error: 'use POST' }, 405);
+
+  let payload: { url?: unknown; urls?: unknown; method?: unknown };
+  try {
+    payload = await req.json();
+  } catch {
+    return json({ error: 'body must be JSON' }, 400);
+  }
+
+  const method = payload.method === 'HEAD' ? 'HEAD' : 'GET';
+  const urls = Array.isArray(payload.urls)
+    ? payload.urls
+    : (payload.url !== undefined ? [payload.url] : []);
+
+  if (!urls.length) return json({ error: 'no url given' }, 400);
+  if (urls.length > MAX_URLS) return json({ error: 'at most ' + MAX_URLS + ' urls per call' }, 400);
+
+  return json({ results: await fetchAll(urls, method) });
+});
