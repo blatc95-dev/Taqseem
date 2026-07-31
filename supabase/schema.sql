@@ -109,3 +109,42 @@ create policy "owners can delete their own records"
   on public.records for delete
   to authenticated
   using (owner_id = auth.uid());
+
+-- ---------- uqn_extractions ----------
+-- one row per "تشريعات أم القرى" extraction: the table an employee pulled for
+-- a single gazette issue, kept so the log survives a page reload and is
+-- visible to the whole team. `items` holds the rendered rows as-is
+-- (title / decisionNo / authority / hasText / link), which keeps a historical
+-- extraction stable even if uqn.gov.sa later edits the article.
+create table public.uqn_extractions (
+  id uuid primary key default gen_random_uuid(),
+  owner_id uuid not null references auth.users(id) on delete cascade,
+  owner_name text not null default '',
+  issue_number text not null default '',
+  hijri_label text not null default '',      -- e.g. "17 صفر 1448هـ"
+  gregorian_date date,
+  source_url text not null default '',
+  item_count integer not null default 0,
+  items jsonb not null default '[]'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+create index uqn_extractions_created_at_idx on public.uqn_extractions(created_at desc);
+create index uqn_extractions_owner_id_idx on public.uqn_extractions(owner_id);
+
+alter table public.uqn_extractions enable row level security;
+
+create policy "extractions are viewable by authenticated users"
+  on public.uqn_extractions for select
+  to authenticated
+  using (true);
+
+create policy "owners can insert their own extractions"
+  on public.uqn_extractions for insert
+  to authenticated
+  with check (owner_id = auth.uid());
+
+create policy "owners can delete their own extractions"
+  on public.uqn_extractions for delete
+  to authenticated
+  using (owner_id = auth.uid());

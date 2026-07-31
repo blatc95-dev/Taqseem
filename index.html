@@ -208,6 +208,7 @@
   .icon-download{-webkit-mask-image:url(icons/document-download.svg);mask-image:url(icons/document-download.svg);}
   .icon-copy{-webkit-mask-image:url(icons/copy.svg);mask-image:url(icons/copy.svg);}
   .icon-home{-webkit-mask-image:url(icons/home-2.svg);mask-image:url(icons/home-2.svg);}
+  .icon-newspaper{-webkit-mask-image:url(icons/newspaper.svg);mask-image:url(icons/newspaper.svg);}
 
   button{font-family:inherit;cursor:pointer;border:none;}
   .btn-primary{
@@ -473,6 +474,70 @@
     content:'';position:absolute;top:15px;inline-start:-15px;
     width:11px;height:0;border-top:2px solid var(--toc-line-color);
   }
+
+  /* ---------- أم القرى extraction tab ---------- */
+  .uqn-fields{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;}
+  .uqn-field{display:flex;flex-direction:column;gap:6px;}
+  .uqn-field > label{font-size:12px;font-weight:600;color:var(--text-muted);}
+  .uqn-field input, .uqn-field select{
+    border:1px solid var(--border);border-radius:9px;padding:9px 12px;font-size:13.5px;
+    font-family:inherit;background:var(--surface);color:var(--text);
+  }
+  .uqn-field input:focus, .uqn-field select:focus{outline:2px solid var(--blue-bg-hover);border-color:var(--blue);}
+  .uqn-hijri{display:flex;gap:6px;}
+  .uqn-hijri input[type="number"]{width:74px;}
+  .uqn-hijri select{min-width:118px;}
+  /* derived, non-editable fields: the date is the only real input */
+  .uqn-field input[readonly]{background:var(--bg-soft);color:var(--text-muted);cursor:default;}
+  .uqn-field input#uqnIssueNo{width:110px;font-weight:700;text-align:center;}
+  .uqn-field input#uqnSourceUrl{min-width:330px;direction:ltr;text-align:left;font-size:12px;}
+  .uqn-greg-hint{font-size:12px;color:var(--text-muted);margin-top:10px;}
+  .uqn-greg-hint b{color:var(--blue);font-weight:700;}
+
+  .uqn-status{font-size:12.5px;color:var(--text-muted);margin-top:14px;min-height:18px;}
+  .uqn-status.error{color:var(--danger);font-weight:600;}
+  .uqn-spinner{
+    display:inline-block;width:12px;height:12px;margin-inline-end:7px;vertical-align:-1px;
+    border:2px solid var(--blue-bg-hover);border-top-color:var(--blue);border-radius:50%;
+    animation:uqn-spin .7s linear infinite;
+  }
+  @keyframes uqn-spin{to{transform:rotate(360deg);}}
+
+  .uqn-result{margin-top:26px;}
+  .uqn-result-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px;}
+  .uqn-result-title{font-size:14.5px;font-weight:700;}
+  .uqn-result-title span{color:var(--text-muted);font-weight:600;font-size:12.5px;}
+
+  .uqn-table-wrap{
+    overflow-x:auto;background:var(--surface);
+    border:1px solid var(--border);border-radius:12px;
+  }
+  table.uqn-table{width:100%;border-collapse:collapse;font-size:13px;}
+  table.uqn-table th, table.uqn-table td{
+    padding:11px 13px;text-align:right;vertical-align:top;
+    border-bottom:1px solid var(--border);line-height:1.65;
+  }
+  table.uqn-table th{
+    background:var(--bg-soft);font-weight:700;font-size:12px;color:var(--text-muted);
+    white-space:nowrap;position:sticky;top:0;
+  }
+  table.uqn-table tr:last-child td{border-bottom:none;}
+  table.uqn-table tbody tr:hover{background:var(--bg-soft);}
+  table.uqn-table .col-idx{width:38px;color:var(--text-muted);text-align:center;}
+  table.uqn-table .col-name{min-width:250px;font-weight:600;}
+  table.uqn-table .col-no{min-width:258px;}
+  table.uqn-table .col-authority{min-width:160px;}
+  table.uqn-table .col-text, table.uqn-table .col-link{white-space:nowrap;text-align:center;}
+  table.uqn-table td.col-no.muted{color:var(--text-muted);}
+  .uqn-sub{display:block;font-size:11.5px;color:var(--text-muted);font-weight:400;margin-top:3px;}
+
+  .yn{font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:999px;display:inline-block;}
+  .yn.yes{background:var(--lvl3-bg);color:var(--lvl3-text);}
+  .yn.no{background:#fef2f2;color:var(--danger);}
+  :root[data-theme="dark"] .yn.no{background:#3a1414;color:#fca5a5;}
+  .yn.unknown{background:var(--lvl2-bg);color:var(--lvl2-text);cursor:help;}
+  .uqn-link{color:var(--blue);font-weight:600;font-size:12px;text-decoration:none;}
+  .uqn-link:hover{text-decoration:underline;}
 </style>
 </head>
 <body>
@@ -682,6 +747,46 @@
   </div>
 
   <!-- SETTINGS -->
+  <!-- ============ UQN: pull an issue's legislation table from أم القرى ============ -->
+  <div class="view" id="viewUqn">
+    <div class="home-header">
+      <div class="eyebrow">أداة داخلية · استخراج من المصدر</div>
+      <h1>تشريعات أم القرى</h1>
+      <p class="sub">اختر تاريخ العدد، ويُستخرج جدول تشريعاته من جريدة أم القرى مباشرة: اسم التشريع، ورقم القرار، والجهة المصدرة، وهل له تفريغ نصي.</p>
+    </div>
+
+    <div class="card">
+      <div class="uqn-fields">
+        <div class="uqn-field">
+          <label for="uqnDay">التاريخ المطلوب (هجري)</label>
+          <div class="uqn-hijri">
+            <input id="uqnDay" type="number" min="1" max="30" placeholder="يوم" aria-label="اليوم">
+            <select id="uqnMonth" aria-label="الشهر"></select>
+            <input id="uqnYear" type="number" min="1430" max="1500" placeholder="سنة" aria-label="السنة">
+          </div>
+        </div>
+        <div class="uqn-field">
+          <label for="uqnIssueNo">رقم العدد</label>
+          <input id="uqnIssueNo" type="text" readonly placeholder="—" title="يُستنتج من التاريخ">
+        </div>
+        <div class="uqn-field">
+          <label for="uqnSourceUrl">رابط أم القرى</label>
+          <input id="uqnSourceUrl" type="text" readonly value="https://www.uqn.gov.sa/Decisions">
+        </div>
+        <button class="btn-primary" id="uqnFetchBtn">استخراج الجدول</button>
+      </div>
+      <div class="uqn-greg-hint" id="uqnGregHint"></div>
+      <div class="uqn-status" id="uqnStatus"></div>
+    </div>
+
+    <div class="uqn-result" id="uqnResult"></div>
+
+    <div class="log-section" id="uqnLogSection" style="margin-top:34px;">
+      <div class="log-section-title">سجل الاستخراجات</div>
+      <div class="log-list" id="uqnLogList"></div>
+    </div>
+  </div>
+
   <div class="view" id="viewSettings">
     <div class="section-top">
       <h2>الإعدادات</h2>
@@ -726,6 +831,7 @@
   <nav class="rail-nav">
     <button class="rail-item" id="navHome" title="الرئيسية"><span class="icon icon-home"></span><span class="rail-label">الرئيسية</span></button>
     <button class="rail-item" id="navNewFile" title="ملف جديد"><span class="icon icon-document"></span><span class="rail-label">ملف جديد</span></button>
+    <button class="rail-item" id="navUqn" title="تشريعات أم القرى"><span class="icon icon-newspaper"></span><span class="rail-label">تشريعات أم القرى</span></button>
     <button class="rail-item" id="navSettings" title="الإعدادات"><span class="icon icon-setting"></span><span class="rail-label">الإعدادات</span></button>
   </nav>
   <div class="rail-account">
@@ -806,6 +912,7 @@ function goToView(view){
   document.getElementById('view' + view.charAt(0).toUpperCase() + view.slice(1)).classList.add('active');
   document.querySelectorAll('.rail-item[data-view]').forEach(b=>b.classList.toggle('active', b.dataset.view === view));
   if(view === 'home') renderHome();
+  if(view === 'uqn') uqnRenderLog();
 }
 
 function goToStep(n){
@@ -1725,6 +1832,609 @@ async function copyTextToClipboard(text){
   }
 }
 
+/* ==================================================================
+   أم القرى tab: pull the legislation table for one gazette issue.
+
+   Only uqn.gov.sa's /api/* routes send `Access-Control-Allow-Origin: *`
+   (the rendered HTML pages send none), so everything here goes through
+   three widget endpoints, all reachable straight from the browser:
+
+     widget/56 — the issue archive. Honours date_from/date_to, so one
+                 request maps a date to its رقم العدد.
+     widget/66 — the قرارات وأنظمة list, 6 per page, newest first.
+                 NOTE: it silently IGNORES date_range/limit/offset, so a
+                 date is located by binary search over pgno instead.
+     widget/37 — one article's detail. The only place that exposes
+                 article_subtitle (which carries رقم القرار — it is
+                 stripped from every list payload) and the full body.
+   ================================================================== */
+const UQN_API = 'https://www.uqn.gov.sa/api';
+const UQN_DECISIONS_URL = 'https://www.uqn.gov.sa/Decisions';
+const UQN_LAST_PAGE = 518;      // upper bound for the pgno binary search
+const UQN_HIJRI_MONTHS = ['محرم','صفر','ربيع الأول','ربيع الآخر','جمادى الأولى','جمادى الآخرة','رجب','شعبان','رمضان','شوال','ذو القعدة','ذو الحجة'];
+
+/* the gazette dates everything by the Umm al-Qura calendar, which is exactly
+   what Intl's islamic-umalqura gives us — no date library needed. */
+const uqnHijriFmt = new Intl.DateTimeFormat('en-u-ca-islamic-umalqura-nu-latn',
+  { year:'numeric', month:'numeric', day:'numeric', timeZone:'UTC' });
+
+function gregToHijri(date){
+  const parts = uqnHijriFmt.formatToParts(date);
+  const pick = t => parseInt((parts.find(p=>p.type===t)||{}).value, 10);
+  return { y:pick('year'), m:pick('month'), d:pick('day') };
+}
+/* Intl only converts gregorian -> hijri, so invert it: jump to an estimate
+   using the mean hijri year, then settle on the exact day. */
+function hijriToGreg(hy, hm, hd){
+  if(!hy || !hm || !hd) return null;
+  let ms = Date.UTC(622, 6, 16) +
+    Math.round(((hy-1)*354.36707 + (hm-1)*29.530589 + (hd-1)) * 86400000);
+  for(let i=0; i<12; i++){
+    const h = gregToHijri(new Date(ms));
+    const off = (hy-h.y)*354.36707 + (hm-h.m)*29.530589 + (hd-h.d);
+    if(Math.abs(off) < 1) break;
+    ms += Math.round(off) * 86400000;
+  }
+  for(let k=-5; k<=5; k++){
+    const t = ms + k*86400000;
+    const h = gregToHijri(new Date(t));
+    if(h.y===hy && h.m===hm && h.d===hd) return new Date(t);
+  }
+  return null; // e.g. a 30th in a 29-day month
+}
+function isoDate(date){
+  return date.getUTCFullYear() + '-' +
+    String(date.getUTCMonth()+1).padStart(2,'0') + '-' +
+    String(date.getUTCDate()).padStart(2,'0');
+}
+function hijriLabel(hy, hm, hd){
+  return `${hd} ${UQN_HIJRI_MONTHS[hm-1]} ${hy}هـ`;
+}
+
+/* strip diacritics, tatweel and bidi marks, and fold alef/ya/ta-marbuta, so
+   "حقـوق المؤلف" and "حقوق المؤلف" compare equal when pairing a لائحة with
+   its "الموافقة على ..." decision. */
+const AR_MARKS = /[\u064B-\u0652\u0670\u0640]/g;              // harakat + tatweel
+const AR_INVISIBLE = /[\u200B-\u200F\u202A-\u202E\u2066-\u2069]/g; // ZWJ + bidi controls
+function normAr(s){
+  return (s||'')
+    .replace(AR_MARKS,'')
+    .replace(AR_INVISIBLE,'')
+    .replace(/[\u0623\u0625\u0622\u0627]/g,'\u0627').replace(/\u0649/g,'\u064a').replace(/\u0629/g,'\u0647')
+    .replace(/\s+/g,' ')
+    .trim();
+}
+function stripBidi(s){ return (s||'').replace(AR_INVISIBLE,'').replace(/\s+/g,' ').trim(); }
+
+/* uqn.gov.sa drops connections when several requests arrive in a burst, so
+   every call gets a couple of backed-off retries. Failures must never be
+   swallowed: a silently empty detail response would render as a complete
+   table with a missing رقم القرار, which is worse than an visible error. */
+async function uqnGet(path, attempts){
+  attempts = attempts || 3;
+  let lastErr;
+  for(let i=0; i<attempts; i++){
+    if(i) await new Promise(r => setTimeout(r, 350 * Math.pow(2, i-1)));
+    try{
+      const res = await fetch(`${UQN_API}/${path}`, { headers:{ 'Accept':'application/json' } });
+      if(res.ok) return await res.json();
+      if(res.status < 500 && res.status !== 429) throw new Error('HTTP ' + res.status);
+      lastErr = new Error('HTTP ' + res.status);
+    }catch(e){ lastErr = e; }
+  }
+  throw lastErr || new Error('fetch failed');
+}
+function uqnWidgetInfo(json){
+  return ((json||{}).widget_data||{}).widget_data_info || {};
+}
+
+/* ---------- issue number for a date (one request) ---------- */
+async function uqnIssueForDate(iso){
+  try{
+    const j = await uqnGet(`widget/56/json?date_from=${iso}&date_to=${iso}`);
+    const rows = ((uqnWidgetInfo(j).pdfs)||{}).data || [];
+    const hit = rows.find(r => (r.issue_date||'').slice(0,10) === iso) || rows[0];
+    return hit ? String(hit.issue_number||'').trim() : '';
+  }catch(e){ return ''; }
+}
+
+/* ---------- locate a date inside the paginated decisions list ----------
+   pages run newest -> oldest, so the target date occupies a contiguous run
+   of pages: binary search into that run, back up to its first page, then
+   read forward until a page holds none of it. ~10 requests, not ~500. */
+async function uqnCollectForDate(iso, onProgress){
+  const cache = new Map();
+  let calls = 0;
+  async function page(pg){
+    if(cache.has(pg)) return cache.get(pg);
+    const j = await uqnGet(`widget/66/json?pgno=${pg}`);
+    const arts = uqnWidgetInfo(j).articles || [];
+    cache.set(pg, arts);
+    calls++;
+    if(onProgress) onProgress(calls);
+    return arts;
+  }
+  const dayOf = a => (a.publish_time||'').slice(0,10);
+
+  let lo = 1, hi = UQN_LAST_PAGE, found = null;
+  while(lo <= hi){
+    const mid = Math.floor((lo+hi)/2);
+    const arts = await page(mid);
+    if(!arts.length){ hi = mid - 1; continue; }
+    const newest = dayOf(arts[0]), oldest = dayOf(arts[arts.length-1]);
+    if(iso > newest) hi = mid - 1;        // target is newer -> earlier pages
+    else if(iso < oldest) lo = mid + 1;   // target is older -> later pages
+    else { found = mid; break; }
+  }
+  if(found === null) return [];
+
+  let first = found;
+  while(first > 1 && (await page(first-1)).some(a => dayOf(a) === iso)) first--;
+
+  const out = [];
+  for(let pg = first; pg <= UQN_LAST_PAGE; pg++){
+    const hits = (await page(pg)).filter(a => dayOf(a) === iso);
+    if(!hits.length) break;
+    out.push(...hits);
+  }
+  return out;
+}
+
+/* ---------- one article's detail: رقم القرار + full text ---------- */
+const UQN_DETAIL_EMPTY = { ok:false, archived:false, title:'', subtitle:'', bodyText:'', permalink:'' };
+/* widget/37 returns a site-relative permalink ("decisions-and-regulations/…")
+   while the list and the archive return absolute ones */
+function uqnAbsolute(url){
+  if(!url) return '';
+  return /^https?:\/\//i.test(url) ? url : 'https://www.uqn.gov.sa/' + String(url).replace(/^\/+/,'');
+}
+async function uqnDetail(article){
+  if(article.np_article_id){
+    try{
+      const j = await uqnGet(`widget/37/json?np_article_id=${article.np_article_id}&is_cms_id=0`);
+      const a = uqnWidgetInfo(j).article;
+      if(a && (a.article_body || a.article_subtitle || a.article_title)){
+        return {
+          ok:true, archived:false,
+          title: stripBidi(a.article_title || ''),
+          subtitle: stripBidi(a.article_subtitle || ''),
+          bodyText: uqnBodyText(a.article_body),
+          permalink: a.permalink || ''
+        };
+      }
+    }catch(e){ /* fall through to the archive endpoint */ }
+  }
+  /* archived entries (is_old_article=1, np id 0) make widget/37 return 500.
+     This endpoint still serves them, but carries no article_subtitle — which
+     is where رقم القرار lives — so their number stays unavailable. */
+  try{
+    const j = await uqnGet(`article/${article.cms_article_id}/json?is_cms_id=1`);
+    const a = (j.articles || [])[0];
+    if(!a) return UQN_DETAIL_EMPTY;
+    return {
+      ok:true, archived:true,
+      title: stripBidi(a.article_title || ''),
+      subtitle: '',
+      bodyText: uqnBodyText(a.article_body_clean),
+      permalink: a.permalink || ''
+    };
+  }catch(e){ return UQN_DETAIL_EMPTY; }
+}
+/* the body arrives as HTML and sometimes opens with an inline <style> block,
+   which would otherwise read as "text present" and leak CSS into the parse */
+function uqnBodyText(html){
+  return String(html||'')
+    .replace(/<style[\s\S]*?<\/style>/gi,' ')
+    .replace(/<script[\s\S]*?<\/script>/gi,' ')
+    .replace(/<[^>]+>/g,' ')
+    .replace(/&nbsp;/g,' ').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>')
+    .replace(/\s+/g,' ')
+    .trim();
+}
+
+/* ---------- reading رقم القرار out of the number line ----------
+   the line looks like one of:
+     قرار رقم (133) وتاريخ 29/01/1448هـ
+     قرار وزير المالية رقم (1117) وتاريخ 1447/12/22هـ
+     قرار مجلس إدارة الهيئة السعودية للملكية الفكرية بالتمرير رقم (34/ت/2026) وتاريخ 05/02/1448هـ
+     أمر ملكي رقم (أ/355) وتاريخ 1447/11/24هـ
+   for مراسيم ملكية the subtitle is empty and the line is the title itself. */
+function uqnNumberFrom(line){
+  const s = stripBidi(line);
+  let m = s.match(/رقم\s*\(([^)]+)\)/);
+  if(m) return stripBidi(m[1]).replace(/\s*\/\s*/g,'/');
+  m = s.match(/رقم\s*([^\s،)]+)/);
+  return m ? stripBidi(m[1]) : '';
+}
+/* the hijri year must come from the DATE part only: a number like
+   (1448-99-238) would otherwise hand us a year that is really a serial. */
+function uqnYearFrom(line){
+  const s = stripBidi(line);
+  const m = s.match(/(?:وتاريخ|بتاريخ|في)\s*([^)]{0,24}?)\s*هـ/);
+  const scope = m ? m[1] : '';
+  const y = scope.match(/\b(1[3-5]\d{2})\b/);
+  return y ? y[1] : '';
+}
+
+/* تصنيف أم القرى -> the instrument name used in our own numbering */
+const UQN_KIND = {
+  'قرارات مجلس الوزراء': 'قرار مجلس الوزراء',
+  'قرارات وزارية': 'القرار الوزاري',
+  'هيئات': 'قرار مجالس وهيئات',
+  'هيئة الخبراء بمجلس الوزراء': 'قرار مجالس وهيئات',
+  'مراسيم ملكية': 'مرسوم ملكي',
+  'أوامر ملكية': 'أمر ملكي',
+  'الديوان الملكي': 'برقية تعميمية'
+};
+const UQN_NO_NUMBER = ['اتفاقيات','مذكرات تفاهم'];
+
+/* "قرار رئيس أمن الدولة" names a person, not the body — the جهة is رئاسة أمن
+   الدولة. But "رئيس الهيئة العامة للإحصاء" already carries its body's name, so
+   only prefix when the captured name doesn't start with one. */
+const UQN_ENTITY_HEADS = ['الهيئة','الهيئه','المركز','المؤسسة','المؤسسه','الوزارة','الوزاره','الجامعة','الجامعه','البنك','السلطة','السلطه','المجلس','الديوان','الإدارة','الادارة','اللجنة','اللجنه','الصندوق','المصلحة','المصلحه','مجلس','هيئة','هيئه','رئاسة','رئاسه'];
+function uqnEntityName(name){
+  const first = name.split(/\s+/)[0] || '';
+  if(UQN_ENTITY_HEADS.includes(first)) return name;
+  return 'رئاسة ' + name;
+}
+function uqnAuthority(sub, subtitle, bodyText){
+  if(sub === 'مراسيم ملكية') return 'الديوان الملكي - مرسوم';
+  if(sub === 'أوامر ملكية')  return 'الديوان الملكي - أمر';
+  if(sub === 'الديوان الملكي') return 'الديوان الملكي';
+  if(sub === 'قرارات مجلس الوزراء') return 'مجلس الوزراء';
+  const st = stripBidi(subtitle);
+  let m = st.match(/قرار\s+وزير\s+(.+?)\s+رقم/);
+  if(m) return 'وزارة ' + m[1].trim();
+  m = st.match(/قرار\s+مجلس\s+إدارة\s+(.+?)\s+(?:بالتمرير\s+)?رقم/);
+  if(m) return m[1].trim();
+  m = st.match(/قرار\s+(?:رئيس|محافظ|أمين\s+عام|أمين)\s+(.+?)\s+رقم/);
+  if(m) return uqnEntityName(m[1].trim());
+  /* nothing in the number line (e.g. "قرار إداري رقم (...)") — the body
+     opens by naming who issued it: "إن محافظ هيئة الزكاة والضريبة والجمارك" */
+  m = bodyText.match(/^إن\s+(?:محافظ|رئيس|وزير|مجلس\s+إدارة|أمين\s+عام|أمين)\s+([^،.]{3,70}?)\s+(?:بناءً|بناء|وبعد|بعد)/);
+  if(m) return m[1].trim();
+  m = bodyText.match(/^إن\s+([^،.]{3,70}?)\s+(?:بناءً|بناء|وبعد|بعد)/);
+  if(m) return m[1].trim();
+  return sub || '—';
+}
+
+function uqnFormatNumber(kind, number, year){
+  if(!number) return '';
+  return year ? `${kind} رقم (${number}) لعام ${year}هـ` : `${kind} رقم (${number})`;
+}
+
+/* build one table row per article, then resolve the لوائح: a لائحة/نظام text
+   carries no number of its own, so it inherits the number of the
+   "الموافقة على ..." decision published alongside it in the same issue. */
+function uqnBuildRows(items){
+  const rows = items.map(it => {
+    const sub = (it.article.sub_section_name || '').trim();
+    const d = it.detail;
+    const failed = !d.ok;
+    const title = d.title || stripBidi(it.article.article_title || '');
+    /* مراسيم/أوامر keep the number in the title; everyone else in the subtitle */
+    const numberLine = d.subtitle || title;
+    const kind = UQN_KIND[sub] || '';
+    const number = (failed || UQN_NO_NUMBER.includes(sub)) ? '' : uqnNumberFrom(numberLine);
+    const year = uqnYearFrom(numberLine);
+    return {
+      title,
+      sub,
+      subtitle: d.subtitle,
+      failed,
+      archived: !!d.archived,
+      decisionNo: (kind && number) ? uqnFormatNumber(kind, number, year) : '',
+      authority: failed ? (sub || '—') : uqnAuthority(sub, d.subtitle, d.bodyText),
+      /* null, not false, when the detail never arrived — "لا" would be a claim
+         we did not verify */
+      hasText: failed ? null : d.bodyText.length > 0,
+      link: uqnAbsolute(it.article.permalink || d.permalink) ||
+        `https://www.uqn.gov.sa/decisions-and-regulations/${it.article.cms_article_id}`,
+      note: ''
+    };
+  });
+
+  /* A لائحة/نظام/قواعد text never carries a number of its own — it is enacted
+     by a decision published beside it in the same issue, and the gazette
+     exposes no field linking the two. Resolve the pair by narrowing evidence,
+     strongest first, and record which rung was used so a weaker match can be
+     spot-checked rather than trusted blindly. */
+  const APPROVAL = normAr('الموافقة على') + ' ';
+  /* a مرسوم/أمر ملكي ratifies a نظام but is published as its own entry, so it
+     is only ever a last-resort partner — a برقية تعميمية from الديوان الملكي,
+     by contrast, is a normal enacting instrument for a لائحة */
+  const DECREE = ['مراسيم ملكية','أوامر ملكية'];
+  const enacting = rows.filter(o => o.decisionNo);
+  /* drop the wrapper wording so "التعديلات الواردة على قواعد مناطق الإيداع"
+     can be recognised inside "...الإجراءات الجمركية وقواعد مناطق الإيداع" */
+  const coreSubject = t => normAr(t)
+    .replace(/^(التعديلات الوارده علي|تعديلات|تعديل موادفي|تعديل مواد في|تعديل|تحديث|جدول تعديل|جدول)\s+/,'')
+    .replace(/^(بعض بنود|بعض مواد|مواد في)\s+/,'')
+    .trim();
+
+  rows.forEach((row, idx) => {
+    if(row.decisionNo) return;
+    if(row.failed){
+      row.decisionNo = '—';
+      row.note = 'تعذر جلب التفاصيل';
+      return;
+    }
+    if(UQN_NO_NUMBER.includes(row.sub)){
+      row.decisionNo = '—';
+      row.note = 'لا يحمل رقم قرار';
+      return;
+    }
+
+    const target = normAr(row.title);
+    const core = coreSubject(row.title);
+    let match = null, weak = false;
+
+    // 1. "الموافقة على <نفس الاسم>"
+    match = enacting.find(o => {
+      const t = normAr(o.title);
+      return t.startsWith(APPROVAL) && t.slice(APPROVAL.length) === target;
+    });
+    // 2. the decision republished under the very same title
+    if(!match) match = enacting.find(o => normAr(o.title) === target);
+    // 3. the decision whose title names this text's subject
+    if(!match && core.length >= 12){
+      match = enacting.find(o => normAr(o.title).includes(core));
+    }
+    // 4. last resort: issues are laid out as (النص، ثم قرار اعتماده)
+    if(!match){
+      let decreeFallback = null;
+      for(let j = idx + 1; j < rows.length; j++){
+        const cand = rows[j];
+        if(!cand.decisionNo || cand.decisionNo === '—') continue;
+        if(DECREE.includes(cand.sub)){ decreeFallback = decreeFallback || cand; continue; }
+        match = cand; break;
+      }
+      match = match || decreeFallback;
+      weak = !!match;
+    }
+
+    if(match){
+      row.decisionNo = match.decisionNo;
+      row.note = weak ? 'رقم قرار الاعتماد (بالترتيب — يُستحسن التحقق)' : 'رقم قرار الاعتماد';
+      if(match.authority) row.authority = match.authority;
+      return;
+    }
+    row.decisionNo = '—';
+    row.note = row.archived
+      ? 'غير متاح في أرشيف أم القرى — يُراجع العدد'
+      : 'لا يوجد قرار اعتماد في هذا العدد';
+    if(row.authority === row.sub) row.authority = '—';
+  });
+  return rows;
+}
+
+/* ---------- rendering ---------- */
+function uqnRowsTableHtml(rows){
+  const body = rows.map((r,i) => `<tr>
+    <td class="col-idx">${i+1}</td>
+    <td class="col-name">${escapeHtml(r.title)}${r.sub ? `<span class="uqn-sub">${escapeHtml(r.sub)}</span>` : ''}</td>
+    <td class="col-no${r.decisionNo === '—' ? ' muted' : ''}">${escapeHtml(r.decisionNo)}${r.note ? `<span class="uqn-sub">${escapeHtml(r.note)}</span>` : ''}</td>
+    <td class="col-authority">${escapeHtml(r.authority)}</td>
+    <td class="col-text">${r.hasText === null
+      ? '<span class="yn unknown" title="تعذر جلب التفاصيل">؟</span>'
+      : `<span class="yn ${r.hasText ? 'yes':'no'}">${r.hasText ? 'نعم':'لا'}</span>`}</td>
+    <td class="col-link"><a class="uqn-link" href="${escapeHtml(r.link)}" target="_blank" rel="noopener noreferrer">فتح</a></td>
+  </tr>`).join('');
+  return `<div class="uqn-table-wrap"><table class="uqn-table">
+    <thead><tr>
+      <th class="col-idx">#</th>
+      <th class="col-name">اسم التشريع</th>
+      <th class="col-no">رقم القرار</th>
+      <th class="col-authority">الجهة المصدرة</th>
+      <th class="col-text">تفريغ نصي</th>
+      <th class="col-link">الرابط</th>
+    </tr></thead>
+    <tbody>${body}</tbody>
+  </table></div>`;
+}
+function uqnRenderResult(meta, rows){
+  const withText = rows.filter(r=>r.hasText).length;
+  $('#uqnResult').innerHTML = `
+    <div class="uqn-result-top">
+      <div class="uqn-result-title">
+        تشريعات ${escapeHtml(meta.hijriLabel)}
+        <span>· العدد ${escapeHtml(meta.issueNumber || '—')} · ${escapeHtml(meta.iso)} · ${rows.length} تشريعًا · ${withText} بتفريغ نصي</span>
+      </div>
+    </div>
+    ${uqnRowsTableHtml(rows)}`;
+}
+
+/* ---------- persistence: the log of past extractions ---------- */
+function uqnMapRow(row){
+  return {
+    id: row.id,
+    ownerId: row.owner_id,
+    user: row.owner_name,
+    issueNumber: row.issue_number,
+    hijriLabel: row.hijri_label,
+    iso: row.gregorian_date,
+    sourceUrl: row.source_url,
+    itemCount: row.item_count,
+    items: Array.isArray(row.items) ? row.items : [],
+    createdAt: row.created_at
+  };
+}
+async function uqnSaveExtraction(meta, rows){
+  if(!currentUser) return null;
+  const { data, error } = await sb.from('uqn_extractions').insert({
+    owner_id: currentUser.id,
+    owner_name: currentUser.fullName,
+    issue_number: meta.issueNumber || '',
+    hijri_label: meta.hijriLabel,
+    gregorian_date: meta.iso,
+    source_url: meta.sourceUrl,
+    item_count: rows.length,
+    items: rows
+  }).select().single();
+  if(error) return null;
+  return uqnMapRow(data);
+}
+async function uqnLoadExtractions(){
+  const { data, error } = await sb.from('uqn_extractions')
+    .select('*').order('created_at', { ascending:false }).limit(60);
+  if(error) return null;
+  return data.map(uqnMapRow);
+}
+let uqnLogCache = [];
+async function uqnRenderLog(){
+  const list = $('#uqnLogList');
+  const recs = await uqnLoadExtractions();
+  if(recs === null){
+    list.innerHTML = '<div class="empty-hint">تعذر تحميل سجل الاستخراجات — تأكد من إنشاء جدول uqn_extractions في Supabase.</div>';
+    return;
+  }
+  uqnLogCache = recs;
+  if(!recs.length){
+    list.innerHTML = '<div class="empty-hint">لا يوجد أي استخراج محفوظ بعد</div>';
+    return;
+  }
+  list.innerHTML = recs.map(r => `<div class="log-card">
+    <div class="log-card-main">
+      <div class="log-title">العدد ${escapeHtml(r.issueNumber || '—')} · ${escapeHtml(r.hijriLabel || '')}</div>
+      <div class="log-meta">${escapeHtml(r.user || 'غير معروف')} · ${formatDate(r.createdAt)} · ${r.itemCount} تشريعًا</div>
+    </div>
+    <div class="log-card-actions">
+      <button class="btn-ghost uqn-log-btn" data-id="${r.id}" data-action="view">عرض</button>
+      ${r.ownerId === currentUser.id ? `<button class="btn-ghost uqn-log-btn log-danger" data-id="${r.id}" data-action="delete">حذف</button>` : ''}
+    </div>
+  </div>`).join('');
+}
+$('#uqnLogList').addEventListener('click', async e => {
+  const btn = e.target.closest('.uqn-log-btn');
+  if(!btn) return;
+  const rec = uqnLogCache.find(r => r.id === btn.dataset.id);
+  if(!rec) return;
+  if(btn.dataset.action === 'view'){
+    uqnRenderResult({ hijriLabel:rec.hijriLabel, issueNumber:rec.issueNumber, iso:rec.iso }, rec.items);
+    $('#uqnResult').scrollIntoView({ behavior:'smooth', block:'start' });
+    return;
+  }
+  const { error } = await sb.from('uqn_extractions').delete().eq('id', rec.id);
+  if(error){ showToast('تعذر حذف الاستخراج'); return; }
+  showToast('تم الحذف');
+  uqnRenderLog();
+});
+
+/* ---------- the extract flow ---------- */
+function uqnSetStatus(msg, isError){
+  const el = $('#uqnStatus');
+  el.classList.toggle('error', !!isError);
+  el.innerHTML = msg;
+}
+function uqnReadDate(){
+  const d = parseInt($('#uqnDay').value, 10);
+  const m = parseInt($('#uqnMonth').value, 10);
+  const y = parseInt($('#uqnYear').value, 10);
+  if(!d || !m || !y) return null;
+  const greg = hijriToGreg(y, m, d);
+  if(!greg) return null;
+  return { hy:y, hm:m, hd:d, greg, iso:isoDate(greg) };
+}
+function uqnUpdateHint(){
+  const picked = uqnReadDate();
+  if(!picked){ $('#uqnGregHint').innerHTML = ''; return; }
+  const g = picked.greg.toLocaleDateString('ar', { day:'numeric', month:'long', year:'numeric', timeZone:'UTC' });
+  $('#uqnGregHint').innerHTML = `يوافق <b>${escapeHtml(g)}</b> (${picked.iso})`;
+}
+
+let uqnBusy = false;
+async function uqnExtract(){
+  if(uqnBusy) return;
+  const picked = uqnReadDate();
+  if(!picked){
+    uqnSetStatus('أدخل تاريخًا هجريًا صحيحًا (اليوم والشهر والسنة).', true);
+    return;
+  }
+  uqnBusy = true;
+  uqnUpdateHint();   // never let a stale hint contradict the table below it
+  const btn = $('#uqnFetchBtn');
+  btn.disabled = true;
+  $('#uqnResult').innerHTML = '';
+  const hLabel = hijriLabel(picked.hy, picked.hm, picked.hd);
+
+  try{
+    uqnSetStatus('<span class="uqn-spinner"></span>جاري تحديد رقم العدد…');
+    const issueNumber = await uqnIssueForDate(picked.iso);
+    $('#uqnIssueNo').value = issueNumber || '—';
+    const sourceUrl = issueNumber
+      ? `https://www.uqn.gov.sa/digital?date=${picked.iso}`
+      : UQN_DECISIONS_URL;
+    $('#uqnSourceUrl').value = sourceUrl;
+
+    uqnSetStatus('<span class="uqn-spinner"></span>جاري البحث عن تشريعات هذا التاريخ…');
+    const articles = await uqnCollectForDate(picked.iso, n => {
+      uqnSetStatus(`<span class="uqn-spinner"></span>جاري البحث في قائمة القرارات… (${n} صفحة)`);
+    });
+
+    if(!articles.length){
+      uqnSetStatus(`لا توجد تشريعات منشورة بتاريخ ${escapeHtml(hLabel)} (${picked.iso}).`);
+      return;
+    }
+
+    /* the number line and the full text live only in widget/37, one request
+       per article. Two at a time: the site starts refusing connections when
+       they arrive in a wider burst. */
+    const items = new Array(articles.length);
+    let done = 0;
+    let cursor = 0;
+    async function worker(){
+      while(cursor < articles.length){
+        const i = cursor++;
+        items[i] = { article: articles[i], detail: await uqnDetail(articles[i]) };
+        done++;
+        uqnSetStatus(`<span class="uqn-spinner"></span>جاري قراءة التشريعات… (${done}/${articles.length})`);
+      }
+    }
+    await Promise.all(Array.from({ length: Math.min(2, articles.length) }, worker));
+
+    const rows = uqnBuildRows(items);
+    const meta = { hijriLabel:hLabel, issueNumber, iso:picked.iso, sourceUrl };
+    uqnRenderResult(meta, rows);
+
+    const missing = rows.filter(r => r.failed).length;
+    const archived = rows.filter(r => r.archived).length;
+    let warn = missing ? ` تعذر جلب تفاصيل ${missing} منها — أعد المحاولة لاستكمالها.` : '';
+    /* pre-2026 issues sit in the gazette's archive, which serves no
+       article_subtitle — the field رقم القرار is read from */
+    if(archived) warn += ` ${archived} منها من الأرشيف القديم، ولا يوفّر أم القرى رقم القرار لها عبر الـAPI.`;
+    const saved = await uqnSaveExtraction(meta, rows);
+    if(saved){
+      uqnSetStatus(`تم استخراج ${rows.length} تشريعًا وحفظها في السجل.${warn}`, !!(missing || archived));
+      uqnRenderLog();
+    }else{
+      uqnSetStatus(`تم استخراج ${rows.length} تشريعًا، لكن تعذر حفظها في السجل.${warn}`, true);
+    }
+  }catch(err){
+    uqnSetStatus('تعذر الوصول إلى بيانات أم القرى. تحقق من الاتصال ثم أعد المحاولة.', true);
+  }finally{
+    uqnBusy = false;
+    btn.disabled = false;
+  }
+}
+
+(function initUqnTab(){
+  const monthSel = $('#uqnMonth');
+  monthSel.innerHTML = UQN_HIJRI_MONTHS
+    .map((name,i) => `<option value="${i+1}">${name}</option>`).join('');
+  /* default to today's hijri date — the newest issue is the common case */
+  const today = gregToHijri(new Date());
+  $('#uqnDay').value = today.d;
+  monthSel.value = today.m;
+  $('#uqnYear').value = today.y;
+  uqnUpdateHint();
+  ['#uqnDay','#uqnMonth','#uqnYear'].forEach(sel =>
+    $(sel).addEventListener('input', uqnUpdateHint));
+  $('#uqnFetchBtn').addEventListener('click', uqnExtract);
+  $('#viewUqn').addEventListener('keydown', e => {
+    if(e.key === 'Enter' && e.target.closest('.uqn-hijri')) uqnExtract();
+  });
+})();
+
 /* ---------- side rail: expand/collapse, navigation, settings ---------- */
 $('#railToggle').addEventListener('click', async ()=>{
   document.body.classList.toggle('rail-expanded');
@@ -1732,9 +2442,11 @@ $('#railToggle').addEventListener('click', async ()=>{
 });
 
 $('#navHome').dataset.view = 'home';
+$('#navUqn').dataset.view = 'uqn';
 $('#navSettings').dataset.view = 'settings';
 $('#navHome').addEventListener('click', ()=>goToView('home'));
 $('#navNewFile').addEventListener('click', startNewFile);
+$('#navUqn').addEventListener('click', ()=>goToView('uqn'));
 $('#navSettings').addEventListener('click', ()=>goToView('settings'));
 
 function applyFontScale(scale){
