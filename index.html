@@ -490,7 +490,6 @@
   /* derived, non-editable fields: the date is the only real input */
   .uqn-field input[readonly]{background:var(--bg-soft);color:var(--text-muted);cursor:default;}
   .uqn-field input#uqnIssueNo{width:110px;font-weight:700;text-align:center;}
-  .uqn-field input#uqnSourceUrl{min-width:330px;direction:ltr;text-align:left;font-size:12px;}
   .uqn-greg-hint{font-size:12px;color:var(--text-muted);margin-top:10px;}
   .uqn-greg-hint b{color:var(--blue);font-weight:700;}
 
@@ -527,17 +526,27 @@
   table.uqn-table .col-name{min-width:250px;font-weight:600;}
   table.uqn-table .col-no{min-width:258px;}
   table.uqn-table .col-authority{min-width:160px;}
-  table.uqn-table .col-text, table.uqn-table .col-link{white-space:nowrap;text-align:center;}
+  table.uqn-table .col-link{white-space:nowrap;text-align:center;}
   table.uqn-table td.col-no.muted{color:var(--text-muted);}
   .uqn-sub{display:block;font-size:11.5px;color:var(--text-muted);font-weight:400;margin-top:3px;}
-
-  .yn{font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:999px;display:inline-block;}
-  .yn.yes{background:var(--lvl3-bg);color:var(--lvl3-text);}
-  .yn.no{background:#fef2f2;color:var(--danger);}
-  :root[data-theme="dark"] .yn.no{background:#3a1414;color:#fca5a5;}
-  .yn.unknown{background:var(--lvl2-bg);color:var(--lvl2-text);cursor:help;}
   .uqn-link{color:var(--blue);font-weight:600;font-size:12px;text-decoration:none;}
   .uqn-link:hover{text-decoration:underline;}
+
+  /* one-time setup card, shown in place of the log until the table exists */
+  .uqn-setup{
+    background:var(--surface);border:1px solid var(--lvl2-border);border-radius:12px;padding:18px;
+  }
+  .uqn-setup-title{font-size:13.5px;font-weight:700;color:var(--lvl2-text);margin-bottom:6px;}
+  .uqn-setup-body{font-size:12.5px;color:var(--text-muted);line-height:1.8;margin-bottom:12px;}
+  .uqn-setup-body b{color:var(--text);}
+  .uqn-setup-actions{display:flex;gap:8px;flex-wrap:wrap;}
+  .uqn-setup pre{
+    margin:12px 0 0;padding:12px;border-radius:9px;background:var(--bg-soft);
+    border:1px solid var(--border);overflow-x:auto;max-height:190px;
+    font-size:11.5px;line-height:1.65;direction:ltr;text-align:left;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--text-muted);
+    cursor:pointer;
+  }
 </style>
 </head>
 <body>
@@ -752,7 +761,7 @@
     <div class="home-header">
       <div class="eyebrow">أداة داخلية · استخراج من المصدر</div>
       <h1>تشريعات أم القرى</h1>
-      <p class="sub">اختر تاريخ العدد، ويُستخرج جدول تشريعاته من جريدة أم القرى مباشرة: اسم التشريع، ورقم القرار، والجهة المصدرة، وهل له تفريغ نصي.</p>
+      <p class="sub">اختر تاريخ العدد، ويُستخرج جدول تشريعاته من جريدة أم القرى مباشرة: اسم التشريع، ورقم القرار، والجهة المصدرة، ورابط كل تشريع في مصدره.</p>
     </div>
 
     <div class="card">
@@ -768,10 +777,6 @@
         <div class="uqn-field">
           <label for="uqnIssueNo">رقم العدد</label>
           <input id="uqnIssueNo" type="text" readonly placeholder="—" title="يُستنتج من التاريخ">
-        </div>
-        <div class="uqn-field">
-          <label for="uqnSourceUrl">رابط أم القرى</label>
-          <input id="uqnSourceUrl" type="text" readonly value="https://www.uqn.gov.sa/Decisions">
         </div>
         <button class="btn-primary" id="uqnFetchBtn">استخراج الجدول</button>
       </div>
@@ -2215,9 +2220,6 @@ function uqnRowsTableHtml(rows){
     <td class="col-name">${escapeHtml(r.title)}${r.sub ? `<span class="uqn-sub">${escapeHtml(r.sub)}</span>` : ''}</td>
     <td class="col-no${r.decisionNo === '—' ? ' muted' : ''}">${escapeHtml(r.decisionNo)}${r.note ? `<span class="uqn-sub">${escapeHtml(r.note)}</span>` : ''}</td>
     <td class="col-authority">${escapeHtml(r.authority)}</td>
-    <td class="col-text">${r.hasText === null
-      ? '<span class="yn unknown" title="تعذر جلب التفاصيل">؟</span>'
-      : `<span class="yn ${r.hasText ? 'yes':'no'}">${r.hasText ? 'نعم':'لا'}</span>`}</td>
     <td class="col-link"><a class="uqn-link" href="${escapeHtml(r.link)}" target="_blank" rel="noopener noreferrer">فتح</a></td>
   </tr>`).join('');
   return `<div class="uqn-table-wrap"><table class="uqn-table">
@@ -2226,19 +2228,17 @@ function uqnRowsTableHtml(rows){
       <th class="col-name">اسم التشريع</th>
       <th class="col-no">رقم القرار</th>
       <th class="col-authority">الجهة المصدرة</th>
-      <th class="col-text">تفريغ نصي</th>
       <th class="col-link">الرابط</th>
     </tr></thead>
     <tbody>${body}</tbody>
   </table></div>`;
 }
 function uqnRenderResult(meta, rows){
-  const withText = rows.filter(r=>r.hasText).length;
   $('#uqnResult').innerHTML = `
     <div class="uqn-result-top">
       <div class="uqn-result-title">
         تشريعات ${escapeHtml(meta.hijriLabel)}
-        <span>· العدد ${escapeHtml(meta.issueNumber || '—')} · ${escapeHtml(meta.iso)} · ${rows.length} تشريعًا · ${withText} بتفريغ نصي</span>
+        <span>· العدد ${escapeHtml(meta.issueNumber || '—')} · ${escapeHtml(meta.iso)} · ${rows.length} تشريعًا</span>
       </div>
     </div>
     ${uqnRowsTableHtml(rows)}`;
@@ -2276,18 +2276,82 @@ async function uqnSaveExtraction(meta, rows){
 }
 async function uqnLoadExtractions(){
   const { data, error } = await sb.from('uqn_extractions')
-    .select('*').order('created_at', { ascending:false }).limit(60);
-  if(error) return null;
-  return data.map(uqnMapRow);
+    .select('*').order('created_at', { ascending:false }).limit(200);
+  if(error) return { error };
+  return { rows: data.map(uqnMapRow) };
 }
+
+/* The log needs a table that only a project owner can create, so when it is
+   missing the tab hands over the exact statement to run instead of just
+   reporting a failure. Pasting the whole schema.sql aborts on the tables that
+   already exist and creates nothing — hence "this block only". */
+const UQN_TABLE_SQL = `create table public.uqn_extractions (
+  id uuid primary key default gen_random_uuid(),
+  owner_id uuid not null references auth.users(id) on delete cascade,
+  owner_name text not null default '',
+  issue_number text not null default '',
+  hijri_label text not null default '',
+  gregorian_date date,
+  source_url text not null default '',
+  item_count integer not null default 0,
+  items jsonb not null default '[]'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+create index uqn_extractions_created_at_idx on public.uqn_extractions(created_at desc);
+create index uqn_extractions_owner_id_idx on public.uqn_extractions(owner_id);
+
+alter table public.uqn_extractions enable row level security;
+
+create policy "extractions are viewable by authenticated users"
+  on public.uqn_extractions for select
+  to authenticated
+  using (true);
+
+create policy "owners can insert their own extractions"
+  on public.uqn_extractions for insert
+  to authenticated
+  with check (owner_id = auth.uid());
+
+create policy "owners can delete their own extractions"
+  on public.uqn_extractions for delete
+  to authenticated
+  using (owner_id = auth.uid());`;
+
+function uqnSqlEditorUrl(){
+  const ref = (SUPABASE_URL.match(/\/\/([^.]+)\./) || [])[1];
+  return ref ? `https://supabase.com/dashboard/project/${ref}/sql/new` : 'https://supabase.com/dashboard';
+}
+function uqnSetupCardHtml(){
+  return `<div class="uqn-setup">
+    <div class="uqn-setup-title">السجل يحتاج تجهيزة واحدة (مرة واحدة فقط)</div>
+    <div class="uqn-setup-body">
+      جدول <b>uqn_extractions</b> غير موجود في Supabase، ولهذا لا يُحفظ أي استخراج.
+      انسخ الأوامر أدناه والصقها في SQL Editor ثم اضغط Run.
+      <br>مهم: الصق <b>هذا المقطع وحده</b> — لصق ملف schema.sql كاملًا يتوقف عند الجداول الموجودة أصلًا ولا يُنشئ شيئًا.
+    </div>
+    <div class="uqn-setup-actions">
+      <button class="pill-btn blue" id="uqnCopySqlBtn"><span class="icon icon-copy"></span> نسخ الأوامر</button>
+      <a class="pill-btn" href="${uqnSqlEditorUrl()}" target="_blank" rel="noopener noreferrer">فتح SQL Editor</a>
+      <button class="pill-btn" id="uqnRecheckBtn">تحقّق مرة أخرى</button>
+    </div>
+    <pre id="uqnSqlBlock" title="اضغط لتحديد الأوامر كاملة">${escapeHtml(UQN_TABLE_SQL)}</pre>
+  </div>`;
+}
+
 let uqnLogCache = [];
 async function uqnRenderLog(){
   const list = $('#uqnLogList');
-  const recs = await uqnLoadExtractions();
-  if(recs === null){
-    list.innerHTML = '<div class="empty-hint">تعذر تحميل سجل الاستخراجات — تأكد من إنشاء جدول uqn_extractions في Supabase.</div>';
+  const res = await uqnLoadExtractions();
+  if(res.error){
+    const msg = res.error.message || '';
+    const tableMissing = /uqn_extractions/.test(msg) || res.error.code === 'PGRST205' || /42P01/.test(res.error.code || '');
+    list.innerHTML = tableMissing
+      ? uqnSetupCardHtml()
+      : `<div class="empty-hint">تعذر تحميل سجل الاستخراجات — ${escapeHtml(msg || 'خطأ غير معروف')}</div>`;
     return;
   }
+  const recs = res.rows;
   uqnLogCache = recs;
   if(!recs.length){
     list.innerHTML = '<div class="empty-hint">لا يوجد أي استخراج محفوظ بعد</div>';
@@ -2305,6 +2369,24 @@ async function uqnRenderLog(){
   </div>`).join('');
 }
 $('#uqnLogList').addEventListener('click', async e => {
+  if(e.target.closest('#uqnCopySqlBtn')){
+    showToast(await copyTextToClipboard(UQN_TABLE_SQL)
+      ? 'تم نسخ الأوامر — الصقها في SQL Editor واضغط Run'
+      : 'تعذر النسخ، حدّد النص يدويًا');
+    return;
+  }
+  if(e.target.closest('#uqnRecheckBtn')){ uqnRenderLog(); return; }
+  /* clipboard writes can be refused by the browser; selecting the block makes
+     the manual path a single click away */
+  const sqlBlock = e.target.closest('#uqnSqlBlock');
+  if(sqlBlock){
+    const range = document.createRange();
+    range.selectNodeContents(sqlBlock);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+    return;
+  }
   const btn = e.target.closest('.uqn-log-btn');
   if(!btn) return;
   const rec = uqnLogCache.find(r => r.id === btn.dataset.id);
@@ -2361,10 +2443,11 @@ async function uqnExtract(){
     uqnSetStatus('<span class="uqn-spinner"></span>جاري تحديد رقم العدد…');
     const issueNumber = await uqnIssueForDate(picked.iso);
     $('#uqnIssueNo').value = issueNumber || '—';
+    /* kept on the saved record as the issue's own page, even though the tab
+       no longer shows a link field — the date alone drives the extraction */
     const sourceUrl = issueNumber
       ? `https://www.uqn.gov.sa/digital?date=${picked.iso}`
       : UQN_DECISIONS_URL;
-    $('#uqnSourceUrl').value = sourceUrl;
 
     uqnSetStatus('<span class="uqn-spinner"></span>جاري البحث عن تشريعات هذا التاريخ…');
     const articles = await uqnCollectForDate(picked.iso, n => {
@@ -2407,7 +2490,9 @@ async function uqnExtract(){
       uqnSetStatus(`تم استخراج ${rows.length} تشريعًا وحفظها في السجل.${warn}`, !!(missing || archived));
       uqnRenderLog();
     }else{
-      uqnSetStatus(`تم استخراج ${rows.length} تشريعًا، لكن تعذر حفظها في السجل.${warn}`, true);
+      /* surface the setup card right below, so the reason is one glance away */
+      uqnRenderLog();
+      uqnSetStatus(`تم استخراج ${rows.length} تشريعًا، لكن لم تُحفظ في السجل — أكمل التجهيزة أدناه ثم أعد الاستخراج.${warn}`, true);
     }
   }catch(err){
     uqnSetStatus('تعذر الوصول إلى بيانات أم القرى. تحقق من الاتصال ثم أعد المحاولة.', true);
