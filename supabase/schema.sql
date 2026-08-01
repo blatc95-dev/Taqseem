@@ -152,12 +152,11 @@ create policy "owners can delete their own extractions"
 -- ---------- site_updates ----------
 -- one row per "تحديثات المواقع" search: the date range an employee already
 -- swept on one source site, plus what that sweep found. The rows are what
--- makes the range rule work — a new search whose range touches a range
--- already recorded for the same site is refused, so no two employees cover
--- the same days twice. `items` keeps the result as rendered, so a historical
--- search stays readable even after the source site edits the page.
-create extension if not exists btree_gist;
-
+-- makes the range warning work — before a search starts, the app looks here
+-- for a range on the same site that the new one touches, and asks the
+-- employee to confirm rather than repeat someone else's sweep by accident.
+-- `items` keeps the result as rendered, so a historical search stays readable
+-- even after the source site edits the page.
 create table public.site_updates (
   id uuid primary key default gen_random_uuid(),
   owner_id uuid not null references auth.users(id) on delete cascade,
@@ -171,14 +170,11 @@ create table public.site_updates (
   item_count integer not null default 0,     -- of those, entries in range
   items jsonb not null default '[]'::jsonb,
   created_at timestamptz not null default now(),
-  constraint site_updates_range_order check (range_from <= range_to),
-  -- the app refuses an overlapping range before it starts scanning; this is
-  -- what still holds the rule when two employees search at the same moment.
-  -- Deleting a search from the log frees its range again, as it should.
-  constraint site_updates_no_overlap exclude using gist (
-    site_key with =,
-    daterange(range_from, range_to, '[]') with &&
-  )
+  constraint site_updates_range_order check (range_from <= range_to)
+  -- deliberately no exclusion constraint on (site_key, range): overlap is a
+  -- confirmed choice in the app, not an error, so the row must be allowed to
+  -- save. A database created before that change still carries
+  -- `site_updates_no_overlap` — see the migration note at the end of this file.
 );
 
 create index site_updates_created_at_idx on public.site_updates(created_at desc);
@@ -200,3 +196,15 @@ create policy "owners can delete their own site updates"
   on public.site_updates for delete
   to authenticated
   using (owner_id = auth.uid());
+
+-- ---------- migrations for projects created earlier ----------
+-- Run these on an existing database only; a project created from the schema
+-- above is already in this shape.
+
+-- "تحديثات المواقع" used to refuse an overlapping range outright, and the
+-- table was created with an exclusion constraint holding that rule. The app
+-- now asks the employee to confirm instead, so the row has to be allowed to
+-- save. Without this, a confirmed search runs but its result is never logged
+-- (the insert fails with 23P01) — the tab detects that and offers this same
+-- statement in its setup card.
+alter table public.site_updates drop constraint if exists site_updates_no_overlap;

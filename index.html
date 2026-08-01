@@ -130,9 +130,6 @@
   .login-card .user-box input, .login-card .user-box select{width:100%;}
   .login-error{color:var(--danger);font-size:12.5px;margin-top:10px;min-height:1px;}
 
-  /* home greeting */
-  .home-greeting{font-size:16px;font-weight:700;color:var(--blue);margin:0 0 8px;}
-
   /* sidebar account block */
   .rail-account{margin-top:auto;padding:10px 8px 14px;border-top:1px solid var(--border);}
   .rail-account-name{
@@ -210,6 +207,12 @@
   .icon-home{-webkit-mask-image:url(icons/home-2.svg);mask-image:url(icons/home-2.svg);}
   .icon-newspaper{-webkit-mask-image:url(icons/newspaper.svg);mask-image:url(icons/newspaper.svg);}
   .icon-globe{-webkit-mask-image:url(icons/globe.svg);mask-image:url(icons/globe.svg);}
+  /* the only arrow in the kit points right, which is *backwards* in RTL, so a
+     "go forward" arrow is that same glyph mirrored */
+  .icon-go{
+    -webkit-mask-image:url(icons/arrow-right.svg);mask-image:url(icons/arrow-right.svg);
+    transform:scaleX(-1);transition:transform .15s ease;
+  }
 
   button{font-family:inherit;cursor:pointer;border:none;}
   .btn-primary{
@@ -369,16 +372,63 @@
     font-size:13px;font-weight:600;padding:12px 16px;border-radius:10px;margin-bottom:18px;
   }
 
-  /* home page */
+  /* ---------- home dashboard ----------
+     one card per tool, each answering "where does this stand right now",
+     then a single merged activity feed under them. */
   .home-header{margin-bottom:26px;}
-  .home-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:26px;}
-  @media (max-width:820px){.home-stats{grid-template-columns:repeat(2,1fr);}}
-  .stat-card{
+
+  .home-products{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:34px;}
+  @media (max-width:980px){.home-products{grid-template-columns:1fr;}}
+  .product-card{
+    display:flex;flex-direction:column;align-items:stretch;gap:10px;text-align:start;
     background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
-    padding:20px;text-align:center;
+    padding:20px;color:var(--text);font-family:inherit;
+    transition:border-color .15s ease, transform .15s ease, background-color .15s ease;
   }
-  .stat-num{font-size:28px;font-weight:800;color:var(--blue);margin-bottom:4px;}
-  .stat-label{font-size:12.5px;color:var(--text-muted);font-weight:600;}
+  .product-card:hover{border-color:var(--blue);transform:translateY(-2px);}
+  .product-card:focus-visible{outline:2px solid var(--blue);outline-offset:2px;}
+  .product-head{display:flex;align-items:center;gap:10px;}
+  .product-icon{
+    display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;
+    width:34px;height:34px;border-radius:10px;background:var(--blue-bg);color:var(--blue);
+  }
+  .product-icon .icon{width:17px;height:17px;}
+  .product-name{font-size:15.5px;font-weight:800;}
+  .product-desc{font-size:12.5px;color:var(--text-muted);line-height:1.7;}
+  /* the one line that actually decides whether this tool needs attention */
+  .product-state{
+    font-size:12.5px;font-weight:600;color:var(--text);margin-top:auto;
+    padding-top:12px;border-top:1px dashed var(--border);
+  }
+  .product-state b{color:var(--blue);font-weight:800;font-size:15px;}
+  .product-state.is-attention b{color:var(--lvl2-text);}
+  .product-state.is-clear b{color:var(--lvl3-text);}
+  .product-cta{
+    display:inline-flex;align-items:center;gap:6px;
+    font-size:13px;font-weight:700;color:var(--blue);
+  }
+  .product-cta .icon{width:14px;height:14px;}
+  .product-card:hover .product-cta .icon{transform:scaleX(-1) translateX(3px);}
+
+  /* activity feed */
+  .activity-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px;}
+  .activity-head .log-section-title{margin-bottom:0;}
+  .activity-filters{display:flex;gap:6px;flex-wrap:wrap;}
+  .chip{
+    font-size:12px;font-weight:600;padding:6px 13px;border-radius:999px;
+    border:1px solid var(--border);background:var(--surface);color:var(--text-muted);
+  }
+  .chip:hover{background:var(--bg-soft);color:var(--text);}
+  .chip.active{background:var(--blue-bg);border-color:var(--blue-bg-hover);color:var(--blue);}
+  .act-tag{
+    font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:999px;
+    margin-inline-end:7px;vertical-align:1px;white-space:nowrap;
+  }
+  .act-tag.act-taqseem{background:var(--lvl1-bg);color:var(--lvl1-text);}
+  .act-tag.act-uqn{background:var(--lvl2-bg);color:var(--lvl2-text);}
+  .act-tag.act-su{background:var(--lvl3-bg);color:var(--lvl3-text);}
+  .act-tag.act-draft{background:var(--bg-soft);color:var(--text-muted);border:1px solid var(--border);}
+  .activity-more{display:flex;justify-content:center;margin-top:14px;}
 
   /* log sections (embedded in the home page) */
   .log-section{margin-bottom:30px;}
@@ -567,8 +617,8 @@
     background:none;border:none;padding:0;font:inherit;font-size:12px;font-weight:700;
     color:var(--blue);text-decoration:underline;cursor:pointer;
   }
-  /* the refusal is the tab's main rule, so it reads as a blocked action
-     rather than as one more grey hint under the form */
+  /* the overlap question interrupts a search the user just asked for, so it
+     reads as a prompt to answer rather than one more grey hint under the form */
   .su-conflict{
     margin-top:14px;padding:12px 14px;border-radius:10px;
     background:var(--lvl2-bg);border:1px solid var(--lvl2-border);
@@ -576,6 +626,9 @@
   }
   .su-conflict b{font-weight:700;}
   .su-conflict ul{margin:6px 0 0;padding-inline-start:18px;}
+  .su-confirm-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px;}
+  .su-confirm-actions .btn-primary,
+  .su-confirm-actions .btn-ghost{padding:8px 18px;font-size:13px;}
   .su-covered{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
   .su-covered-chip{
     font-size:11.5px;font-weight:600;color:var(--text-muted);
@@ -669,27 +722,58 @@
     </div>
   </div>
 
-  <!-- HOME (stats + the log, merged into one landing page) -->
+  <!-- HOME — one landing page across every tool: where each one stands, then
+       one merged activity feed instead of a separate log per tool -->
   <div class="view" id="viewHome">
     <div class="home-header">
-      <span class="eyebrow">أداة داخلية · إدخال البيانات</span>
-      <h1>مقسّم التشريعات</h1>
-      <p class="home-greeting" id="homeGreeting"></p>
-      <p class="sub">ابدأ ملفًا جديدًا لتقسيم نص تشريع إلى أقسام وأبواب وفصول ومواد، أو تابع مسودة أو راجع الملفات المصدَّرة أدناه.</p>
+      <span class="eyebrow">أداة داخلية · فريق قانونية</span>
+      <h1 id="homeGreeting">أهلًا بك</h1>
+      <p class="sub">ابدأ من الأداة التي تحتاجها، أو تابع آخر ما أنجزه الفريق أدناه.</p>
     </div>
-    <div class="home-stats">
-      <div class="stat-card"><div class="stat-num" id="statExported">0</div><div class="stat-label">ملف مُصدَّر</div></div>
-      <div class="stat-card"><div class="stat-num" id="statArticles">0</div><div class="stat-label">مادة مُصدَّرة</div></div>
-      <div class="stat-card"><div class="stat-num" id="statDrafts">0</div><div class="stat-label">مسودة قيد العمل</div></div>
-      <div class="stat-card"><div class="stat-num" id="statLastActivity">—</div><div class="stat-label">آخر نشاط</div></div>
+
+    <div class="home-products" id="homeProducts">
+      <button class="product-card" data-product="taqseem">
+        <span class="product-head">
+          <span class="product-icon"><span class="icon icon-document"></span></span>
+          <span class="product-name">تقسيم</span>
+        </span>
+        <span class="product-desc">تحويل نص التشريع إلى أقسام وأبواب وفصول ومواد</span>
+        <span class="product-state" id="prodTaqseemState">…</span>
+        <span class="product-cta">ابدأ تقسيمًا جديدًا<span class="icon icon-go"></span></span>
+      </button>
+      <button class="product-card" data-product="uqn">
+        <span class="product-head">
+          <span class="product-icon"><span class="icon icon-newspaper"></span></span>
+          <span class="product-name">تشريعات أم القرى</span>
+        </span>
+        <span class="product-desc">استخراج جدول تشريعات عدد من جريدة أم القرى</span>
+        <span class="product-state" id="prodUqnState">…</span>
+        <span class="product-cta">استخرج عددًا<span class="icon icon-go"></span></span>
+      </button>
+      <button class="product-card" data-product="siteUpdates">
+        <span class="product-head">
+          <span class="product-icon"><span class="icon icon-globe"></span></span>
+          <span class="product-name">تحديثات المواقع</span>
+        </span>
+        <span class="product-desc">ما نُشر على مواقع الجهات خلال فترة محددة</span>
+        <span class="product-state" id="prodSuState">…</span>
+        <span class="product-cta">ابحث عن التحديثات<span class="icon icon-go"></span></span>
+      </button>
     </div>
+
     <div class="log-section">
-      <div class="log-section-title">المسودات (متوقفة في المنتصف)</div>
-      <div class="log-list" id="logDrafts"></div>
-    </div>
-    <div class="log-section">
-      <div class="log-section-title">الملفات المكتملة</div>
-      <div class="log-list" id="logCompleted"></div>
+      <div class="activity-head">
+        <div class="log-section-title">آخر النشاط</div>
+        <div class="activity-filters" id="homeFilters">
+          <button class="chip active" data-filter="all">الكل</button>
+          <button class="chip" data-filter="drafts">مسودات</button>
+          <button class="chip" data-filter="taqseem">تقسيم</button>
+          <button class="chip" data-filter="uqn">أم القرى</button>
+          <button class="chip" data-filter="su">المواقع</button>
+        </div>
+      </div>
+      <div class="log-list" id="homeActivity"></div>
+      <div class="activity-more"><button class="pill-btn" id="homeMoreBtn" hidden>عرض المزيد</button></div>
     </div>
   </div>
 
@@ -841,7 +925,7 @@
     <div class="home-header">
       <div class="eyebrow">أداة داخلية · استخراج من المصدر</div>
       <h1>تحديثات المواقع</h1>
-      <p class="sub">اختر الموقع ونطاق التواريخ، ويُستخرج ما نُشر أو حُدِّث على الموقع خلال تلك الفترة. النطاق الافتراضي دائمًا آخر سبعة أيام، وأي نطاق يتداخل مع بحث سابق على الموقع نفسه يُرفض حتى لا يتكرر العمل.</p>
+      <p class="sub">اختر الموقع ونطاق التواريخ، ويُستخرج ما نُشر أو حُدِّث على الموقع خلال تلك الفترة. النطاق الافتراضي دائمًا آخر سبعة أيام، وإن تداخل النطاق مع بحث سابق على الموقع نفسه فسيُسأل عن التأكيد قبل البدء حتى لا يتكرر العمل دون قصد.</p>
     </div>
 
     <div class="card">
@@ -918,7 +1002,7 @@
   </div>
   <nav class="rail-nav">
     <button class="rail-item" id="navHome" title="الرئيسية"><span class="icon icon-home"></span><span class="rail-label">الرئيسية</span></button>
-    <button class="rail-item" id="navNewFile" title="ملف جديد"><span class="icon icon-document"></span><span class="rail-label">ملف جديد</span></button>
+    <button class="rail-item" id="navNewFile" title="تقسيم"><span class="icon icon-document"></span><span class="rail-label">تقسيم</span></button>
     <button class="rail-item" id="navUqn" title="تشريعات أم القرى"><span class="icon icon-newspaper"></span><span class="rail-label">تشريعات أم القرى</span></button>
     <button class="rail-item" id="navSiteUpdates" title="تحديثات المواقع"><span class="icon icon-globe"></span><span class="rail-label">تحديثات المواقع</span></button>
     <button class="rail-item" id="navSettings" title="الإعدادات"><span class="icon icon-setting"></span><span class="rail-label">الإعدادات</span></button>
@@ -1166,45 +1250,203 @@ async function startNewFile(){
   showToast('بدأت ملفًا جديدًا');
 }
 
-/* ---------- home page (also doubles as the log) ---------- */
-function countsSummary(counts){
-  if(!counts) return '';
-  return [0,1,2,3].filter(l=>counts[l]).map(l=>`${counts[l]} ${levelLabel[l]}`).join(' · ');
+/* ---------- home dashboard ----------
+   Two questions only: where does each tool stand right now, and what happened
+   last. Anything a tool's own page already answers better stays on that page. */
+function arCount(n, one, two, few, many){
+  if(n === 1) return one;
+  if(n === 2) return two;
+  return `${n} ${(n >= 3 && n <= 10) ? few : many}`;
 }
-function logCardHtml(rec, isDraft, isOwner){
-  const actions = (isDraft && isOwner)
-    ? `<button class="btn-ghost log-open-btn" data-id="${rec.id}" data-action="continue">متابعة</button>
-       <button class="btn-ghost log-open-btn log-danger" data-id="${rec.id}" data-action="delete">إنهاء</button>`
-    : `<button class="btn-ghost log-open-btn" data-id="${rec.id}" data-action="view">عرض</button>`;
+/* on a landing page "قبل يومين" carries the meaning a timestamp doesn't; the
+   exact stamp is still one click away inside each tool's own log */
+function relTime(iso){
+  if(!iso) return '';
+  const mins = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
+  if(mins < 1) return 'الآن';
+  if(mins < 60) return 'قبل ' + arCount(mins, 'دقيقة', 'دقيقتين', 'دقائق', 'دقيقة');
+  const hours = Math.floor(mins / 60);
+  if(hours < 24) return 'قبل ' + arCount(hours, 'ساعة', 'ساعتين', 'ساعات', 'ساعة');
+  const days = Math.floor(hours / 24);
+  if(days === 1) return 'أمس';
+  if(days < 30) return 'قبل ' + arCount(days, 'يوم', 'يومين', 'أيام', 'يومًا');
+  return formatDateOnly(iso);
+}
+
+function homeSetState(sel, html, tone){
+  const el = $(sel);
+  el.className = 'product-state' + (tone ? ' is-' + tone : '');
+  el.innerHTML = html;
+}
+function homeRenderTaqseemState(records){
+  const drafts = records.filter(r => r.status === 'draft').length;
+  const done = records.filter(r => r.status === 'completed').length;
+  const tail = done ? ` · ${arCount(done, 'ملف مكتمل', 'ملفان مكتملان', 'ملفات مكتملة', 'ملفًا مكتملًا')}` : '';
+  homeSetState('#prodTaqseemState',
+    drafts
+      ? `<b>${arCount(drafts, 'مسودة واحدة', 'مسودتان', 'مسودات', 'مسودة')}</b> قيد العمل${tail}`
+      : `لا مسودات معلّقة${tail || ' · لم يكتمل أي ملف بعد'}`,
+    drafts ? 'attention' : 'clear');
+}
+function homeRenderUqnState(res){
+  if(res.error){ homeSetState('#prodUqnState', 'السجل غير متاح — تحتاج الصفحة تجهيزة'); return; }
+  /* no "behind / caught up" to report here — an issue is extracted on demand —
+     so the number stays neutral rather than claiming a state it can't know */
+  const last = res.rows[0];
+  homeSetState('#prodUqnState',
+    last
+      ? `آخر عدد مستخرج <b>${escapeHtml(last.issueNumber || '—')}</b> · ${relTime(last.createdAt)}`
+      : 'لم يُستخرج أي عدد بعد');
+}
+/* the number that decides whether this tool needs attention is how many days
+   on a site nobody has swept yet */
+function homeRenderSuState(res){
+  if(res.error){ homeSetState('#prodSuState', 'السجل غير متاح — تحتاج الصفحة تجهيزة'); return; }
+  const today = suTodayIso();
+  const states = SU_SITES.map(site => {
+    const newest = res.rows.filter(r => r.siteKey === site.key)
+      .reduce((max, r) => (r.to > max ? r.to : max), '');
+    return { site, gap: newest ? Math.max(0, suDaysBetween(newest, today)) : null };
+  });
+  const untouched = states.filter(s => s.gap === null);
+  if(untouched.length === states.length){
+    homeSetState('#prodSuState', 'لم يبدأ أي بحث بعد');
+    return;
+  }
+  if(untouched.length){
+    homeSetState('#prodSuState', `${escapeHtml(untouched[0].site.name)} — لم يبدأ أي بحث بعد`, 'attention');
+    return;
+  }
+  const worst = states.slice().sort((a, b) => b.gap - a.gap)[0];
+  homeSetState('#prodSuState',
+    worst.gap
+      ? `<b>${arCount(worst.gap, 'يوم واحد', 'يومان', 'أيام', 'يومًا')}</b> بلا تغطية حتى اليوم`
+      : 'مغطى حتى اليوم',
+    worst.gap ? 'attention' : 'clear');
+}
+
+/* the feed: the three logs merged, newest first, filtered client-side */
+const HOME_FEED_PAGE = 6;
+let homeFeed = [];
+let homeUqnCache = [];
+let homeSuCache = [];
+let homeFilter = 'all';
+let homeExpanded = false;
+
+function homeFeedItemHtml(it){
   return `<div class="log-card">
     <div class="log-card-main">
-      <div class="log-title">${escapeHtml(rec.title || 'بدون عنوان')}</div>
-      <div class="log-meta">${escapeHtml(rec.user || 'غير معروف')} · ${formatDate(rec.updatedAt || rec.createdAt)}${rec.counts ? ' · ' + countsSummary(rec.counts) : ''}</div>
+      <div class="log-title"><span class="act-tag act-${it.kind}">${it.tag}</span>${
+        it.draft ? '<span class="act-tag act-draft">مسودة</span>' : ''}${escapeHtml(it.title)}</div>
+      <div class="log-meta">${escapeHtml(it.who || 'غير معروف')} · ${relTime(it.when)}${
+        it.extra ? ' · ' + escapeHtml(it.extra) : ''}</div>
     </div>
-    <div class="log-card-actions">${actions}</div>
+    <div class="log-card-actions">${it.actions}</div>
   </div>`;
 }
-async function renderHome(){
-  $('#homeGreeting').textContent = `أهلا ${currentUser.fullName}، كيف أقدر أساعدك اليوم؟`;
-  const records = await loadRecords();
-  const completed = records.filter(r=>r.status === 'completed');
-  const drafts = records.filter(r=>r.status === 'draft');
-  const articleCount = completed.reduce((sum,r)=> sum + ((r.counts && r.counts[3]) || 0), 0);
-  let lastActivity = null;
-  records.forEach(r=>{
-    const t = r.updatedAt || r.exportedAt || r.createdAt;
-    if(t && (!lastActivity || t > lastActivity)) lastActivity = t;
+function homeBuildFeed(records){
+  const fromRecords = records.map(r => {
+    const mine = r.ownerId === currentUser.id;
+    const draft = r.status === 'draft';
+    const articles = (r.counts && r.counts[3]) || 0;
+    return {
+      kind: 'taqseem', tag: 'تقسيم', draft,
+      when: r.updatedAt || r.exportedAt || r.createdAt,
+      title: r.title || 'بدون عنوان',
+      who: r.user,
+      extra: articles ? arCount(articles, 'مادة واحدة', 'مادتان', 'مواد', 'مادة') : '',
+      actions: (draft && mine)
+        ? `<button class="btn-ghost log-open-btn" data-id="${r.id}" data-action="continue">متابعة</button>
+           <button class="btn-ghost log-open-btn log-danger" data-id="${r.id}" data-action="delete">إنهاء</button>`
+        : `<button class="btn-ghost log-open-btn" data-id="${r.id}" data-action="view">عرض</button>`
+    };
   });
-  $('#statExported').textContent = completed.length;
-  $('#statArticles').textContent = articleCount;
-  $('#statDrafts').textContent = drafts.length;
-  $('#statLastActivity').textContent = lastActivity ? formatDateOnly(lastActivity) : '—';
-
-  const draftsSorted = [...drafts].sort((a,b)=>(b.updatedAt||'').localeCompare(a.updatedAt||''));
-  const completedSorted = [...completed].sort((a,b)=>(b.exportedAt||'').localeCompare(a.exportedAt||''));
-  $('#logDrafts').innerHTML = draftsSorted.length ? draftsSorted.map(r=>logCardHtml(r,true,r.ownerId===currentUser.id)).join('') : '<div class="empty-hint">لا توجد مسودات حاليًا</div>';
-  $('#logCompleted').innerHTML = completedSorted.length ? completedSorted.map(r=>logCardHtml(r,false,r.ownerId===currentUser.id)).join('') : '<div class="empty-hint">لا يوجد أي ملف مُصدَّر بعد</div>';
+  const fromUqn = homeUqnCache.map(r => ({
+    kind: 'uqn', tag: 'أم القرى', draft: false,
+    when: r.createdAt,
+    title: `العدد ${r.issueNumber || '—'} · ${r.hijriLabel || ''}`,
+    who: r.user,
+    extra: r.itemCount ? arCount(r.itemCount, 'تشريع واحد', 'تشريعان', 'تشريعات', 'تشريعًا') : 'لا تشريعات',
+    actions: `<button class="btn-ghost home-src-btn" data-kind="uqn" data-id="${r.id}">عرض</button>`
+  }));
+  const fromSu = homeSuCache.map(r => ({
+    kind: 'su', tag: 'المواقع', draft: false,
+    when: r.createdAt,
+    title: `${r.siteName || ''} · من ${r.from} إلى ${r.to}`,
+    who: r.user,
+    extra: r.itemCount ? arCount(r.itemCount, 'تحديث واحد', 'تحديثان', 'تحديثات', 'تحديثًا') : 'لا تحديثات',
+    actions: `<button class="btn-ghost home-src-btn" data-kind="su" data-id="${r.id}">عرض</button>`
+  }));
+  homeFeed = fromRecords.concat(fromUqn, fromSu)
+    .sort((a, b) => (b.when || '').localeCompare(a.when || ''));
 }
+function renderHomeFeed(){
+  const items = homeFeed.filter(it =>
+    homeFilter === 'all' ? true :
+    homeFilter === 'drafts' ? it.draft : it.kind === homeFilter);
+  const shown = homeExpanded ? items : items.slice(0, HOME_FEED_PAGE);
+  $('#homeActivity').innerHTML = shown.length
+    ? shown.map(homeFeedItemHtml).join('')
+    : '<div class="empty-hint">لا يوجد نشاط هنا بعد</div>';
+  const more = $('#homeMoreBtn');
+  more.hidden = items.length <= HOME_FEED_PAGE;
+  more.textContent = homeExpanded ? 'عرض أقل' : `عرض المزيد (${items.length - HOME_FEED_PAGE})`;
+}
+
+async function renderHome(){
+  $('#homeGreeting').textContent = `أهلًا ${currentUser.fullName}`;
+  /* a tool whose table isn't set up yet must not take the whole page down with
+     it — its card says so and the rest of the dashboard still renders */
+  const [records, uqnRes, suRes] = await Promise.all([
+    loadRecords(), uqnLoadExtractions(), suLoadSearches()
+  ]);
+  homeUqnCache = uqnRes.rows || [];
+  homeSuCache = suRes.rows || [];
+  homeRenderTaqseemState(records);
+  homeRenderUqnState(uqnRes);
+  homeRenderSuState(suRes);
+  homeBuildFeed(records);
+  renderHomeFeed();
+}
+
+$('#homeProducts').addEventListener('click', e => {
+  const card = e.target.closest('.product-card');
+  if(!card) return;
+  if(card.dataset.product === 'taqseem') startNewFile();
+  else goToView(card.dataset.product);
+});
+$('#homeFilters').addEventListener('click', e => {
+  const chip = e.target.closest('.chip');
+  if(!chip) return;
+  homeFilter = chip.dataset.filter;
+  homeExpanded = false;
+  document.querySelectorAll('#homeFilters .chip').forEach(c => c.classList.toggle('active', c === chip));
+  renderHomeFeed();
+});
+$('#homeMoreBtn').addEventListener('click', ()=>{
+  homeExpanded = !homeExpanded;
+  renderHomeFeed();
+});
+/* opening a past extraction/search from the feed lands on that tool's own page
+   with the saved result already rendered, so it reads in its normal context */
+$('#homeActivity').addEventListener('click', e => {
+  const btn = e.target.closest('.home-src-btn');
+  if(!btn) return;
+  if(btn.dataset.kind === 'uqn'){
+    const rec = homeUqnCache.find(r => r.id === btn.dataset.id);
+    if(!rec) return;
+    goToView('uqn');
+    uqnRenderResult({ hijriLabel:rec.hijriLabel, issueNumber:rec.issueNumber, iso:rec.iso }, rec.items);
+    $('#uqnResult').scrollIntoView({ behavior:'smooth', block:'start' });
+    return;
+  }
+  const rec = homeSuCache.find(r => r.id === btn.dataset.id);
+  if(!rec) return;
+  goToView('siteUpdates');
+  suRenderResult({ siteName:rec.siteName, from:rec.from, to:rec.to }, rec.items);
+  $('#suResult').scrollIntoView({ behavior:'smooth', block:'start' });
+});
+
 document.addEventListener('click', async e=>{
   const btn = e.target.closest('.log-open-btn');
   if(!btn) return;
@@ -2614,9 +2856,10 @@ async function uqnExtract(){
    Every request goes through the `site-proxy` edge function, which fetches
    an allow-listed URL server-side and hands it back with CORS enabled.
 
-   The rule that shapes the tab: a search covers a date range, that range is
-   recorded, and a later range touching a recorded one is refused — which is
-   what keeps two employees from sweeping the same days twice.
+   The rule that shapes the tab: a search covers a date range and that range is
+   recorded, so a later range touching a recorded one is a repeat of work
+   already done. That is worth a warning, not a veto — the search stops and
+   asks "هل أنت متأكد؟", listing what it collides with, and runs only on yes.
    ================================================================== */
 const SU_PROXY_FN = 'site-proxy';
 const SU_DEFAULT_DAYS = 7;          // "الافتراضي دائمًا آخر سبع أيام"
@@ -2633,6 +2876,9 @@ function suShiftIso(iso, days){
   const d = new Date(iso + 'T00:00:00Z');
   d.setUTCDate(d.getUTCDate() + days);
   return d.toISOString().slice(0,10);
+}
+function suDaysBetween(fromIso, toIso){
+  return Math.round((Date.parse(toIso + 'T00:00:00Z') - Date.parse(fromIso + 'T00:00:00Z')) / 86400000);
 }
 function suHttpDateToIso(httpDate){
   const t = Date.parse(httpDate || '');
@@ -2867,9 +3113,7 @@ async function suLoadSearches(){
    Neither can be done from here: the table needs an owner in the SQL editor,
    and the proxy needs a function deployed. So the tab hands over exactly what
    to paste instead of only reporting that something is missing. */
-const SU_TABLE_SQL = `create extension if not exists btree_gist;
-
-create table public.site_updates (
+const SU_TABLE_SQL = `create table public.site_updates (
   id uuid primary key default gen_random_uuid(),
   owner_id uuid not null references auth.users(id) on delete cascade,
   owner_name text not null default '',
@@ -2882,11 +3126,7 @@ create table public.site_updates (
   item_count integer not null default 0,
   items jsonb not null default '[]'::jsonb,
   created_at timestamptz not null default now(),
-  constraint site_updates_range_order check (range_from <= range_to),
-  constraint site_updates_no_overlap exclude using gist (
-    site_key with =,
-    daterange(range_from, range_to, '[]') with &&
-  )
+  constraint site_updates_range_order check (range_from <= range_to)
 );
 
 create index site_updates_created_at_idx on public.site_updates(created_at desc);
@@ -2908,6 +3148,14 @@ create policy "owners can delete their own site updates"
   on public.site_updates for delete
   to authenticated
   using (owner_id = auth.uid());`;
+
+/* Overlap used to be refused outright, and the table was created with an
+   exclusion constraint that held that rule even against two people searching
+   at the same moment. It is a question now, so a database created under the
+   old shape needs this one statement — offered only after a save actually
+   hits the constraint. */
+const SU_DROP_OVERLAP_SQL =
+  `alter table public.site_updates drop constraint if exists site_updates_no_overlap;`;
 
 /* the same function as supabase/functions/site-proxy/index.ts, with the type
    annotations dropped so it pastes cleanly into the Dashboard editor. That
@@ -3025,16 +3273,16 @@ function suFunctionsUrl(){
   return ref ? `https://supabase.com/dashboard/project/${ref}/functions` : 'https://supabase.com/dashboard';
 }
 
-const suSetupState = { table:false, fn:false, detail:'' };
+const suSetupState = { table:false, fn:false, overlap:false, detail:'' };
 function suRenderSetup(){
   const host = $('#suSetup');
-  if(!suSetupState.table && !suSetupState.fn){ host.innerHTML = ''; return; }
+  if(!suSetupState.table && !suSetupState.fn && !suSetupState.overlap){ host.innerHTML = ''; return; }
   const steps = [];
   if(suSetupState.table){
     steps.push(`<div class="src-setup-step">
       <div class="src-setup-step-title">١ · جدول <b>site_updates</b> غير موجود في Supabase</div>
       <div class="src-setup-body">
-        بدونه لا يُحفظ أي بحث، ولا تعمل قاعدة منع تداخل النطاقات.
+        بدونه لا يُحفظ أي بحث ولا يظهر شيء في السجل.
         انسخ الأوامر أدناه والصقها في SQL Editor ثم اضغط Run.
         <br>مهم: الصق <b>هذا المقطع وحده</b> — لصق ملف schema.sql كاملًا يتوقف عند الجداول الموجودة أصلًا ولا يُنشئ شيئًا.
       </div>
@@ -3059,6 +3307,21 @@ function suRenderSetup(){
         <a class="pill-btn" href="${suFunctionsUrl()}" target="_blank" rel="noopener noreferrer">فتح Edge Functions</a>
       </div>
       <pre data-su-select title="اضغط لتحديد الكود كاملًا">${escapeHtml(SU_PROXY_SOURCE)}</pre>
+    </div>`);
+  }
+  if(suSetupState.overlap){
+    steps.push(`<div class="src-setup-step">
+      <div class="src-setup-step-title">٣ · قيد قديم يمنع حفظ النطاقات المتداخلة</div>
+      <div class="src-setup-body">
+        صار التداخل يُسأل عنه قبل البحث بدل أن يُمنع، لكن الجدول أُنشئ سابقًا بقيد
+        <b>site_updates_no_overlap</b> يرفض حفظ أي نطاق يلامس نطاقًا محفوظًا.
+        انسخ الأمر أدناه والصقه في SQL Editor ثم اضغط Run — مرة واحدة فقط.
+      </div>
+      <div class="src-setup-actions">
+        <button class="pill-btn blue" data-su-copy="overlap"><span class="icon icon-copy"></span> نسخ الأمر</button>
+        <a class="pill-btn" href="${uqnSqlEditorUrl()}" target="_blank" rel="noopener noreferrer">فتح SQL Editor</a>
+      </div>
+      <pre data-su-select title="اضغط لتحديد الأمر">${escapeHtml(SU_DROP_OVERLAP_SQL)}</pre>
     </div>`);
   }
   host.innerHTML = `<div class="src-setup">
@@ -3151,32 +3414,44 @@ function suRenderRangeNote(){
     (covered.length ? `<br>نطاقات مغطاة سابقًا على هذا الموقع:${chips}` : '');
 }
 
-function suRenderConflict(){
-  const host = $('#suConflict');
-  const site = suSiteByKey($('#suSite').value);
+/* An out-of-order range is the only thing that still blocks the button: there
+   is nothing there to search. Overlap no longer blocks and no longer shows
+   itself while typing — it is asked about once, on the search itself. */
+function suValidateRange(){
   const range = suReadRange();
-  /* a running search owns the button; this function is also called from the
-     pre-flight check inside it, and must not hand it back mid-scan */
-  const setDisabled = on => { if(!suBusy) $('#suFetchBtn').disabled = on; };
-  setDisabled(false);
-  if(!range){ host.innerHTML = ''; return null; }
-  if(range.from > range.to){
-    host.innerHTML = `<div class="su-conflict">تاريخ البداية بعد تاريخ النهاية — صحّح النطاق قبل البحث.</div>`;
-    setDisabled(true);
-    return null;
-  }
-  const clashes = suConflictsFor(site.key, range);
-  if(!clashes.length){ host.innerHTML = ''; return null; }
+  const bad = !!(range && range.from > range.to);
+  $('#suConflict').innerHTML = bad
+    ? '<div class="su-conflict">تاريخ البداية بعد تاريخ النهاية — صحّح النطاق قبل البحث.</div>'
+    : '';
+  /* a running search owns the button and must not have it handed back mid-scan */
+  if(!suBusy) $('#suFetchBtn').disabled = bad;
+  return !bad;
+}
+
+/* the overlap question, asked in place of the old refusal: it lists what the
+   range collides with, and the search only runs on an explicit "نعم" */
+let suPendingConfirm = null;
+function suCloseConfirm(answer){
+  if(!suPendingConfirm) return;
+  const resolve = suPendingConfirm;
+  suPendingConfirm = null;
+  $('#suConflict').innerHTML = '';
+  resolve(answer);
+}
+function suConfirmOverlap(clashes, site){
   const free = suFreeRangeFor(site.key);
-  host.innerHTML = `<div class="su-conflict">
-    <b>البحث ممتنع:</b> هذا النطاق يتداخل مع ${clashes.length === 1 ? 'بحث سابق' : clashes.length + ' عمليات بحث سابقة'} على الموقع نفسه.
+  $('#suConflict').innerHTML = `<div class="su-conflict">
+    <b>هل أنت متأكد؟</b> هذا النطاق يتداخل مع ${clashes.length === 1 ? 'بحث سابق' : clashes.length + ' عمليات بحث سابقة'} على الموقع نفسه، وقد يتكرر العمل نفسه.
     <ul>${clashes.map(c => `<li>من ${escapeHtml(c.from)} إلى ${escapeHtml(c.to)} — ${escapeHtml(c.user || 'غير معروف')} · ${escapeHtml(formatDateOnly(c.createdAt))}</li>`).join('')}</ul>
-    ${free
-      ? `<button class="su-preset" data-su-usefree>استخدم النطاق المتاح: من ${escapeHtml(free.from)} إلى ${escapeHtml(free.to)}</button>`
-      : 'كل الأيام حتى اليوم مغطاة على هذا الموقع.'}
+    <div class="su-confirm-actions">
+      <button class="btn-primary" data-su-confirm="yes">نعم، ابحث</button>
+      <button class="btn-ghost" data-su-confirm="no">إلغاء</button>
+      ${free
+        ? `<button class="su-preset" data-su-usefree>أو استخدم النطاق المتاح: من ${escapeHtml(free.from)} إلى ${escapeHtml(free.to)}</button>`
+        : ''}
+    </div>
   </div>`;
-  setDisabled(true);
-  return clashes;
+  return new Promise(resolve => { suPendingConfirm = resolve; });
 }
 
 /* ---------- the search flow ---------- */
@@ -3203,17 +3478,20 @@ async function suSearch(){
 
   try{
     /* re-read the log first: another employee may have covered these days
-       while this tab sat open, and the refusal has to account for that */
+       while this tab sat open, and the question has to account for that */
     suSetStatus('<span class="src-spinner"></span>جاري التحقق من النطاقات المغطاة سابقًا…');
     await suRenderLog();
-    const clashes = suRenderConflict();
-    if(clashes && clashes.length){
-      suSetStatus('لم يبدأ البحث — النطاق يتداخل مع بحث سابق على هذا الموقع.', true);
+    if(suSetupState.table){
+      suSetStatus('لم يبدأ البحث — أكمل تجهيزة الجدول أدناه أولًا، وإلا لن يُحفظ البحث ولن يظهر في السجل.', true);
       return;
     }
-    if(suSetupState.table){
-      suSetStatus('لم يبدأ البحث — أكمل تجهيزة الجدول أدناه أولًا، وإلا لن يُحفظ البحث ولن تعمل قاعدة منع التداخل.', true);
-      return;
+    const clashes = suConflictsFor(site.key, range);
+    if(clashes.length){
+      suSetStatus('');
+      if(!await suConfirmOverlap(clashes, site)){
+        suSetStatus('أُلغي البحث — لم يتغيّر شيء.');
+        return;
+      }
     }
 
     const result = await site.scan(range, msg => suSetStatus(`<span class="src-spinner"></span>${msg}`));
@@ -3227,15 +3505,21 @@ async function suSearch(){
       : '';
     const summary = `فُحص ${result.scanned} عنصرًا على الموقع خلال ${result.pagesRead} صفحة، منها ${result.rows.length} ضمن النطاق.${undatedNote}`;
     if(saved.row){
+      suSetupState.overlap = false;   // a save that landed is proof the constraint is gone
       suSetStatus(`${summary} وسُجّل النطاق في السجل.`);
       await suRenderLog();
       suRenderRangeNote();
     }else{
-      /* 23P01 = the no-overlap exclusion constraint: someone saved a touching
-         range between the check above and this insert */
-      const clash = (saved.error || {}).code === '23P01';
-      suSetStatus(`${summary} لكن لم يُحفظ البحث — ${clash
-        ? 'سجّل موظف آخر نطاقًا متداخلًا في اللحظة نفسها، فالنتيجة أعلاه للاطلاع فقط.'
+      /* 23P01 = the old no-overlap exclusion constraint. Overlap is a question
+         now, not a rule, so a database still carrying that constraint needs
+         one statement run against it — which the setup card hands over. */
+      const oldConstraint = (saved.error || {}).code === '23P01';
+      if(oldConstraint){
+        suSetupState.overlap = true;
+        suRenderSetup();
+      }
+      suSetStatus(`${summary} لكن لم يُحفظ البحث — ${oldConstraint
+        ? 'قاعدة البيانات ما زالت تحمل قيدًا قديمًا يرفض النطاقات المتداخلة؛ أزِله بالخطوة أدناه ثم أعد البحث ليُحفظ.'
         : escapeHtml((saved.error || {}).message || 'خطأ غير معروف')}`, true);
       await suRenderLog();
     }
@@ -3252,7 +3536,8 @@ async function suSearch(){
     }
   }finally{
     suBusy = false;
-    suRenderConflict();   // restores the button unless a conflict still stands
+    suCloseConfirm(false);   // nothing may be left waiting on an answer
+    suValidateRange();       // hands the button back
   }
 }
 
@@ -3265,7 +3550,7 @@ async function suOnEnter(){
   suSetStatus('');
   await suRenderLog();
   suRenderRangeNote();
-  suRenderConflict();
+  suValidateRange();
 }
 
 (function initSiteUpdatesTab(){
@@ -3274,36 +3559,46 @@ async function suOnEnter(){
   suApplyDefaultRange();
 
   ['#suSite','#suFrom','#suTo'].forEach(sel => $(sel).addEventListener('change', ()=>{
+    /* an open "هل أنت متأكد؟" was asked about the old range, so editing the
+       range answers it with no */
+    suCloseConfirm(false);
     /* the previous search's outcome does not describe the new range, and
        leaving it up would read as a verdict on it */
     if(!suBusy) suSetStatus('');
     suRenderRangeNote();
-    suRenderConflict();
+    suValidateRange();
   }));
   $('#suFetchBtn').addEventListener('click', suSearch);
 
   $('#suConflict').addEventListener('click', e => {
-    if(!e.target.closest('[data-su-usefree]')) return;
-    const free = suFreeRangeFor($('#suSite').value);
-    if(!free) return;
-    $('#suFrom').value = free.from;
-    $('#suTo').value = free.to;
-    suRenderRangeNote();
-    suRenderConflict();
+    if(e.target.closest('[data-su-usefree]')){
+      const free = suFreeRangeFor($('#suSite').value);
+      suCloseConfirm(false);
+      if(free){
+        $('#suFrom').value = free.from;
+        $('#suTo').value = free.to;
+      }
+      suRenderRangeNote();
+      suValidateRange();
+      return;
+    }
+    const answer = e.target.closest('[data-su-confirm]');
+    if(answer) suCloseConfirm(answer.dataset.suConfirm === 'yes');
   });
 
   $('#suSetup').addEventListener('click', async e => {
     const copy = e.target.closest('[data-su-copy]');
     if(copy){
-      const text = copy.dataset.suCopy === 'sql' ? SU_TABLE_SQL : SU_PROXY_SOURCE;
+      const text = { sql:SU_TABLE_SQL, fn:SU_PROXY_SOURCE, overlap:SU_DROP_OVERLAP_SQL }[copy.dataset.suCopy];
       showToast(await copyTextToClipboard(text) ? 'تم النسخ' : 'تعذر النسخ، حدّد النص يدويًا');
       return;
     }
     if(e.target.closest('[data-su-recheck]')){
-      suSetupState.fn = false;   // only a fresh search can prove the proxy works
+      suSetupState.fn = false;        // only a fresh search can prove the proxy works
+      suSetupState.overlap = false;   // ...and only a fresh save can prove the constraint is gone
       await suRenderLog();
       suRenderRangeNote();
-      suRenderConflict();
+      suValidateRange();
       return;
     }
     /* clipboard writes can be refused by the browser; selecting the block
@@ -3333,7 +3628,7 @@ async function suOnEnter(){
     showToast('تم الحذف — صار نطاقه متاحًا للبحث من جديد');
     await suRenderLog();
     suRenderRangeNote();
-    suRenderConflict();
+    suValidateRange();
   });
 })();
 
@@ -3344,11 +3639,18 @@ $('#railToggle').addEventListener('click', async ()=>{
 });
 
 $('#navHome').dataset.view = 'home';
+$('#navNewFile').dataset.view = 'editor';
 $('#navUqn').dataset.view = 'uqn';
 $('#navSiteUpdates').dataset.view = 'siteUpdates';
 $('#navSettings').dataset.view = 'settings';
 $('#navHome').addEventListener('click', ()=>goToView('home'));
-$('#navNewFile').addEventListener('click', startNewFile);
+/* the rail entry is the tool, not the "new file" button it used to be: an open
+   file is returned to rather than thrown away, and starting a fresh one is the
+   home card's job */
+$('#navNewFile').addEventListener('click', ()=>{
+  if(rawText.trim() || marks.length) goToView('editor');
+  else startNewFile();
+});
 $('#navUqn').addEventListener('click', ()=>goToView('uqn'));
 $('#navSiteUpdates').addEventListener('click', ()=>goToView('siteUpdates'));
 $('#navSettings').addEventListener('click', ()=>goToView('settings'));
