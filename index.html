@@ -3987,46 +3987,107 @@ function suResetDraft(){
    The source sites send no CORS header, so the browser cannot fetch the file
    itself; and `download` on a cross-origin link is ignored, so a plain link
    opens a PDF viewer instead of saving. The proxy is the way: it hands the
-   bytes back base64'd and the blob is saved under the site's own filename. */
+   bytes back base64'd and the blob is saved.
+
+   But `fileUrl` is not always a file. Half these listings link the entry's own
+   page — rulebook.sama.gov.sa rows point at /ar/node/11105, and the PDF is
+   behind a «تحميل الوثيقة الأصلية» inside it — so a download that trusted the
+   listing would save the web page. What came back is therefore checked before
+   it is saved: HTML means the address was a page, and the document is looked
+   for inside it. A page with no document in it is said so plainly rather than
+   handed over as a .pdf that is really markup. */
 function suB64ToBytes(b64){
   const bin = atob(b64);
   const out = new Uint8Array(bin.length);
   for(let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
   return out;
 }
-/* the site did not name the file, so it is named after the row — keeping
-   whatever extension the address carried, since that is what it really is */
-function suExtOf(url, contentType){
+function suDecodeBytes(bytes, contentType){
+  const m = /charset\s*=\s*"?([\w-]+)/i.exec(contentType || '');
+  try{ return new TextDecoder(m ? m[1] : 'utf-8').decode(bytes); }
+  catch(e){ return new TextDecoder('utf-8').decode(bytes); }
+}
+/* the declared type is what a server is meant to say, and most of them do; the
+   opening bytes are what it actually sent, which is what settles a WAF block
+   page served as application/pdf */
+function suIsHtmlBody(contentType, bytes){
+  if(/^\s*(text\/html|application\/xhtml)/i.test(contentType || '')) return true;
+  const head = suDecodeBytes(bytes.subarray(0, 200), '').trim().slice(0, 120).toLowerCase();
+  return head.startsWith('<!doctype html') || head.startsWith('<html') || head.startsWith('<?xml-stylesheet');
+}
+/* Which link on a page is the document it is about. A detail page carries
+   others — sama's circular pages link two unrelated guidance PDFs beside the
+   one being read — so the link that names itself a download wins, and document
+   order settles the rest. Only hosts the proxy would fetch anyway are
+   considered, so a page cannot send the download somewhere else. */
+const SU_DOWNLOAD_WORDS = /تحميل|تنزيل|الوثيقة|الملف|النص الكامل|download/i;
+function suFileLinkIn(html, pageUrl){
+  const doc = suDoc(html);
+  const seen = new Set();
+  let best = null;
+  Array.from(doc.querySelectorAll('a[href]')).forEach((a, order) => {
+    let abs;
+    try{ abs = new URL(a.getAttribute('href'), pageUrl); }catch(e){ return; }
+    if(abs.protocol !== 'https:' || !/\.sa$/i.test(abs.hostname) || !suIsFile(abs.href)) return;
+    if(seen.has(abs.href)) return;
+    seen.add(abs.href);
+    const score = (SU_DOWNLOAD_WORDS.test(suText(a)) ? 2 : 0) + (/\.pdf(\?|#|$)/i.test(abs.href) ? 1 : 0);
+    if(!best || score > best.score) best = { url: abs.href, score, order };
+  });
+  return best ? best.url : '';
+}
+/* the site's own name for the file is often an opaque code
+   (SAMA_AR_11105_VER1.pdf), and the row's title is what the employee went
+   looking for — so that is the name it lands under */
+function suFileName(row, url, res){
   const m = /\.(pdf|docx?|xlsx?|pptx?)(?:\?|#|$)/i.exec(url || '');
-  if(m) return '.' + m[1].toLowerCase();
-  return /pdf/i.test(contentType || '') ? '.pdf' : '';
+  const ext = m ? '.' + m[1].toLowerCase() : (/pdf/i.test(res.contentType || '') ? '.pdf' : '');
+  return (row.title || '').trim()
+    ? edSafeName(row.title, 'ملف', ext)
+    : (res.filename || edSafeName('', 'ملف', ext));
+}
+async function suFetchFile(url){
+  const [res] = await suProxyFetch([url], 'FILE');
+  if(!res.ok){
+    throw new Error(res.error === 'response too large'
+      ? 'الملف أكبر من أن يُنزَّل عبر الوسيط — افتحه من رابط «فتح»'
+      : `تعذر تنزيل الملف (${res.status || res.error || 'خطأ'})`);
+  }
+  /* the function answered but sent no bytes: it is the older copy, which only
+     knows GET and HEAD and decoded the PDF as if it were a page */
+  if(typeof res.base64 !== 'string'){
+    const stale = new Error('النسخة المنشورة من وسيط القراءة لا تدعم تنزيل الملفات — أعِد نشرها من بطاقة التجهيزة');
+    stale.proxyStale = true;
+    throw stale;
+  }
+  res.bytes = suB64ToBytes(res.base64);
+  return res;
 }
 let suDownloading = false;
 async function suDownloadRowFile(row, btn){
   if(!row || suDownloading) return;
-  const url = row.fileUrl || '';
+  let url = row.fileUrl || '';
   if(!/^https?:\/\//.test(url)){ showToast('لا يوجد ملف في هذا الصف'); return; }
   suDownloading = true;
   const label = btn.textContent;
   btn.disabled = true;
   btn.textContent = 'جاري التنزيل…';
   try{
-    const [res] = await suProxyFetch([url], 'FILE');
-    if(!res.ok){
-      throw new Error(res.error === 'response too large'
-        ? 'الملف أكبر من أن يُنزَّل عبر الوسيط — افتحه من رابط «فتح»'
-        : `تعذر تنزيل الملف (${res.status || res.error || 'خطأ'})`);
-    }
-    /* the function answered but sent no bytes: it is the older copy, which only
-       knows GET and HEAD and decoded the PDF as if it were a page */
-    if(typeof res.base64 !== 'string'){
-      const stale = new Error('النسخة المنشورة من وسيط القراءة لا تدعم تنزيل الملفات — أعِد نشرها من بطاقة التجهيزة');
-      stale.proxyStale = true;
-      throw stale;
+    let res = await suFetchFile(url);
+    if(suIsHtmlBody(res.contentType, res.bytes)){
+      /* a page, not a file — the document it is about is one link deeper */
+      const inner = suFileLinkIn(suDecodeBytes(res.bytes, res.contentType), res.finalUrl || url);
+      if(!inner) throw new Error('هذه الجهة تنشر هذا العنصر كصفحة لا كملف، ولا يوجد ملف داخلها — افتحه من «فتح»');
+      btn.textContent = 'جاري تنزيل الملف…';
+      url = inner;
+      res = await suFetchFile(url);
+      if(suIsHtmlBody(res.contentType, res.bytes)){
+        throw new Error('ما وصل صفحة لا ملفًا — قد يكون الموقع حجب الطلب. افتحه من «فتح»');
+      }
     }
     edSaveBlob(
-      new Blob([suB64ToBytes(res.base64)], { type: res.contentType || 'application/octet-stream' }),
-      res.filename || edSafeName(row.title, 'ملف', suExtOf(url, res.contentType)));
+      new Blob([res.bytes], { type: res.contentType || 'application/octet-stream' }),
+      suFileName(row, url, res));
   }catch(err){
     if(err && (err.proxyMissing || err.proxyStale)){
       suSetupState.fn = true;
