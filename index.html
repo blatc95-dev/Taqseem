@@ -582,6 +582,8 @@
   table.src-table .col-no{min-width:258px;}
   table.src-table .col-authority{min-width:160px;}
   table.src-table .col-link{white-space:nowrap;text-align:center;}
+  /* the handing-over column: one button, never wider than its word */
+  table.src-table .col-dl{white-space:nowrap;text-align:center;width:1%;}
   table.src-table td.col-no.muted{color:var(--text-muted);}
   .src-sub{display:block;font-size:11.5px;color:var(--text-muted);font-weight:400;margin-top:3px;}
   .src-link{color:var(--blue);font-weight:600;font-size:12px;text-decoration:none;}
@@ -637,12 +639,7 @@
   }
   table.src-table .col-date{min-width:104px;white-space:nowrap;}
   table.src-table .col-type{min-width:96px;}
-  /* the unified table carries every field any of the thirteen sites publishes,
-     so the columns most of them leave blank stay narrow */
   table.src-table .col-entity{min-width:160px;}
-  table.src-table .col-hijri{min-width:110px;}
-  table.src-table .col-status{min-width:84px;}
-  table.src-table .col-num{min-width:104px;}
   .su-note{
     margin-top:14px;padding:12px 14px;border-radius:10px;
     background:var(--bg-soft);border:1px solid var(--border);
@@ -688,16 +685,23 @@
   .su-pick span{font-weight:600;}
   .su-pick em{display:block;font-style:normal;font-size:11.5px;color:var(--text-muted);font-weight:400;}
 
-  /* ---------- an editable result ---------- */
-  .ed-bar{
-    display:flex;align-items:center;justify-content:space-between;gap:12px;
-    flex-wrap:wrap;margin:12px 0;
-  }
-  .ed-bar-note{font-size:12px;color:var(--text-muted);line-height:1.8;}
-  .ed-bar-note b{color:var(--text);}
-  .ed-bar-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
-  .ed-bar-actions .btn-primary{padding:9px 20px;font-size:13px;}
+  /* ---------- a result, read by default and edited on request ---------- */
+  .ed-note{font-size:12px;color:var(--text-muted);line-height:1.8;margin:0 0 12px;}
+  .ed-note b{color:var(--text);}
+  /* the actions sit under the table: that is where a reader arrives having
+     decided whether anything needs fixing */
+  .ed-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:14px 0 0;}
+  .ed-bar .btn-primary{padding:9px 20px;font-size:13px;}
   .ed-dirty{color:var(--lvl2-text);font-weight:700;}
+  /* what a row hands over: its file, or the text captured with it */
+  .ed-dl{
+    background:var(--blue-bg);border:1px solid transparent;border-radius:7px;
+    padding:5px 12px;font:inherit;font-size:12px;font-weight:600;
+    color:var(--blue);cursor:pointer;white-space:nowrap;
+  }
+  .ed-dl:hover:not(:disabled){border-color:var(--blue);}
+  .ed-dl:disabled{opacity:.6;cursor:default;}
+  .ed-none{color:var(--text-muted);}
   table.src-table td.ed-td{padding:6px 8px;}
   .ed-cell{
     width:100%;min-width:74px;box-sizing:border-box;
@@ -718,7 +722,7 @@
   .ed-del:hover{border-color:var(--danger,#c0392b);color:var(--danger,#c0392b);}
   table.src-table .col-row-actions{width:44px;text-align:center;}
   /* a row the site gave no date for is the one row a person has to act on */
-  table.src-table tr.ed-undated td.ed-td{background:var(--lvl2-bg);}
+  table.src-table tr.ed-undated td{background:var(--lvl2-bg);}
 </style>
 </head>
 <body>
@@ -964,7 +968,7 @@
     <div class="home-header">
       <div class="eyebrow">أداة داخلية · استخراج من المصدر</div>
       <h1>تشريعات أم القرى</h1>
-      <p class="sub">اختر تاريخ العدد، ويُستخرج جدول تشريعاته من جريدة أم القرى مباشرة: اسم التشريع، ورقم القرار، والجهة المصدرة، ورابط كل تشريع في مصدره. الجدول قابل للتعديل ولإضافة صفوف، ولا يُسجَّل الاستخراج إلا بعد الضغط على «حفظ».</p>
+      <p class="sub">اختر تاريخ العدد، ويُستخرج جدول تشريعاته من جريدة أم القرى مباشرة: اسم التشريع، ورقم القرار، والجهة المصدرة، ورابط كل تشريع في مصدره، ونصّه كملف نصي يُنزَّل مباشرة لمن لا يفتح معه موقع أم القرى. الجدول يُعرض للقراءة، وتحته «تعديل» و«إضافة صف»، ولا يُسجَّل الاستخراج إلا بعد الضغط على «حفظ».</p>
     </div>
 
     <div class="card">
@@ -1000,7 +1004,7 @@
     <div class="home-header">
       <div class="eyebrow">أداة داخلية · استخراج من المصدر</div>
       <h1>تحديثات المواقع</h1>
-      <p class="sub">اختر الجهات ونطاق التواريخ، ويُستخرج ما نُشر أو حُدِّث خلال تلك الفترة في جدول واحد. النطاق الافتراضي دائمًا آخر سبعة أيام، وإن تداخل النطاق مع بحث سابق على الجهة نفسها فسيُسأل عن التأكيد قبل البدء حتى لا يتكرر العمل دون قصد. النتيجة قابلة للتعديل ولإضافة صفوف، ولا يُسجَّل شيء في السجل إلا بعد الضغط على «حفظ».</p>
+      <p class="sub">اختر الجهات ونطاق التواريخ، ويُستخرج ما نُشر أو حُدِّث خلال تلك الفترة في جدول واحد: الجهة، واسم الملف، وتاريخ نشره الميلادي، ورابطه، وزر لتنزيل الملف نفسه. النطاق الافتراضي دائمًا آخر سبعة أيام، وإن تداخل النطاق مع بحث سابق على الجهة نفسها فسيُسأل عن التأكيد قبل البدء حتى لا يتكرر العمل دون قصد. الجدول يُعرض للقراءة، وتحته «تعديل» و«إضافة صف»، ولا يُسجَّل شيء في السجل إلا بعد الضغط على «حفظ».</p>
     </div>
 
     <div class="card">
@@ -1391,7 +1395,7 @@ function homeRenderSuState(res){
     homeSetState('#prodSuState', 'لم يبدأ أي بحث بعد');
     return;
   }
-  /* with thirteen sources, naming one untouched جهة would read as if it were the
+  /* with a dozen sources, naming one untouched جهة would read as if it were the
      only one — the number is what tells you how much is still uncovered */
   if(untouched.length){
     homeSetState('#prodSuState',
@@ -1513,14 +1517,14 @@ $('#homeMoreBtn').addEventListener('click', ()=>{
 });
 /* opening a past extraction/search from the feed lands on that tool's own page
    with the saved result already rendered, so it reads in its normal context */
-$('#homeActivity').addEventListener('click', e => {
+$('#homeActivity').addEventListener('click', async e => {
   const btn = e.target.closest('.home-src-btn');
   if(!btn) return;
   if(btn.dataset.kind === 'uqn'){
     const rec = homeUqnCache.find(r => r.id === btn.dataset.id);
     if(!rec) return;
     goToView('uqn');
-    uqnOpenRecord(rec);
+    await uqnOpenRecord(rec);
     return;
   }
   const rec = homeSuCache.find(r => r.id === btn.dataset.id);
@@ -2395,7 +2399,7 @@ async function uqnCollectForDate(iso, onProgress){
 }
 
 /* ---------- one article's detail: رقم القرار + full text ---------- */
-const UQN_DETAIL_EMPTY = { ok:false, archived:false, title:'', subtitle:'', bodyText:'', permalink:'' };
+const UQN_DETAIL_EMPTY = { ok:false, archived:false, title:'', subtitle:'', text:'', parseText:'', permalink:'' };
 /* widget/37 returns a site-relative permalink ("decisions-and-regulations/…")
    while the list and the archive return absolute ones */
 function uqnAbsolute(url){
@@ -2412,7 +2416,8 @@ async function uqnDetail(article){
           ok:true, archived:false,
           title: stripBidi(a.article_title || ''),
           subtitle: stripBidi(a.article_subtitle || ''),
-          bodyText: uqnBodyText(a.article_body),
+          text: uqnBodyLines(a.article_body),
+          parseText: uqnBodyText(a.article_body),
           permalink: a.permalink || ''
         };
       }
@@ -2429,20 +2434,39 @@ async function uqnDetail(article){
       ok:true, archived:true,
       title: stripBidi(a.article_title || ''),
       subtitle: '',
-      bodyText: uqnBodyText(a.article_body_clean),
+      text: uqnBodyLines(a.article_body_clean),
+      parseText: uqnBodyText(a.article_body_clean),
       permalink: a.permalink || ''
     };
   }catch(e){ return UQN_DETAIL_EMPTY; }
 }
 /* the body arrives as HTML and sometimes opens with an inline <style> block,
    which would otherwise read as "text present" and leak CSS into the parse */
-function uqnBodyText(html){
+function uqnStripMarkup(html){
   return String(html||'')
     .replace(/<style[\s\S]*?<\/style>/gi,' ')
-    .replace(/<script[\s\S]*?<\/script>/gi,' ')
-    .replace(/<[^>]+>/g,' ')
-    .replace(/&nbsp;/g,' ').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>')
+    .replace(/<script[\s\S]*?<\/script>/gi,' ');
+}
+function uqnDecodeEntities(s){
+  return s.replace(/&nbsp;/g,' ').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>');
+}
+/* one line, for the parsers: the regexes that read the جهة out of the opening
+   sentence are anchored at its start and must not meet a newline */
+function uqnBodyText(html){
+  return uqnDecodeEntities(uqnStripMarkup(html).replace(/<[^>]+>/g,' '))
     .replace(/\s+/g,' ')
+    .trim();
+}
+/* the same body laid out to be read: this is what goes into the record and out
+   again as the text file, so the paragraph the HTML marked stays a paragraph */
+function uqnBodyLines(html){
+  return uqnDecodeEntities(uqnStripMarkup(html)
+      .replace(/<br\s*\/?>/gi,'\n')
+      .replace(/<\/(p|div|li|tr|h[1-6]|blockquote)\s*>/gi,'\n\n')
+      .replace(/<[^>]+>/g,' '))
+    .replace(/[^\S\n]+/g,' ')       // spaces collapse, newlines survive
+    .replace(/ *\n */g,'\n')
+    .replace(/\n{3,}/g,'\n\n')
     .trim();
 }
 
@@ -2538,10 +2562,11 @@ function uqnBuildRows(items){
       failed,
       archived: !!d.archived,
       decisionNo: (kind && number) ? uqnFormatNumber(kind, number, year) : '',
-      authority: failed ? (sub || '—') : uqnAuthority(sub, d.subtitle, d.bodyText),
-      /* null, not false, when the detail never arrived — "لا" would be a claim
-         we did not verify */
-      hasText: failed ? null : d.bodyText.length > 0,
+      authority: failed ? (sub || '—') : uqnAuthority(sub, d.subtitle, d.parseText),
+      /* uqn.gov.sa is unreachable from outside the Kingdom, and colleagues
+         working from abroad cannot open the link at all — so the text is kept
+         with the row, and the table hands it over as a file */
+      text: failed ? '' : d.text,
       link: uqnAbsolute(it.article.permalink || d.permalink) ||
         `https://www.uqn.gov.sa/decisions-and-regulations/${it.article.cms_article_id}`,
       note: ''
@@ -2632,37 +2657,73 @@ const UQN_COLS = [
   { key:'sub',        label:'التصنيف',       cls:'col-type' },
   { key:'decisionNo', label:'رقم القرار',    cls:'col-no' },
   { key:'authority',  label:'الجهة المصدرة', cls:'col-authority' },
-  { key:'link',       label:'الرابط',        cls:'col-link', type:'url' }
+  { key:'link',       label:'الرابط',        cls:'col-link', type:'url' },
+  { key:'text',       label:'النص',          cls:'col-dl',   type:'textfile' }
 ];
 const uqnDraft = {
   hostSel: '#uqnResult',
   cols: UQN_COLS,
   rows: [], sites: [], meta: null,
-  recordIds: null, readOnly: false,
+  recordIds: null, readOnly: false, editing: false,
   head: '', note: '', footer: '', emptyHint: '',
   dirty: false, saving: false,
   save: function(){ return uqnSaveDraft(); }
 };
 function uqnResetDraft(){
   Object.assign(uqnDraft, {
-    rows: [], meta: null, recordIds: null, readOnly: false,
+    rows: [], meta: null, recordIds: null, readOnly: false, editing: false,
     head: '', note: '', footer: '', emptyHint: '', dirty: false, saving: false
   });
   $('#uqnResult').innerHTML = '';
+}
+
+/* ---------- handing a تشريع over as a text file ----------
+   The row already carries the text — it was read at extraction time, from
+   inside the Kingdom, where uqn.gov.sa answers. Downloading it is local work:
+   no request goes anywhere, which is exactly why it works for a colleague the
+   gazette will not open for. A header names the تشريع and keeps the link, so
+   the file still says where it came from. */
+function uqnDownloadRowText(row){
+  if(!row) return;
+  const text = (row.text || '').trim();
+  if(!text){
+    showToast('لا يوجد نص محفوظ لهذا التشريع — أعد الاستخراج من داخل المملكة');
+    return;
+  }
+  const head = [
+    row.title || '',
+    row.decisionNo && row.decisionNo !== '—' ? row.decisionNo : '',
+    row.authority && row.authority !== '—' ? `الجهة المصدرة: ${row.authority}` : '',
+    row.link || ''
+  ].filter(Boolean).join('\n');
+  /* the leading BOM is what makes Windows Notepad open it as Arabic rather
+     than as mojibake */
+  const blob = new Blob(['﻿' + head + '\n\n' + '—'.repeat(20) + '\n\n' + text + '\n'],
+    { type:'text/plain;charset=utf-8' });
+  edSaveBlob(blob, edSafeName(row.title, 'تشريع', '.txt'));
 }
 function uqnHead(meta, n){
   return `تشريعات ${escapeHtml(meta.hijriLabel)}
     <span>· العدد ${escapeHtml(meta.issueNumber || '—')} · ${escapeHtml(meta.iso)} · ${n} تشريعًا</span>`;
 }
-function uqnOpenRecord(rec){
+/* the log carries no items, so they are read here — and a read that failed is
+   said so rather than drawn as an issue that turned out to be empty */
+async function uqnOpenRecord(rec){
   const mine = rec.ownerId === currentUser.id;
+  uqnSetStatus('<span class="src-spinner"></span>جاري فتح الاستخراج…');
+  const items = rec.items && rec.items.length ? rec.items : await uqnLoadItems(rec.id);
+  if(!items){
+    uqnSetStatus('تعذر فتح الاستخراج — لم تصل تشريعاته. تحقق من الاتصال ثم أعد المحاولة.', true);
+    return;
+  }
+  uqnSetStatus('');
   Object.assign(uqnDraft, {
-    rows: rec.items.slice(),
+    rows: items.slice(),
     meta: { hijriLabel: rec.hijriLabel, issueNumber: rec.issueNumber, iso: rec.iso, sourceUrl: rec.sourceUrl },
     recordIds: rec.id,
-    readOnly: !mine,
+    readOnly: !mine, editing: false,
     dirty: false, saving: false,
-    head: uqnHead({ hijriLabel: rec.hijriLabel, issueNumber: rec.issueNumber, iso: rec.iso }, rec.items.length),
+    head: uqnHead({ hijriLabel: rec.hijriLabel, issueNumber: rec.issueNumber, iso: rec.iso }, items.length),
     note: mine ? 'استخراج محفوظ — أي تعديل هنا يحدّثه في مكانه بعد الضغط على حفظ.' : 'استخراج محفوظ.',
     emptyHint: 'هذا الاستخراج لا يحتوي أي تشريع.',
     footer: ''
@@ -2704,13 +2765,19 @@ async function uqnSaveDraft(){
   }
   uqnDraft.recordIds = data.id;
   uqnDraft.dirty = false;
+  uqnDraft.editing = false;   // saved is read-again, not still-being-typed-in
   uqnSetStatus(`تم حفظ ${uqnDraft.rows.length} تشريعًا في السجل.`);
   showToast('تم الحفظ');
   edRender(uqnDraft);
   uqnRenderLog();
 }
 
-/* ---------- persistence: the log of past extractions ---------- */
+/* ---------- persistence: the log of past extractions ----------
+   `items` is deliberately left out of the listing query. Each row now carries
+   the full text of every تشريع in its issue, so two hundred of them would be
+   tens of megabytes fetched to render a list that shows none of it. The text
+   is read for the one record actually opened. */
+const UQN_LOG_COLS = 'id, owner_id, owner_name, issue_number, hijri_label, gregorian_date, source_url, item_count, created_at';
 function uqnMapRow(row){
   return {
     id: row.id,
@@ -2727,9 +2794,15 @@ function uqnMapRow(row){
 }
 async function uqnLoadExtractions(){
   const { data, error } = await sb.from('uqn_extractions')
-    .select('*').order('created_at', { ascending:false }).limit(200);
+    .select(UQN_LOG_COLS).order('created_at', { ascending:false }).limit(200);
   if(error) return { error };
   return { rows: data.map(uqnMapRow) };
+}
+async function uqnLoadItems(id){
+  const { data, error } = await sb.from('uqn_extractions')
+    .select('items').eq('id', id).maybeSingle();
+  if(error || !data) return null;
+  return Array.isArray(data.items) ? data.items : [];
 }
 
 /* The log needs a table that only a project owner can create, so when it is
@@ -2844,7 +2917,7 @@ $('#uqnLogList').addEventListener('click', async e => {
   if(!rec) return;
   if(btn.dataset.action === 'view'){
     if(uqnDraft.dirty && !confirm('في الجدول تعديلات غير محفوظة، وفتح استخراج آخر سيستبدلها. أتريد المتابعة؟')) return;
-    uqnOpenRecord(rec);
+    await uqnOpenRecord(rec);
     return;
   }
   if(!confirm(`حذف استخراج ${rec.hijriLabel}؟`)) return;
@@ -2941,7 +3014,7 @@ async function uqnExtract(){
        article_subtitle — the field رقم القرار is read from */
     if(archived) gaps.push(`${archived} منها من الأرشيف القديم، ولا يوفّر أم القرى رقم القرار لها عبر الـAPI — تُكتب يدويًا`);
     Object.assign(uqnDraft, {
-      rows, meta, recordIds: null, readOnly: false, dirty: false,
+      rows, meta, recordIds: null, readOnly: false, dirty: false, editing: false,
       head: uqnHead(meta, rows.length),
       note: 'لم يُحفظ شيء بعد — عدّل ما تريد ثم اضغط حفظ.',
       emptyHint: 'لا تشريعات في هذا العدد.',
@@ -3094,12 +3167,13 @@ async function suProxyFetchMany(urls, method, onBatch){
    Each is handed the range and a progress callback, and returns its entries in
    a single shape, whatever the site looks like:
 
-     { section, title, date, hijri, status, number, fileUrl }
+     { title, date, fileUrl }
 
-   `date` is the only field the range is tested against, and it is always a
-   Gregorian ISO day. Every other field is whatever that site publishes, and is
-   left empty when it publishes nothing — the result table shows a blank rather
-   than inventing a value or dropping the column for everyone else.
+   Three fields and no more: these listings agree on nothing else, and the
+   columns that carried a site's own النوع، الرقم، الحالة والتاريخ الهجري were
+   blank on most rows and meant something different on each of the rest. `date`
+   is always a Gregorian ISO day, and it is the field the range is tested
+   against.
 
    There are two kinds of listing here, and the difference is only where the
    date comes from:
@@ -3182,11 +3256,7 @@ function suGregToIso(raw){
 
 /* ---------- the tails every adapter shares ---------- */
 function suEntry(o){
-  return {
-    section: o.section || '', title: o.title || '', date: o.date || '',
-    hijri: o.hijri || '', status: o.status || '', number: o.number || '',
-    fileUrl: o.fileUrl || ''
-  };
+  return { title: o.title || '', date: o.date || '', fileUrl: o.fileUrl || '' };
 }
 /* one GET, checked — a listing page that did not arrive is not an empty listing,
    and treating it as one would report "no updates" for a range nobody read */
@@ -3256,7 +3326,6 @@ function momahParse(html){
     const link = tr.querySelector('a[href]');
     return suEntry({
       title: suText(titleCell),
-      section: suText(tr.querySelector('[data-label="النوع"]')),
       fileUrl: link ? suSameOrigin(link.getAttribute('href'), MOMAH_ORIGIN, MOMAH_ORIGIN) : ''
     });
   }).filter(Boolean);
@@ -3299,7 +3368,9 @@ async function momahScan(range, onProgress){
      archives of earlier months. They are navigation, not files, so they are
      followed rather than reported as undated; and a file inside one can still
      carry a recent date (the 2025 reports were re-uploaded in 2026), so
-     skipping them would silently miss real updates. */
+     skipping them would silently miss real updates.
+   Its section headings ("- اللوائح -") are walked past rather than read: the
+   result table has no column left for them. */
 const SAFF_ORIGIN = 'https://www.saff.com.sa';
 const SAFF_LIST_URL = SAFF_ORIGIN + '/files.php';
 const SAFF_MAX_ARCHIVES = 12;   // one link per past year; this is the guard
@@ -3311,15 +3382,8 @@ function saffParseFilesPage(html){
   const column = doc.querySelector('.col-sm-9');
   if(!column) return null;   // the page's shape changed — better to fail loudly
   const files = [], archives = [];
-  let section = '';
-  /* headings and rows are siblings, so the section a row belongs to is whichever
-     heading was last seen — querySelectorAll walks them in document order */
-  column.querySelectorAll('p[align="center"], .p-3').forEach(el => {
+  column.querySelectorAll('.p-3').forEach(el => {
     const text = suText(el);
-    if(el.tagName === 'P'){
-      section = text.replace(/^[-–—\s]+|[-–—\s]+$/g, '');   // "- اللوائح -"
-      return;
-    }
     const link = el.querySelector('a[href]');
     if(!link || !text) return;
     const url = suSameOrigin(link.getAttribute('href'), SAFF_LIST_URL, SAFF_ORIGIN);
@@ -3328,7 +3392,7 @@ function saffParseFilesPage(html){
     try{ parsed = new URL(url); }catch(e){ return; }
     const year = parsed.pathname.endsWith('/files.php') ? parsed.searchParams.get('year') : '';
     if(year) archives.push({ year, url });
-    else files.push(suEntry({ title: text, section, fileUrl: url }));
+    else files.push(suEntry({ title: text, fileUrl: url }));
   });
   return { files, archives };
 }
@@ -3340,15 +3404,14 @@ async function saffScan(range, onProgress){
 
   const entries = parsed.files.slice();
   let pagesRead = 1;
-  /* each archive year is read as its own page, and its section keeps the year so
-     a result says which archive an entry came from. Only the links on the main
-     page are followed: an archive page carries no year links of its own. */
+  /* each archive year is read as its own page. Only the links on the main page
+     are followed: an archive page carries no year links of its own. */
   for(const archive of parsed.archives.slice(0, SAFF_MAX_ARCHIVES)){
     onProgress(`جاري قراءة أرشيف ${archive.year}…`);
     const sub = saffParseFilesPage(await suGetPage(archive.url, `أرشيف ${archive.year}`));
     if(!sub) throw new Error(`تعذر قراءة أرشيف ${archive.year} — تغيّر شكل الصفحة`);
     pagesRead++;
-    sub.files.forEach(f => entries.push({ ...f, section: `${f.section} ${archive.year}`.trim() }));
+    entries.push(...sub.files);
   }
 
   const dated = await suDateByFile(entries, onProgress);
@@ -3357,8 +3420,9 @@ async function saffScan(range, onProgress){
 
 /* ---------- البنك المركزي السعودي — تعاميم ----------
    The richest listing of the lot and the cheapest to read: one page, no
-   pagination, ~690 circulars in a table that prints the number, both calendars,
-   whether the circular is still in force, and which sectors it applies to. */
+   pagination, ~690 circulars in a table. It prints far more than the four
+   fields kept here — its own number, both calendars, whether the circular is
+   still in force — and only the Gregorian date and the title are read. */
 const SAMA_ORIGIN = 'https://rulebook.sama.gov.sa';
 const SAMA_LIST_URL = SAMA_ORIGIN + '/ar/' + encodeURIComponent('تعاميم-البنك-المركزي');
 
@@ -3372,12 +3436,8 @@ function samaParse(html){
     if(td.length < 4) return null;
     const link = tr.querySelector('a[href]');
     return suEntry({
-      number: suText(td[0]),
       title: suTextLines(td[1], ' '),
-      hijri: suText(td[2]),
       date: suGregToIso(suText(td[3])),
-      status: suText(td[4]),
-      section: suTextLines(td[5], ' · '),
       fileUrl: link ? suSameOrigin(link.getAttribute('href'), SAMA_LIST_URL, SAMA_ORIGIN) : ''
     });
   }).filter(e => e && e.title);
@@ -3392,8 +3452,7 @@ async function samaScan(range, onProgress){
 
 /* ---------- وزارة الموارد البشرية والتنمية الاجتماعية — القرارات الوزارية ----------
    A Drupal view whose every card prints both calendars through the site's own
-   hijri_dual_date_formatter, so the hijri date here is the ministry's, not one
-   this app converted. */
+   hijri_dual_date_formatter; the Gregorian half is the one read. */
 const HRSD_ORIGIN = 'https://www.hrsd.gov.sa';
 const HRSD_LIST_URL = HRSD_ORIGIN + '/knowledge-centre/decisions-and-regulations/ministerial-decisions';
 const HRSD_MAX_PAGES = 25;
@@ -3406,9 +3465,7 @@ function hrsdParse(html){
     const link = card.querySelector('h2 a[href], h3 a[href]');
     return suEntry({
       title: suText(link) || suText(card.querySelector('h2, h3')),
-      hijri: suText(card.querySelector('.hijri-date')),
       date: suGregToIso(suText(card.querySelector('.gregorian-date'))),
-      section: Array.from(card.querySelectorAll('.card-tags .tag-md')).map(suText).filter(Boolean).join(' · '),
       fileUrl: link ? suSameOrigin(link.getAttribute('href'), HRSD_ORIGIN, HRSD_ORIGIN) : ''
     });
   }).filter(e => e.title);
@@ -3459,7 +3516,6 @@ function cmaParse(html, base){
     return suEntry({
       title: (holder && holder.getAttribute('data-title'))
         || (heading && heading.getAttribute('title')) || suText(heading),
-      section: holder ? (holder.getAttribute('data-category') || '').trim() : '',
       date,
       fileUrl: link ? suSameOrigin(link.getAttribute('href'), base, CMA_ORIGINS) : ''
     });
@@ -3492,7 +3548,6 @@ function sfdaParse(html){
     return suEntry({
       title: suText(it.querySelector('.m-c-title')),
       date: suGregToIso(suText(it.querySelector('.news-date'))),
-      section: Array.from(it.querySelectorAll('a.cat')).map(suText).filter(Boolean).join(' · '),
       fileUrl: file ? suSameOrigin(file.getAttribute('href'), SFDA_ORIGIN, SFDA_ORIGIN) : ''
     });
   }).filter(e => e.title);
@@ -3503,51 +3558,6 @@ async function sfdaScan(range, onProgress){
     { url: SFDA_LIST_URL, maxPages: SFDA_MAX_PAGES, label: 'لوائح الغذاء والدواء', parse: sfdaParse },
     range, onProgress);
   return { ...suSplitByRange(got.entries, range), scanned: got.entries.length, pagesRead: got.pagesRead };
-}
-
-/* ---------- الهيئة الوطنية للأمن السيبراني — الوثائق التنظيمية ----------
-   A Next.js page whose class names are utility soup, so an entry is found by
-   structure instead: a heading followed by a sibling whose text reads as a date.
-
-   Only the first batch is server-rendered — the rest arrives behind an
-   "عرض المزيد" the proxy cannot press — so this sweep sees the newest documents
-   and no more. The registry says so, rather than leaving it to be discovered. */
-const NCA_ORIGIN = 'https://nca.gov.sa';
-const NCA_LIST_URL = NCA_ORIGIN + '/ar/regulatory-documents/';
-
-function ncaParse(html){
-  const doc = suDoc(html);
-  const out = [];
-  doc.querySelectorAll('h3').forEach(h => {
-    const title = suText(h);
-    if(!title) return;
-    let date = '';
-    let sib = h.nextElementSibling;
-    for(let i = 0; i < 3 && sib && !date; i++, sib = sib.nextElementSibling){
-      date = suGregToIso(suText(sib));
-    }
-    if(!date) return;
-    /* the card's own link sits several wrappers above the heading, so the walk
-       climbs until it finds one rather than assuming a depth */
-    let block = h.parentElement, link = h.closest('a[href]'), tag = null;
-    for(let i = 0; i < 4 && block; i++, block = block.parentElement){
-      if(!tag) tag = block.querySelector('[data-testid^="tag"]');
-      if(!link) link = block.querySelector('a[href]');
-      if(link && tag) break;
-    }
-    out.push(suEntry({
-      title, date,
-      section: suText(tag),
-      fileUrl: link ? suSameOrigin(link.getAttribute('href'), NCA_LIST_URL, NCA_ORIGIN) : ''
-    }));
-  });
-  return out;
-}
-
-async function ncaScan(range, onProgress){
-  onProgress('جاري قراءة الوثائق التنظيمية…');
-  const entries = ncaParse(await suGetPage(NCA_LIST_URL, 'الوثائق التنظيمية'));
-  return { ...suSplitByRange(entries, range), scanned: entries.length, pagesRead: 1 };
 }
 
 /* ---------- مركز التحكيم الرياضي السعودي — الأنظمة واللوائح ----------
@@ -3702,10 +3712,10 @@ function suFileDatedScanner(url, label, parse){
    front rather than leaving to be inferred from a short result. */
 const SU_SITES = [
   { key: 'sama-circulars', name: 'البنك المركزي السعودي', section: 'التعاميم',
-    home: SAMA_LIST_URL, dateMeaning: 'تاريخ الإصدار المنشور في الجدول (ميلادي، ومعه الهجري كما نشره البنك)',
+    home: SAMA_LIST_URL, dateMeaning: 'تاريخ الإصدار الميلادي المنشور في الجدول',
     scan: samaScan },
   { key: 'hrsd-decisions', name: 'وزارة الموارد البشرية والتنمية الاجتماعية', section: 'القرارات الوزارية',
-    home: HRSD_LIST_URL, dateMeaning: 'تاريخ القرار المنشور في البطاقة (ميلادي، ومعه الهجري كما نشرته الوزارة)',
+    home: HRSD_LIST_URL, dateMeaning: 'تاريخ القرار الميلادي المنشور في البطاقة',
     scan: hrsdScan },
   { key: 'cma-regulations', name: 'هيئة السوق المالية', section: 'التشريعات',
     home: CMA_REGULATIONS_URL, dateMeaning: 'التاريخ المنشور على بطاقة التشريع',
@@ -3716,10 +3726,6 @@ const SU_SITES = [
   { key: 'sfda-regulations', name: 'الهيئة العامة للغذاء والدواء', section: 'اللوائح',
     home: SFDA_LIST_URL, dateMeaning: 'التاريخ المنشور على بطاقة اللائحة',
     scan: sfdaScan },
-  { key: 'nca-documents', name: 'الهيئة الوطنية للأمن السيبراني', section: 'الوثائق التنظيمية',
-    home: NCA_LIST_URL, dateMeaning: 'التاريخ المنشور تحت اسم الوثيقة',
-    note: 'الموقع يبني بقية القائمة بجافاسكربت خلف زر «عرض المزيد»، فيقرأ البحث أحدث الوثائق فقط لا القائمة كاملة.',
-    scan: ncaScan },
   { key: 'ssac-regulations', name: 'مركز التحكيم الرياضي السعودي', section: 'الأنظمة واللوائح',
     home: SSAC_LIST_URL, dateMeaning: 'التاريخ المنشور بجانب اسم الوثيقة',
     scan: ssacScan },
@@ -3743,25 +3749,60 @@ const SU_SITES = [
     note: 'الموقع ينشر تاريخ إصدار بالشهر فقط (مثل «2024/11 م») ولا يصلح لنطاق محسوب بالأيام، فالتاريخ المعتمد هو تاريخ الملف.',
     scan: suFileDatedScanner(SBA_LIST_URL, 'لوائح المحامين', sbaParse) }
 ];
-function suSiteByKey(key){ return SU_SITES.find(s => s.key === key) || SU_SITES[0]; }
-function suSiteLabel(site){ return `${site.name} — ${site.section}`; }
+function suSiteLabel(site){ return site.section ? `${site.name} — ${site.section}` : site.name; }
 
 /* ==================================================================
    Editable results — shared by أم القرى and تحديثات المواقع
    ------------------------------------------------------------------
    An extraction is a starting point, not a verdict: these sites misspell their
    own titles, leave fields blank, and sometimes publish something their listing
-   does not carry at all. So a result is a draft — every cell an input, rows
-   addable and removable — and nothing reaches the log until حفظ is pressed.
-   Until then the sweep has cost nothing and claimed nothing.
+   does not carry at all. So a result is a draft — rows addable, removable and
+   correctable — and nothing reaches the log until حفظ is pressed. Until then
+   the sweep has cost nothing and claimed nothing.
 
-   The draft's `rows` array is the model and the table is only its view. Typing
+   But most of the time nobody is correcting anything, and a table of input
+   boxes reads as a form to fill rather than an answer to read. So the table
+   renders as plain text, and the inputs appear only after تعديل is pressed.
+   Leaving edit mode hides them again and discards nothing: the row model is
+   the same object either way, and حفظ writes it in both modes.
+
+   The draft's `rows` array is that model and the table is only its view. Typing
    writes straight into the model, so adding or deleting a row (which re-renders)
    never loses an edit, and a save writes exactly what is on the screen.
    ================================================================== */
+const ED_NONE = '<span class="ed-none">—</span>';
+
+/* the two columns that hand something over rather than hold a value: the file
+   the row points at, and the text captured when the row was extracted. They
+   look and behave the same whether or not the table is being edited. */
+function edHandoverHtml(col, row, i){
+  /* every row's button says the same word, so the row it belongs to has to be
+     said out loud somewhere */
+  const what = escapeHtml(row.title || `الصف ${i + 1}`);
+  if(col.type === 'file'){
+    return /^https?:\/\//.test(row.fileUrl || '')
+      ? `<button class="ed-dl" data-ed-file="${i}" aria-label="تنزيل ملف ${what}">تنزيل</button>` : ED_NONE;
+  }
+  return (row.text || '').trim()
+    ? `<button class="ed-dl" data-ed-text="${i}" aria-label="تنزيل نص ${what}">تنزيل</button>` : ED_NONE;
+}
 function edCellHtml(col, row, i, draft){
   const value = row[col.key] || '';
   const label = escapeHtml(col.label);
+  if(col.type === 'file' || col.type === 'textfile') return edHandoverHtml(col, row, i);
+  /* the address itself is never on display — it is long, it is noise beside an
+     Arabic title, and the only thing anyone does with it is open it */
+  const openLink = /^https?:\/\//.test(value)
+    ? `<a class="src-link" href="${escapeHtml(value)}" target="_blank" rel="noopener noreferrer">فتح</a>`
+    : '';
+  if(!draft.editing){
+    if(col.type === 'url') return openLink || ED_NONE;
+    if(col.type === 'site'){
+      const site = draft.sites.find(s => s.key === value);
+      return escapeHtml((site && site.label) || value) || ED_NONE;
+    }
+    return escapeHtml(value) || ED_NONE;
+  }
   if(col.type === 'site'){
     /* a row added by hand has to say which جهة it belongs to, because that is
        what decides the record it is saved into */
@@ -3772,53 +3813,56 @@ function edCellHtml(col, row, i, draft){
   const input = `<input class="ed-cell" type="${col.type === 'date' ? 'date' : 'text'}"
     data-i="${i}" data-key="${escapeHtml(col.key)}" value="${escapeHtml(value)}" aria-label="${label}">`;
   if(col.type !== 'url') return input;
-  /* the url stays editable, and stays openable while it is still valid */
-  return `<div class="ed-url">${input}${/^https?:\/\//.test(value)
-    ? `<a class="src-link" href="${escapeHtml(value)}" target="_blank" rel="noopener noreferrer">فتح</a>`
-    : ''}</div>`;
+  /* editing is the one place the address shows: a hand-added row has no link
+     until somebody types one, and a wrong one cannot be fixed unseen */
+  return `<div class="ed-url">${input}${openLink}</div>`;
 }
 function edTableHtml(draft){
+  const cell = draft.editing ? 'ed-td ' : '';
   const body = draft.rows.map((row, i) => `<tr${row.undated ? ' class="ed-undated"' : ''}>
       <td class="col-idx">${i + 1}</td>
-      ${draft.cols.map(c => `<td class="ed-td ${c.cls}">${edCellHtml(c, row, i, draft)}</td>`).join('')}
-      <td class="col-row-actions"><button class="ed-del" data-i="${i}" title="حذف هذا الصف" aria-label="حذف الصف ${i + 1}">×</button></td>
+      ${draft.cols.map(c => `<td class="${cell}${c.cls}">${edCellHtml(c, row, i, draft)}</td>`).join('')}
+      ${draft.editing
+        ? `<td class="col-row-actions"><button class="ed-del" data-i="${i}" title="حذف هذا الصف" aria-label="حذف الصف ${i + 1}">×</button></td>`
+        : ''}
     </tr>`).join('');
   return `<div class="src-table-wrap"><table class="src-table">
     <thead><tr>
       <th class="col-idx">#</th>
       ${draft.cols.map(c => `<th class="${c.cls}">${escapeHtml(c.label)}</th>`).join('')}
-      <th class="col-row-actions"></th>
+      ${draft.editing ? '<th class="col-row-actions"></th>' : ''}
     </tr></thead>
     <tbody>${body}</tbody>
   </table></div>`;
 }
 const ED_DIRTY_HTML = ' <span class="ed-dirty">· فيه تعديلات غير محفوظة</span>';
+function edNoteHtml(draft){
+  return `<div class="ed-note">${draft.note || ''}${
+    draft.readOnly ? ' <b>هذا السجل لزميل آخر — يمكن عرضه لا تعديله.</b>'
+                   : (draft.dirty ? ED_DIRTY_HTML : '')}</div>`;
+}
+/* under the table, because that is where a reader arrives having decided
+   whether anything needs fixing */
 function edBarHtml(draft){
-  if(draft.readOnly){
-    return `<div class="ed-bar"><div class="ed-bar-note">${draft.note || ''}
-      <b>هذا السجل لزميل آخر — يمكن عرضه لا تعديله.</b></div></div>`;
-  }
-  return `<div class="ed-bar">
-    <div class="ed-bar-note">${draft.note || ''}${draft.dirty ? ED_DIRTY_HTML : ''}</div>
-    <div class="ed-bar-actions">
-      <button class="pill-btn" data-ed-add>إضافة صف</button>
-      <button class="btn-primary" data-ed-save${draft.saving ? ' disabled' : ''}>${
-        draft.saving ? 'جاري الحفظ…' : (draft.recordIds ? 'حفظ التعديلات' : 'حفظ في السجل')}</button>
-    </div>
-  </div>`;
+  if(draft.readOnly) return '';
+  const add = '<button class="pill-btn" data-ed-add>إضافة صف</button>';
+  const save = `<button class="btn-primary" data-ed-save${draft.saving ? ' disabled' : ''}>${
+    draft.saving ? 'جاري الحفظ…' : (draft.recordIds ? 'حفظ التعديلات' : 'حفظ في السجل')}</button>`;
+  return `<div class="ed-bar">${draft.editing
+    ? `<button class="pill-btn" data-ed-done>إنهاء التعديل</button>${add}${save}`
+    : `<button class="pill-btn" data-ed-edit>تعديل</button>${add}${save}`}</div>`;
 }
 function edRender(draft){
   const host = $(draft.hostSel);
   if(!draft.head && !draft.rows.length){ host.innerHTML = ''; return; }
-  const bar = edBarHtml(draft);
   host.innerHTML = `
     <div class="src-result-top"><div class="src-result-title">${draft.head || ''}</div></div>
-    ${bar}
+    ${edNoteHtml(draft)}
     ${draft.rows.length
       ? edTableHtml(draft)
       : `<div class="empty-hint">${escapeHtml(draft.emptyHint || 'لا يوجد شيء')}</div>`}
-    ${draft.footer || ''}
-    ${draft.rows.length > 6 ? bar : ''}`;
+    ${edBarHtml(draft)}
+    ${draft.footer || ''}`;
 }
 function edBlankRow(draft){
   const row = {};
@@ -3832,9 +3876,8 @@ function edMarkDirty(draft, host){
   draft.dirty = true;
   /* re-rendering here would pull the focus out of the cell being typed in, so
      only the note that reports the state is touched */
-  host.querySelectorAll('.ed-bar-note').forEach(n => {
-    if(!n.querySelector('.ed-dirty')) n.insertAdjacentHTML('beforeend', ED_DIRTY_HTML);
-  });
+  const note = host.querySelector('.ed-note');
+  if(note && !note.querySelector('.ed-dirty')) note.insertAdjacentHTML('beforeend', ED_DIRTY_HTML);
 }
 function edBind(draft){
   const host = $(draft.hostSel);
@@ -3851,8 +3894,22 @@ function edBind(draft){
   host.addEventListener('input', write);
   host.addEventListener('change', write);
   host.addEventListener('click', e => {
+    /* handing a row's file or text over is reading, not editing, so it works on
+       a colleague's record too — and that is the point of it */
+    const file = e.target.closest('[data-ed-file]');
+    if(file){ suDownloadRowFile(draft.rows[+file.dataset.edFile], file); return; }
+    const text = e.target.closest('[data-ed-text]');
+    if(text){ uqnDownloadRowText(draft.rows[+text.dataset.edText]); return; }
     if(draft.readOnly) return;
+    if(e.target.closest('[data-ed-edit]') || e.target.closest('[data-ed-done]')){
+      /* nothing is discarded either way — the inputs are a view of rows that
+         stay exactly as they are, and حفظ is offered in both modes */
+      draft.editing = !draft.editing;
+      edRender(draft);
+      return;
+    }
     if(e.target.closest('[data-ed-add]')){
+      draft.editing = true;   // a blank row is unusable without somewhere to type
       draft.rows.push(edBlankRow(draft));
       draft.dirty = true;
       edRender(draft);
@@ -3871,25 +3928,48 @@ function edBind(draft){
   });
 }
 
+/* ---------- handing a row over as a file ----------
+   Both tabs answer the same question — "I cannot reach the source, give me the
+   thing itself" — from two different places. أم القرى is geo-blocked for
+   colleagues abroad, so its text is captured at extraction time and written
+   into the record; the source sites are reachable but send no CORS header, so
+   their files come back through the proxy at the moment the button is pressed.
+   Either way the browser is handed bytes it can save, not a link to follow. */
+function edSaveBlob(blob, filename){
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  /* revoking straight away can cut the download off in some browsers */
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+/* a filename is a filename in every folder it lands in, so the separators and
+   the characters Windows refuses come out */
+function edSafeName(name, fallback, ext){
+  const clean = String(name || '').replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim();
+  return (clean || fallback).slice(0, 90) + (ext || '');
+}
+
 /* ---------- the unified result table ----------
-   One shape for thirteen listings, so a sweep across them reads as one answer.
-   A site that publishes no النوع, no هجري, no الحالة and no رقم leaves those
-   cells blank rather than having its rows shaped differently from the rest. */
+   One shape for twelve listings, so a sweep across them reads as one answer.
+   Four columns and a download: the جهة, what was published, when, and the
+   file itself. The last column is the same fileUrl seen twice — once as
+   something to open on the source site, once as bytes to save. */
 const SU_COLS = [
-  { key:'siteKey', label:'الجهة',          cls:'col-entity', type:'site' },
-  { key:'section', label:'القسم / النوع',  cls:'col-type' },
-  { key:'title',   label:'اسم الملف',      cls:'col-name' },
-  { key:'date',    label:'تاريخ النشر',    cls:'col-date', type:'date' },
-  { key:'hijri',   label:'التاريخ الهجري', cls:'col-hijri' },
-  { key:'status',  label:'الحالة',         cls:'col-status' },
-  { key:'number',  label:'الرقم',          cls:'col-num' },
-  { key:'fileUrl', label:'رابط الملف',     cls:'col-link', type:'url' }
+  { key:'siteKey', label:'الجهة',       cls:'col-entity', type:'site' },
+  { key:'title',   label:'اسم الملف',   cls:'col-name' },
+  { key:'date',    label:'تاريخ النشر', cls:'col-date', type:'date' },
+  { key:'fileUrl', label:'الرابط',      cls:'col-link', type:'url' },
+  { key:'fileUrl', label:'الملف',       cls:'col-dl',   type:'file' }
 ];
 const suDraft = {
   hostSel: '#suResult',
   cols: SU_COLS,
   rows: [], sites: [], range: null, stats: {}, failures: [],
-  recordIds: null, readOnly: false,
+  recordIds: null, readOnly: false, editing: false,
   head: '', note: '', footer: '', emptyHint: '',
   dirty: false, saving: false,
   save: function(){ return suSaveDraft(); }
@@ -3897,10 +3977,68 @@ const suDraft = {
 function suResetDraft(){
   Object.assign(suDraft, {
     rows: [], sites: [], range: null, stats: {}, failures: [],
-    recordIds: null, readOnly: false,
+    recordIds: null, readOnly: false, editing: false,
     head: '', note: '', footer: '', emptyHint: '', dirty: false, saving: false
   });
   $('#suResult').innerHTML = '';
+}
+
+/* ---------- downloading one row's file ----------
+   The source sites send no CORS header, so the browser cannot fetch the file
+   itself; and `download` on a cross-origin link is ignored, so a plain link
+   opens a PDF viewer instead of saving. The proxy is the way: it hands the
+   bytes back base64'd and the blob is saved under the site's own filename. */
+function suB64ToBytes(b64){
+  const bin = atob(b64);
+  const out = new Uint8Array(bin.length);
+  for(let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+/* the site did not name the file, so it is named after the row — keeping
+   whatever extension the address carried, since that is what it really is */
+function suExtOf(url, contentType){
+  const m = /\.(pdf|docx?|xlsx?|pptx?)(?:\?|#|$)/i.exec(url || '');
+  if(m) return '.' + m[1].toLowerCase();
+  return /pdf/i.test(contentType || '') ? '.pdf' : '';
+}
+let suDownloading = false;
+async function suDownloadRowFile(row, btn){
+  if(!row || suDownloading) return;
+  const url = row.fileUrl || '';
+  if(!/^https?:\/\//.test(url)){ showToast('لا يوجد ملف في هذا الصف'); return; }
+  suDownloading = true;
+  const label = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'جاري التنزيل…';
+  try{
+    const [res] = await suProxyFetch([url], 'FILE');
+    if(!res.ok){
+      throw new Error(res.error === 'response too large'
+        ? 'الملف أكبر من أن يُنزَّل عبر الوسيط — افتحه من رابط «فتح»'
+        : `تعذر تنزيل الملف (${res.status || res.error || 'خطأ'})`);
+    }
+    /* the function answered but sent no bytes: it is the older copy, which only
+       knows GET and HEAD and decoded the PDF as if it were a page */
+    if(typeof res.base64 !== 'string'){
+      const stale = new Error('النسخة المنشورة من وسيط القراءة لا تدعم تنزيل الملفات — أعِد نشرها من بطاقة التجهيزة');
+      stale.proxyStale = true;
+      throw stale;
+    }
+    edSaveBlob(
+      new Blob([suB64ToBytes(res.base64)], { type: res.contentType || 'application/octet-stream' }),
+      res.filename || edSafeName(row.title, 'ملف', suExtOf(url, res.contentType)));
+  }catch(err){
+    if(err && (err.proxyMissing || err.proxyStale)){
+      suSetupState.fn = true;
+      suSetupState.fnStale = !!err.proxyStale;
+      suRenderSetup();
+    }
+    showToast((err && err.message) || 'تعذر تنزيل الملف');
+  }finally{
+    suDownloading = false;
+    btn.disabled = false;
+    btn.textContent = label;
+  }
 }
 
 /* ---------- persistence: the log of past searches ---------- */
@@ -3928,7 +4066,7 @@ async function suLoadSearches(){
 }
 
 /* A save writes one record per جهة: the overlap question is asked per site and
-   so is deleting a coverage, and both would blur if a thirteen-site sweep
+   so is deleting a coverage, and both would blur if a twelve-site sweep
    landed as a single row. A site whose sweep failed is not written at all — its
    range was never actually read. */
 async function suSaveDraft(){
@@ -3976,6 +4114,7 @@ async function suSaveDraft(){
   const savedCount = suDraft.sites.length - problems.length;
   if(!problems.length){
     suDraft.dirty = false;
+    suDraft.editing = false;   // saved is read-again, not still-being-typed-in
     suSetStatus(`تم الحفظ — ${arCount(savedCount, 'سجل واحد', 'سجلان', 'سجلات', 'سجلًا')} في السجل.`);
     showToast('تم الحفظ');
   }else{
@@ -4070,14 +4209,16 @@ const SU_PROXY_SOURCE = `// Taqseem — site-proxy
 // /api/* routes, which the أم القرى tab calls straight from the browser), so
 // the browser is not allowed to read their responses at all. This function is
 // the one hop that can: it fetches a permitted public URL server-side and
-// hands the result back with CORS enabled.
+// hands the result back with CORS enabled. It is also how the tab downloads a
+// published document: the same wall that stops the browser reading a listing
+// stops it saving a PDF, so a FILE call brings the bytes back base64'd.
 //
 //
 // Safety:
 //   * only public Saudi hosts over https are reachable (see resolveTarget), so
 //     the function can never be pointed at the project's own services or at a
 //     cloud metadata endpoint
-//   * only GET and HEAD, so it can never change anything upstream
+//   * only GET and HEAD upstream, so it can never change anything there
 //   * JWT verification stays on (Supabase's default), so only a signed-in
 //     employee can drive it
 
@@ -4097,6 +4238,10 @@ const CORS = {
 
 const MAX_URLS = 24;          // one listing page's worth of files, plus slack
 const MAX_BODY = 4_000_000;   // bytes; the largest listing runs ~460 KB
+// A FILE call carries one published document, not a listing, so it gets its own
+// ceiling: these are scanned PDFs and a few of them run past ten megabytes.
+// base64 inflates by a third, so this is ~27 MB on the wire.
+const MAX_FILE = 20_000_000;
 const POOL = 6;               // parallel upstream requests per call
 const TIMEOUT_MS = 40_000;    // a source site that hangs must not hang the call,
                               // but a slow-and-working one must not be cut off either
@@ -4127,6 +4272,34 @@ function decodeBody(bytes, charset) {
   }
 }
 
+// btoa takes a string, and spreading a whole multi-megabyte array into
+// String.fromCharCode would blow the argument limit — so it is fed in chunks.
+function toBase64(bytes) {
+  const CHUNK = 0x8000;
+  let binary = '';
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
+  }
+  return btoa(binary);
+}
+
+// What the saved file should be called. The upstream's own
+// Content-Disposition wins when it sends one (it carries the Arabic name);
+// otherwise the last path segment is the name the site publishes it under.
+function filenameOf(disposition, url) {
+  const star = /filename\\*\\s*=\\s*[^']*''([^;]+)/i.exec(disposition);
+  const plain = /filename\\s*=\\s*"?([^";]+)"?/i.exec(disposition);
+  let name = '';
+  if (star) { try { name = decodeURIComponent(star[1]); } catch { name = star[1]; } }
+  if (!name && plain) name = plain[1];
+  if (!name) {
+    const last = url.pathname.split('/').filter(Boolean).pop() || '';
+    try { name = decodeURIComponent(last); } catch { name = last; }
+  }
+  // no separators, so the name can never point anywhere but the download folder
+  return name.replace(/[\\\\\\/:*?"<>|]+/g, ' ').replace(/\\s+/g, ' ').trim().slice(0, 150);
+}
+
 function resolveTarget(raw) {
   if (typeof raw !== 'string') return null;
   let u;
@@ -4139,17 +4312,23 @@ function resolveTarget(raw) {
   return SAUDI_HOST.test(u.hostname.toLowerCase()) ? u : null;
 }
 
-async function fetchOne(raw, method) {
+// GET  — the page, decoded to text (how every listing is read)
+// HEAD — headers only, for a file's Last-Modified
+// FILE — the bytes themselves, base64'd, so the browser can save a document
+//        from a site that sends no CORS header
+async function fetchOne(raw, mode) {
   const target = resolveTarget(raw);
   if (!target) return { url: raw, ok: false, status: 0, error: 'host not allowed' };
   try {
     const res = await fetch(target, {
-      method,
+      method: mode === 'HEAD' ? 'HEAD' : 'GET',
       redirect: 'follow',
       signal: AbortSignal.timeout(TIMEOUT_MS),
       headers: {
         'User-Agent': USER_AGENT,
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept': mode === 'FILE'
+          ? '*/*'
+          : 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         'Accept-Language': 'ar,en;q=0.9',
       },
     });
@@ -4163,35 +4342,45 @@ async function fetchOne(raw, method) {
       contentType,
       contentLength: res.headers.get('content-length') || '',
     };
-    if (method === 'GET') {
-      // refuse before buffering when the upstream declares an oversized body,
-      // and still clamp afterwards for the chunked responses that declare none
-      if (Number(out.contentLength || 0) > MAX_BODY) {
-        return { ...out, ok: false, error: 'response too large' };
-      }
-      const charset = charsetOf(contentType);
-      const buf = await res.arrayBuffer();
-      out.charset = charset;
-      // clamped in bytes, the same unit MAX_BODY is compared against above
-      out.body = decodeBody(new Uint8Array(buf, 0, Math.min(buf.byteLength, MAX_BODY)), charset);
-    } else {
+    const cap = mode === 'FILE' ? MAX_FILE : MAX_BODY;
+    if (mode === 'HEAD') {
       // a HEAD is only worth making when the upstream answers it honestly;
       // some servers do not, which shows up as a missing lastModified
       await res.body?.cancel();
+      return out;
     }
+    // refuse before buffering when the upstream declares an oversized body,
+    // and still clamp afterwards for the chunked responses that declare none
+    if (Number(out.contentLength || 0) > cap) {
+      await res.body?.cancel();
+      return { ...out, ok: false, error: 'response too large' };
+    }
+    const buf = await res.arrayBuffer();
+    if (mode === 'FILE') {
+      // a document is handed back whole or not at all: a clamped PDF is a
+      // corrupt file, which is worse than a refusal the employee can act on
+      if (buf.byteLength > cap) return { ...out, ok: false, error: 'response too large' };
+      out.filename = filenameOf(res.headers.get('content-disposition') || '', new URL(res.url || target));
+      out.base64 = toBase64(new Uint8Array(buf));
+      return out;
+    }
+    const charset = charsetOf(contentType);
+    out.charset = charset;
+    // clamped in bytes, the same unit MAX_BODY is compared against above
+    out.body = decodeBody(new Uint8Array(buf, 0, Math.min(buf.byteLength, cap)), charset);
     return out;
   } catch (e) {
     return { url: raw, ok: false, status: 0, error: String(e?.message || e) };
   }
 }
 
-async function fetchAll(urls, method) {
+async function fetchAll(urls, mode) {
   const out = new Array(urls.length);
   let cursor = 0;
   async function worker() {
     while (cursor < urls.length) {
       const i = cursor++;
-      out[i] = await fetchOne(urls[i], method);
+      out[i] = await fetchOne(urls[i], mode);
     }
   }
   await Promise.all(
@@ -4218,15 +4407,19 @@ Deno.serve(async (req) => {
     return json({ error: 'body must be JSON' }, 400);
   }
 
-  const method = payload.method === 'HEAD' ? 'HEAD' : 'GET';
+  const mode = payload.method === 'HEAD' ? 'HEAD'
+    : payload.method === 'FILE' ? 'FILE' : 'GET';
   const urls = Array.isArray(payload.urls)
     ? payload.urls
     : (payload.url !== undefined ? [payload.url] : []);
 
   if (!urls.length) return json({ error: 'no url given' }, 400);
   if (urls.length > MAX_URLS) return json({ error: 'at most ' + MAX_URLS + ' urls per call' }, 400);
+  // one whole document per call: two 20 MB files in one response would be
+  // built in memory at the same time
+  if (mode === 'FILE' && urls.length > 1) return json({ error: 'one url per FILE call' }, 400);
 
-  return json({ results: await fetchAll(urls, method) });
+  return json({ results: await fetchAll(urls, mode) });
 });`;
 
 function suFunctionsUrl(){
@@ -4260,9 +4453,10 @@ function suRenderSetup(){
       <div class="src-setup-step-title">دالة <b>site-proxy</b> ${st.fnStale ? 'منشورة بنسخة أقدم' : 'غير منشورة'}</div>
       <div class="src-setup-body">
         ${st.fnStale
-          ? `الدالة تعمل، لكنها منشورة بنسخة سابقة كانت تحمل قائمة مواقع بالأسماء.
-             النسخة أدناه تسمح بأي موقع سعودي عام تحت النطاق <b>.sa</b>، فهي آخر إعادة نشر تحتاجها —
-             أي جهة تُضاف بعدها تعمل بلا لمس الدالة. من لوحة Supabase: <b>Edge Functions</b> ثم
+          ? `الدالة تعمل، لكنها منشورة بنسخة سابقة: إما أنها تحمل قائمة مواقع بالأسماء لا تعرف
+             هذه الجهة، وإما أنها لا تعرف كيف تُنزّل ملفًا. النسخة أدناه تسمح بأي موقع سعودي عام
+             تحت النطاق <b>.sa</b> وتُعيد الملفات كما هي، فهي آخر إعادة نشر تحتاجها.
+             من لوحة Supabase: <b>Edge Functions</b> ثم
              <b>site-proxy</b> ثم <b>Edit function</b>، استبدل الكود كاملًا ثم اضغط Deploy.`
           : `مواقع الجهات لا ترسل ترويسة CORS، فلا يستطيع المتصفح قراءتها مباشرة؛ هذه الدالة هي الوسيط الذي يقرأها.
              من لوحة Supabase: <b>Edge Functions</b> ثم <b>Deploy a new function</b> ثم <b>Via Editor</b>،
@@ -4460,7 +4654,7 @@ function suCloseConfirm(answer){
   $('#suConflict').innerHTML = '';
   resolve(answer);
 }
-/* asked once for the whole sweep and not once per جهة: thirteen interruptions
+/* asked once for the whole sweep and not once per جهة: twelve interruptions
    would be answered blind */
 function suConfirmOverlap(clashes, sites){
   const free = suFreeRangeForSites(sites);
@@ -4559,7 +4753,7 @@ async function suSearch(){
     const undatedCount = rows.filter(r => r.undated).length;
     Object.assign(suDraft, {
       rows, sites: done, range, stats, failures,
-      recordIds: null, readOnly: false, dirty: false,
+      recordIds: null, readOnly: false, dirty: false, editing: false,
       head: rows.length
         ? `تحديثات ${done.length === 1 ? escapeHtml(done[0].label) : done.length + ' جهة'}
            <span>· من ${escapeHtml(range.from)} إلى ${escapeHtml(range.to)} · ${rows.length} عنصرًا</span>`
@@ -4601,7 +4795,11 @@ async function suSearch(){
 
 /* ---------- opening a saved record for editing ---------- */
 function suOpenRecord(rec){
-  const site = suSiteByKey(rec.siteKey);
+  /* a جهة can leave the registry (الأمن السيبراني did), and its saved searches
+     stay in the log — so the record's own name and url describe it, rather than
+     it silently taking on the identity of whichever site happens to be first */
+  const site = SU_SITES.find(s => s.key === rec.siteKey)
+    || { key: rec.siteKey, name: rec.siteName || rec.siteKey, section: '', home: rec.sourceUrl || '' };
   const mine = rec.ownerId === currentUser.id;
   Object.assign(suDraft, {
     rows: rec.items.map(it => ({ ...it, siteKey: site.key })),
@@ -4610,7 +4808,7 @@ function suOpenRecord(rec){
     stats: { [site.key]: { scanned: rec.scannedCount, pagesRead: 0 } },
     failures: [],
     recordIds: { [site.key]: rec.id },
-    readOnly: !mine,
+    readOnly: !mine, editing: false,
     dirty: false, saving: false,
     head: `${escapeHtml(rec.siteName || suSiteLabel(site))}
            <span>· من ${escapeHtml(rec.from)} إلى ${escapeHtml(rec.to)} · ${rec.items.length} عنصرًا · ${escapeHtml(rec.user || '')}</span>`,
