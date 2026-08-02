@@ -2905,7 +2905,10 @@ function suRangesOverlap(a, b){
 /* anything that came back *from* the function is proof it is deployed, so the
    "not deployed" setup step retires itself the moment that proof arrives */
 function suMarkProxyAlive(){
-  if(!suSetupState.fn) return;
+  /* a reply proves something is deployed; it proves nothing about whether that
+     copy knows every site here, so a stale marker stands until a sweep that ran
+     all the way through clears it */
+  if(!suSetupState.fn || suSetupState.fnStale) return;
   suSetupState.fn = false;
   suSetupState.detail = '';
   suRenderSetup();
@@ -2929,7 +2932,31 @@ async function suProxyFetch(urls, method){
   if(!data || !Array.isArray(data.results)){
     throw new Error((data && data.error) || 'رد غير متوقع من وسيط القراءة');
   }
+  /* the function answered, but refused the host — its allow-list is older than
+     this page's list of sites, so the deployed copy predates them. Adding a
+     site means redeploying, and that is a different fix from "not deployed",
+     so it is told apart here rather than surfacing as a bare fetch failure.
+     One refusal fails the whole call: every url in a sweep shares an origin, so
+     the rest are refused too, and a partial sweep is not a result. */
+  if(data.results.some(r => r && r.error === 'host not allowed')){
+    const err = new Error('النسخة المنشورة من وسيط القراءة لا تعرف هذا الموقع');
+    err.proxyStale = true;
+    throw err;
+  }
   return data.results;
+}
+/* site-proxy refuses more than 24 urls in one call. A listing longer than that
+   is read in consecutive calls rather than by raising the cap, so a single
+   invocation stays short and the allow-list stays the only limit on reach. */
+const SU_PROXY_MAX_URLS = 24;
+async function suProxyFetchMany(urls, method, onBatch){
+  const out = [];
+  for(let i = 0; i < urls.length; i += SU_PROXY_MAX_URLS){
+    const batch = urls.slice(i, i + SU_PROXY_MAX_URLS);
+    if(onBatch) onBatch(i + batch.length, urls.length);
+    out.push(...await suProxyFetch(batch, method));
+  }
+  return out;
 }
 
 /* ---------- adapter: وزارة البلديات والإسكان — الأنظمة واللوائح ----------
@@ -3005,6 +3032,99 @@ async function momahScanRegulations(range, onProgress){
   return { rows, undated, scanned, pagesRead };
 }
 
+/* ---------- adapter: الاتحاد السعودي لكرة القدم — الملفات ----------
+   files.php is one flat page, no pagination: five headed sections (اللوائح،
+   المستندات، الجداول، التقارير، التقارير الشهرية) and under each a run of rows
+   linking straight to the published file. As on momah the page shows no dates
+   and the file's own Last-Modified is the date — here corroborated by the unix
+   timestamp the site bakes into every upload's filename.
+
+   Two things momah did not have:
+   * the page is served as windows-1256, so site-proxy has to decode it by the
+     charset the response declares or every title arrives as mojibake
+   * التقارير الشهرية ends with links back into files.php?year=YYYY — the
+     archives of earlier months. They are navigation, not files, so they are
+     followed rather than reported as undated; and a file inside one can still
+     carry a recent date (the 2025 reports were re-uploaded in 2026), so
+     skipping them would silently miss real updates. */
+const SAFF_ORIGIN = 'https://www.saff.com.sa';
+const SAFF_LIST_URL = SAFF_ORIGIN + '/files.php';
+const SAFF_MAX_ARCHIVES = 12;   // one link per past year; this is the guard
+
+function saffParseFilesPage(html){
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  /* the files column only: the news rail beside it keeps its images under the
+     same /uploadcenter/ path, so a document-wide selector would collect them */
+  const column = doc.querySelector('.col-sm-9');
+  if(!column) return null;   // the page's shape changed — better to fail loudly
+  const files = [], archives = [];
+  let section = '';
+  /* headings and rows are siblings, so the section a row belongs to is whichever
+     heading was last seen — querySelectorAll walks them in document order */
+  column.querySelectorAll('p[align="center"], .p-3').forEach(el => {
+    /* bidi marks are data-entry residue in the site's own titles; they are
+       invisible, and dropping them keeps the stored text comparable */
+    const text = (el.textContent || '').replace(/[\u200e\u200f]/g, '').replace(/\s+/g, ' ').trim();
+    if(el.tagName === 'P'){
+      section = text.replace(/^[-–—\s]+|[-–—\s]+$/g, '');   // "- اللوائح -"
+      return;
+    }
+    const link = el.querySelector('a[href]');
+    if(!link || !text) return;
+    let url;
+    try{ url = new URL(link.getAttribute('href'), SAFF_LIST_URL); }
+    catch(e){ return; }        // a malformed href points at nothing to read
+    if(url.origin !== SAFF_ORIGIN) return;
+    const year = url.pathname.endsWith('/files.php') ? url.searchParams.get('year') : '';
+    if(year) archives.push({ year, url: url.href });
+    else files.push({ title: text, type: section, fileUrl: url.href });
+  });
+  return { files, archives };
+}
+
+async function saffScanFiles(range, onProgress){
+  onProgress('جاري قراءة صفحة الملفات…');
+  const [main] = await suProxyFetch([SAFF_LIST_URL], 'GET');
+  if(!main.ok) throw new Error(`تعذر فتح صفحة الملفات (${main.status || main.error || 'خطأ'})`);
+  const parsed = saffParseFilesPage(main.body);
+  if(!parsed) throw new Error('تعذر قراءة قائمة الملفات — تغيّر شكل الصفحة');
+
+  const entries = parsed.files.slice();
+  let pagesRead = 1;
+  /* each archive year is read as its own page, and its section keeps the year so
+     a result says which archive the entry came from. Only the links on the main
+     page are followed: an archive page carries no year links of its own. */
+  for(const archive of parsed.archives.slice(0, SAFF_MAX_ARCHIVES)){
+    onProgress(`جاري قراءة أرشيف ${archive.year}…`);
+    const [page] = await suProxyFetch([archive.url], 'GET');
+    if(!page.ok) throw new Error(`تعذر فتح أرشيف ${archive.year} (${page.status || page.error || 'خطأ'})`);
+    const sub = saffParseFilesPage(page.body);
+    if(!sub) throw new Error(`تعذر قراءة أرشيف ${archive.year} — تغيّر شكل الصفحة`);
+    pagesRead++;
+    sub.files.forEach(f => entries.push({ ...f, type: `${f.type} ${archive.year}`.trim() }));
+  }
+
+  /* one HEAD per distinct file, batched — the page links ~76 files, well past
+     what a single proxy call takes */
+  const urls = Array.from(new Set(entries.map(e => e.fileUrl)));
+  const heads = await suProxyFetchMany(urls, 'HEAD', (done, total) =>
+    onProgress(`جاري قراءة تواريخ الملفات… (${done} من ${total})`));
+  const dateFor = new Map(heads.map(h => [h.url, h.ok ? suHttpDateToIso(h.lastModified) : '']));
+
+  const rows = [], undated = [];
+  entries.forEach(entry => {
+    const date = dateFor.get(entry.fileUrl) || '';
+    /* a file whose date could not be read is not evidence of anything, so it is
+       set aside to be reported rather than dropped or dated by guesswork */
+    if(!date){ undated.push({ ...entry, undated:true }); return; }
+    if(date >= range.from && date <= range.to) rows.push({ ...entry, date });
+  });
+  /* nothing on this page is in date order, so the result is put in one */
+  rows.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+
+  return { rows, undated, scanned: entries.length, pagesRead };
+}
+
 /* ---------- the site registry ---------- */
 const SU_SITES = [
   {
@@ -3014,6 +3134,14 @@ const SU_SITES = [
     home: MOMAH_LIST_URL,
     dateMeaning: 'تاريخ نشر ملف التشريع على الموقع (Last-Modified للملف)',
     scan: momahScanRegulations
+  },
+  {
+    key: 'saff-files',
+    name: 'الاتحاد السعودي لكرة القدم',
+    section: 'الملفات',
+    home: SAFF_LIST_URL,
+    dateMeaning: 'تاريخ نشر الملف على الموقع (Last-Modified للملف)',
+    scan: saffScanFiles
   }
 ];
 function suSiteByKey(key){ return SU_SITES.find(s => s.key === key) || SU_SITES[0]; }
@@ -3046,7 +3174,7 @@ function suRowsTableHtml(rows){
 function suUndatedHtml(undated){
   if(!undated.length) return '';
   return `<div class="su-undated">
-    <div class="su-undated-title">${undated.length} عنصرًا على الصفحات المفحوصة بلا ملف منشور — لا يمكن تأريخه، ويُراجع يدويًا</div>
+    <div class="su-undated-title">${undated.length} عنصرًا على الصفحات المفحوصة بلا تاريخ يمكن التحقق منه — يُراجع يدويًا</div>
     <ul>${undated.map(u => `<li>${escapeHtml(u.title)}${u.type ? ` <span>· ${escapeHtml(u.type)}</span>` : ''}</li>`).join('')}</ul>
   </div>`;
 }
@@ -3062,7 +3190,7 @@ function suRenderResult(meta, items){
     <div class="src-result-top"><div class="src-result-title">${head}</div></div>
     ${rows.length
       ? suRowsTableHtml(rows)
-      : '<div class="empty-hint">لم يُنشر أي تشريع على الموقع خلال هذه الفترة</div>'}
+      : '<div class="empty-hint">لم يُنشر أي ملف على الموقع خلال هذه الفترة</div>'}
     ${suUndatedHtml(undated)}`;
 }
 
@@ -3171,6 +3299,8 @@ const SU_PROXY_SOURCE = `// Taqseem — site-proxy
 const ALLOWED_HOSTS = new Set([
   'momah.gov.sa',
   'www.momah.gov.sa',
+  'saff.com.sa',
+  'www.saff.com.sa',
 ]);
 
 const CORS = {
@@ -3182,6 +3312,21 @@ const CORS = {
 const MAX_URLS = 24;
 const MAX_BODY = 4_000_000;
 const POOL = 6;
+
+// res.text() decodes as UTF-8 whatever the response declares, so a page served
+// in a legacy encoding would come back as mojibake — saff.com.sa sends
+// windows-1256. The declared charset is honoured instead.
+function charsetOf(contentType) {
+  const m = /charset\\s*=\\s*"?([\\w-]+)/i.exec(contentType);
+  return (m ? m[1] : 'utf-8').toLowerCase();
+}
+function decodeBody(bytes, charset) {
+  try {
+    return new TextDecoder(charset).decode(bytes);
+  } catch {
+    return new TextDecoder('utf-8').decode(bytes);
+  }
+}
 
 function resolveTarget(raw) {
   if (typeof raw !== 'string') return null;
@@ -3203,20 +3348,24 @@ async function fetchOne(raw, method) {
         'Accept-Language': 'ar',
       },
     });
+    const contentType = res.headers.get('content-type') || '';
     const out = {
       url: raw,
       finalUrl: res.url,
       ok: res.ok,
       status: res.status,
       lastModified: res.headers.get('last-modified') || '',
-      contentType: res.headers.get('content-type') || '',
+      contentType,
       contentLength: res.headers.get('content-length') || '',
     };
     if (method === 'GET') {
       if (Number(out.contentLength || 0) > MAX_BODY) {
         return { ...out, ok: false, error: 'response too large' };
       }
-      out.body = (await res.text()).slice(0, MAX_BODY);
+      const charset = charsetOf(contentType);
+      const buf = await res.arrayBuffer();
+      out.charset = charset;
+      out.body = decodeBody(new Uint8Array(buf, 0, Math.min(buf.byteLength, MAX_BODY)), charset);
     } else {
       await res.body?.cancel();
     }
@@ -3273,7 +3422,7 @@ function suFunctionsUrl(){
   return ref ? `https://supabase.com/dashboard/project/${ref}/functions` : 'https://supabase.com/dashboard';
 }
 
-const suSetupState = { table:false, fn:false, overlap:false, detail:'' };
+const suSetupState = { table:false, fn:false, fnStale:false, overlap:false, detail:'' };
 function suRenderSetup(){
   const host = $('#suSetup');
   if(!suSetupState.table && !suSetupState.fn && !suSetupState.overlap){ host.innerHTML = ''; return; }
@@ -3295,11 +3444,15 @@ function suRenderSetup(){
   }
   if(suSetupState.fn){
     steps.push(`<div class="src-setup-step">
-      <div class="src-setup-step-title">٢ · دالة <b>site-proxy</b> غير منشورة</div>
+      <div class="src-setup-step-title">٢ · دالة <b>site-proxy</b> ${suSetupState.fnStale ? 'منشورة بنسخة أقدم' : 'غير منشورة'}</div>
       <div class="src-setup-body">
-        مواقع الجهات لا ترسل ترويسة CORS، فلا يستطيع المتصفح قراءتها مباشرة؛ هذه الدالة هي الوسيط الذي يقرأها.
-        من لوحة Supabase: <b>Edge Functions</b> ثم <b>Deploy a new function</b> ثم <b>Via Editor</b>،
-        وسمِّ الدالة <b>site-proxy</b> بالضبط، والصق الكود أدناه ثم اضغط Deploy.
+        ${suSetupState.fnStale
+          ? `النسخة المنشورة تعمل، لكن قائمة المواقع المسموح بها فيها لا تضم هذا الموقع — فهي أقدم من هذه الصفحة.
+             أعد نشر الدالة بالكود أدناه: من لوحة Supabase <b>Edge Functions</b> ثم <b>site-proxy</b> ثم
+             <b>Edit function</b>، واستبدل الكود كاملًا ثم اضغط Deploy.`
+          : `مواقع الجهات لا ترسل ترويسة CORS، فلا يستطيع المتصفح قراءتها مباشرة؛ هذه الدالة هي الوسيط الذي يقرأها.
+             من لوحة Supabase: <b>Edge Functions</b> ثم <b>Deploy a new function</b> ثم <b>Via Editor</b>،
+             وسمِّ الدالة <b>site-proxy</b> بالضبط، والصق الكود أدناه ثم اضغط Deploy.`}
         ${suSetupState.detail ? `<br>الخطأ الحالي: ${escapeHtml(suSetupState.detail)}` : ''}
       </div>
       <div class="src-setup-actions">
@@ -3495,13 +3648,19 @@ async function suSearch(){
     }
 
     const result = await site.scan(range, msg => suSetStatus(`<span class="src-spinner"></span>${msg}`));
+    /* a sweep that ran to the end is the proof a redeployed proxy knows this site */
+    if(suSetupState.fnStale){
+      suSetupState.fn = false;
+      suSetupState.fnStale = false;
+      suRenderSetup();
+    }
 
     const meta = { siteName:`${site.name} — ${site.section}`, from:range.from, to:range.to };
     suRenderResult(meta, result.rows.concat(result.undated));
 
     const saved = await suSaveSearch(site, range, result);
     const undatedNote = result.undated.length
-      ? ` (${result.undated.length} عنصرًا بلا ملف منشور لا يمكن تأريخه)`
+      ? ` (${result.undated.length} عنصرًا بلا تاريخ يمكن التحقق منه)`
       : '';
     const summary = `فُحص ${result.scanned} عنصرًا على الموقع خلال ${result.pagesRead} صفحة، منها ${result.rows.length} ضمن النطاق.${undatedNote}`;
     if(saved.row){
@@ -3526,11 +3685,14 @@ async function suSearch(){
   }catch(err){
     /* a half-finished sweep is not a result: nothing is saved, so the range
        stays open and the next attempt starts clean */
-    if(err && err.proxyMissing){
+    if(err && (err.proxyMissing || err.proxyStale)){
       suSetupState.fn = true;
-      suSetupState.detail = (err.message && !/Failed to send/i.test(err.message)) ? err.message : '';
+      suSetupState.fnStale = !!err.proxyStale;
+      suSetupState.detail = (!err.proxyStale && err.message && !/Failed to send/i.test(err.message)) ? err.message : '';
       suRenderSetup();
-      suSetStatus('وسيط القراءة (site-proxy) غير منشور أو غير قابل للوصول — أكمل التجهيزة أدناه ثم أعد المحاولة.', true);
+      suSetStatus(err.proxyStale
+        ? 'وسيط القراءة منشور بنسخة أقدم لا تعرف هذا الموقع — أعد نشره بالكود أدناه ثم أعد المحاولة.'
+        : 'وسيط القراءة (site-proxy) غير منشور أو غير قابل للوصول — أكمل التجهيزة أدناه ثم أعد المحاولة.', true);
     }else{
       suSetStatus(`تعذر إتمام البحث ولم يُحفظ شيء — ${escapeHtml((err && err.message) || 'خطأ غير معروف')}`, true);
     }
@@ -3595,6 +3757,7 @@ async function suOnEnter(){
     }
     if(e.target.closest('[data-su-recheck]')){
       suSetupState.fn = false;        // only a fresh search can prove the proxy works
+      suSetupState.fnStale = false;   // ...or that the deployed copy knows every site
       suSetupState.overlap = false;   // ...and only a fresh save can prove the constraint is gone
       await suRenderLog();
       suRenderRangeNote();

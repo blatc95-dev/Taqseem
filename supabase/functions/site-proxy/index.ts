@@ -1,6 +1,6 @@
 // Taqseem — site-proxy
 //
-// The "تحديثات المواقع" tab reads public pages on government sites. Those
+// The "تحديثات المواقع" tab reads public pages on the source sites. Those
 // sites send no `Access-Control-Allow-Origin` header (unlike uqn.gov.sa's
 // /api/* routes, which the أم القرى tab calls straight from the browser), so
 // the browser is not allowed to read their responses at all. This function is
@@ -23,6 +23,8 @@
 const ALLOWED_HOSTS = new Set([
   'momah.gov.sa',
   'www.momah.gov.sa',
+  'saff.com.sa',
+  'www.saff.com.sa',
 ]);
 
 const CORS = {
@@ -36,6 +38,24 @@ const MAX_BODY = 4_000_000;   // bytes; the listing pages run ~300 KB
 const POOL = 6;               // parallel upstream requests per call
 
 type Result = Record<string, unknown>;
+
+// `res.text()` decodes as UTF-8 no matter what the response declares, so a page
+// served in a legacy encoding would come back as mojibake — saff.com.sa serves
+// windows-1256. The declared charset is honoured instead, and it wins over any
+// <meta charset> inside the document, which is what a browser does too (and
+// what saff needs: its header says windows-1256 while its meta claims utf-8).
+function charsetOf(contentType: string): string {
+  const m = /charset\s*=\s*"?([\w-]+)/i.exec(contentType);
+  return (m ? m[1] : 'utf-8').toLowerCase();
+}
+function decodeBody(bytes: Uint8Array, charset: string): string {
+  try {
+    return new TextDecoder(charset).decode(bytes);
+  } catch {
+    // an encoding label this runtime does not know is not worth failing over
+    return new TextDecoder('utf-8').decode(bytes);
+  }
+}
 
 function resolveTarget(raw: unknown): URL | null {
   if (typeof raw !== 'string') return null;
@@ -57,13 +77,14 @@ async function fetchOne(raw: unknown, method: 'GET' | 'HEAD'): Promise<Result> {
         'Accept-Language': 'ar',
       },
     });
+    const contentType = res.headers.get('content-type') || '';
     const out: Result = {
       url: raw,
       finalUrl: res.url,
       ok: res.ok,
       status: res.status,
       lastModified: res.headers.get('last-modified') || '',
-      contentType: res.headers.get('content-type') || '',
+      contentType,
       contentLength: res.headers.get('content-length') || '',
     };
     if (method === 'GET') {
@@ -72,7 +93,11 @@ async function fetchOne(raw: unknown, method: 'GET' | 'HEAD'): Promise<Result> {
       if (Number(out.contentLength || 0) > MAX_BODY) {
         return { ...out, ok: false, error: 'response too large' };
       }
-      out.body = (await res.text()).slice(0, MAX_BODY);
+      const charset = charsetOf(contentType);
+      const buf = await res.arrayBuffer();
+      out.charset = charset;
+      // clamped in bytes, the same unit MAX_BODY is compared against above
+      out.body = decodeBody(new Uint8Array(buf, 0, Math.min(buf.byteLength, MAX_BODY)), charset);
     } else {
       // a HEAD is only worth making when the upstream answers it honestly;
       // some servers do not, which shows up as a missing lastModified
