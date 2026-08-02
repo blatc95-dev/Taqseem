@@ -2905,10 +2905,7 @@ function suRangesOverlap(a, b){
 /* anything that came back *from* the function is proof it is deployed, so the
    "not deployed" setup step retires itself the moment that proof arrives */
 function suMarkProxyAlive(){
-  /* a reply proves something is deployed; it proves nothing about whether that
-     copy knows every site here, so a stale marker stands until a sweep that ran
-     all the way through clears it */
-  if(!suSetupState.fn || suSetupState.fnStale) return;
+  if(!suSetupState.fn) return;
   suSetupState.fn = false;
   suSetupState.detail = '';
   suRenderSetup();
@@ -3422,10 +3419,19 @@ function suFunctionsUrl(){
   return ref ? `https://supabase.com/dashboard/project/${ref}/functions` : 'https://supabase.com/dashboard';
 }
 
-const suSetupState = { table:false, fn:false, fnStale:false, overlap:false, detail:'' };
+/* `staleSite` holds the key of the site the deployed proxy refused, not a flag:
+   the refusal is about one site's host missing from that copy's allow-list, so
+   the step belongs to that site. Kept as a flag it followed the employee around
+   — onto the other site, and back onto every visit to the tab — describing a
+   problem that was not on the screen. */
+const suSetupState = { table:false, fn:false, staleSite:'', overlap:false, detail:'' };
+function suStaleHere(){
+  return !!suSetupState.staleSite && suSetupState.staleSite === $('#suSite').value;
+}
 function suRenderSetup(){
   const host = $('#suSetup');
-  if(!suSetupState.table && !suSetupState.fn && !suSetupState.overlap){ host.innerHTML = ''; return; }
+  const stale = suStaleHere();
+  if(!suSetupState.table && !suSetupState.fn && !stale && !suSetupState.overlap){ host.innerHTML = ''; return; }
   const steps = [];
   if(suSetupState.table){
     steps.push(`<div class="src-setup-step">
@@ -3442,14 +3448,15 @@ function suRenderSetup(){
       <pre data-su-select title="اضغط لتحديد الأوامر كاملة">${escapeHtml(SU_TABLE_SQL)}</pre>
     </div>`);
   }
-  if(suSetupState.fn){
+  if(suSetupState.fn || stale){
     steps.push(`<div class="src-setup-step">
-      <div class="src-setup-step-title">٢ · دالة <b>site-proxy</b> ${suSetupState.fnStale ? 'منشورة بنسخة أقدم' : 'غير منشورة'}</div>
+      <div class="src-setup-step-title">٢ · دالة <b>site-proxy</b> ${stale ? 'منشورة بنسخة أقدم' : 'غير منشورة'}</div>
       <div class="src-setup-body">
-        ${suSetupState.fnStale
-          ? `النسخة المنشورة تعمل، لكن قائمة المواقع المسموح بها فيها لا تضم هذا الموقع — فهي أقدم من هذه الصفحة.
-             أعد نشر الدالة بالكود أدناه: من لوحة Supabase <b>Edge Functions</b> ثم <b>site-proxy</b> ثم
-             <b>Edit function</b>، واستبدل الكود كاملًا ثم اضغط Deploy.`
+        ${stale
+          ? `الدالة تعمل، لكنها منشورة بنسخة سابقة لإضافة <b>${escapeHtml(suSiteByKey(suSetupState.staleSite).name)}</b>،
+             فهي ترفض قراءته. ليست دالة جديدة: افتح <b>site-proxy</b> نفسها من لوحة Supabase،
+             <b>Edit function</b>، استبدل الكود كاملًا بالكود أدناه ثم اضغط Deploy — مرة واحدة.
+             <br>بقية المواقع تعمل كالمعتاد في هذه الأثناء.`
           : `مواقع الجهات لا ترسل ترويسة CORS، فلا يستطيع المتصفح قراءتها مباشرة؛ هذه الدالة هي الوسيط الذي يقرأها.
              من لوحة Supabase: <b>Edge Functions</b> ثم <b>Deploy a new function</b> ثم <b>Via Editor</b>،
              وسمِّ الدالة <b>site-proxy</b> بالضبط، والصق الكود أدناه ثم اضغط Deploy.`}
@@ -3649,9 +3656,8 @@ async function suSearch(){
 
     const result = await site.scan(range, msg => suSetStatus(`<span class="src-spinner"></span>${msg}`));
     /* a sweep that ran to the end is the proof a redeployed proxy knows this site */
-    if(suSetupState.fnStale){
-      suSetupState.fn = false;
-      suSetupState.fnStale = false;
+    if(suSetupState.staleSite === site.key){
+      suSetupState.staleSite = '';
       suRenderSetup();
     }
 
@@ -3686,9 +3692,14 @@ async function suSearch(){
     /* a half-finished sweep is not a result: nothing is saved, so the range
        stays open and the next attempt starts clean */
     if(err && (err.proxyMissing || err.proxyStale)){
-      suSetupState.fn = true;
-      suSetupState.fnStale = !!err.proxyStale;
-      suSetupState.detail = (!err.proxyStale && err.message && !/Failed to send/i.test(err.message)) ? err.message : '';
+      /* the refusal is this site's, the outage is everyone's — so one is filed
+         against the site and the other against the function */
+      if(err.proxyStale){
+        suSetupState.staleSite = site.key;
+      }else{
+        suSetupState.fn = true;
+        suSetupState.detail = /Failed to send/i.test(err.message || '') ? '' : (err.message || '');
+      }
       suRenderSetup();
       suSetStatus(err.proxyStale
         ? 'وسيط القراءة منشور بنسخة أقدم لا تعرف هذا الموقع — أعد نشره بالكود أدناه ثم أعد المحاولة.'
@@ -3727,6 +3738,7 @@ async function suOnEnter(){
     /* the previous search's outcome does not describe the new range, and
        leaving it up would read as a verdict on it */
     if(!suBusy) suSetStatus('');
+    suRenderSetup();   // the redeploy step belongs to one site; switching hides it
     suRenderRangeNote();
     suValidateRange();
   }));
@@ -3757,7 +3769,7 @@ async function suOnEnter(){
     }
     if(e.target.closest('[data-su-recheck]')){
       suSetupState.fn = false;        // only a fresh search can prove the proxy works
-      suSetupState.fnStale = false;   // ...or that the deployed copy knows every site
+      suSetupState.staleSite = '';    // ...or that the deployed copy knows this site
       suSetupState.overlap = false;   // ...and only a fresh save can prove the constraint is gone
       await suRenderLog();
       suRenderRangeNote();
