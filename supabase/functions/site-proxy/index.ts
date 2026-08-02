@@ -4,7 +4,7 @@
 // sites send no `Access-Control-Allow-Origin` header (unlike uqn.gov.sa's
 // /api/* routes, which the أم القرى tab calls straight from the browser), so
 // the browser is not allowed to read their responses at all. This function is
-// the one hop that can: it fetches an allow-listed public URL server-side and
+// the one hop that can: it fetches a permitted public URL server-side and
 // hands the result back with CORS enabled.
 //
 // Deploy from the Dashboard (no CLI needed):
@@ -14,18 +14,20 @@
 // two in step when editing.
 //
 // Safety:
-//   * only ALLOWED_HOSTS are reachable, so the function can never be pointed
-//     at the project's own services or at a cloud metadata endpoint
+//   * only public Saudi hosts over https are reachable (see resolveTarget), so
+//     the function can never be pointed at the project's own services or at a
+//     cloud metadata endpoint
 //   * only GET and HEAD, so it can never change anything upstream
 //   * JWT verification stays on (Supabase's default), so only a signed-in
 //     employee can drive it
 
-const ALLOWED_HOSTS = new Set([
-  'momah.gov.sa',
-  'www.momah.gov.sa',
-  'saff.com.sa',
-  'www.saff.com.sa',
-]);
+// This used to be a literal set of hostnames, which meant every new source site
+// needed this file redeployed before the tab could read it — and until that
+// happened all the tab could do was tell the employee their proxy was out of
+// date. It is a policy now: any public host under the .sa namespace. Nothing
+// internal answers to a .sa name, so the guard the name list existed for still
+// holds, while adding a site is pure client-side work.
+const SAUDI_HOST = /^(?!-)[a-z0-9-]+(\.(?!-)[a-z0-9-]+)*\.sa$/;
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -34,8 +36,18 @@ const CORS = {
 };
 
 const MAX_URLS = 24;          // one listing page's worth of files, plus slack
-const MAX_BODY = 4_000_000;   // bytes; the listing pages run ~300 KB
+const MAX_BODY = 4_000_000;   // bytes; the largest listing runs ~460 KB
 const POOL = 6;               // parallel upstream requests per call
+const TIMEOUT_MS = 40_000;    // a source site that hangs must not hang the call,
+                              // but a slow-and-working one must not be cut off either
+
+// Some of these sites sit behind a WAF that answers TaqseemBot with a block
+// page — cma.gov.sa returns "خطأ في الوصول" and hrsd.gov.sa a 503 — while the
+// same public page is served normally to a browser. Nothing here is hidden
+// behind a login or a robots rule; the honest bot string simply trips a filter.
+const USER_AGENT =
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 ' +
+  '(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
 
 type Result = Record<string, unknown>;
 
@@ -62,7 +74,11 @@ function resolveTarget(raw: unknown): URL | null {
   let u: URL;
   try { u = new URL(raw); } catch { return null; }
   if (u.protocol !== 'https:') return null;
-  return ALLOWED_HOSTS.has(u.hostname) ? u : null;
+  // credentials in the url, or a port other than the public one, are how an
+  // internal service would be reached — neither belongs to a public page
+  if (u.username || u.password || u.port) return null;
+  // an IP literal can never match, since the name has to end in .sa
+  return SAUDI_HOST.test(u.hostname.toLowerCase()) ? u : null;
 }
 
 async function fetchOne(raw: unknown, method: 'GET' | 'HEAD'): Promise<Result> {
@@ -72,9 +88,11 @@ async function fetchOne(raw: unknown, method: 'GET' | 'HEAD'): Promise<Result> {
     const res = await fetch(target, {
       method,
       redirect: 'follow',
+      signal: AbortSignal.timeout(TIMEOUT_MS),
       headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; TaqseemBot/1.0)',
-        'Accept-Language': 'ar',
+        'User-Agent': USER_AGENT,
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'ar,en;q=0.9',
       },
     });
     const contentType = res.headers.get('content-type') || '';

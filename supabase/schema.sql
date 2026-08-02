@@ -144,18 +144,31 @@ create policy "owners can insert their own extractions"
   to authenticated
   with check (owner_id = auth.uid());
 
+-- a saved extraction is editable: أم القرى leaves رقم القرار out of its
+-- archive, and a wrong تصنيف is something a person can see and the parser
+-- cannot, so the table it produced is a draft the owner can correct
+create policy "owners can update their own extractions"
+  on public.uqn_extractions for update
+  to authenticated
+  using (owner_id = auth.uid())
+  with check (owner_id = auth.uid());
+
 create policy "owners can delete their own extractions"
   on public.uqn_extractions for delete
   to authenticated
   using (owner_id = auth.uid());
 
 -- ---------- site_updates ----------
--- one row per "تحديثات المواقع" search: the date range an employee already
--- swept on one source site, plus what that sweep found. The rows are what
--- makes the range warning work — before a search starts, the app looks here
--- for a range on the same site that the new one touches, and asks the
--- employee to confirm rather than repeat someone else's sweep by accident.
--- `items` keeps the result as rendered, so a historical search stays readable
+-- one row per جهة per "تحديثات المواقع" search: the date range an employee
+-- already swept on that one source site, plus what that sweep found. A search
+-- can cover many sites at once and still writes a row each, because coverage is
+-- asked about and deleted per site — a thirteen-site sweep saved as one row
+-- would blur both. The rows are what makes the range warning work: before a
+-- search starts the app looks here for a range on the same site that the new
+-- one touches, and asks the employee to confirm rather than repeat someone
+-- else's sweep by accident.
+-- `items` keeps the result as saved — including any correction the employee
+-- made and any row they added by hand — so a historical search stays readable
 -- even after the source site edits the page.
 create table public.site_updates (
   id uuid primary key default gen_random_uuid(),
@@ -192,6 +205,12 @@ create policy "owners can insert their own site updates"
   to authenticated
   with check (owner_id = auth.uid());
 
+create policy "owners can update their own site updates"
+  on public.site_updates for update
+  to authenticated
+  using (owner_id = auth.uid())
+  with check (owner_id = auth.uid());
+
 create policy "owners can delete their own site updates"
   on public.site_updates for delete
   to authenticated
@@ -208,3 +227,20 @@ create policy "owners can delete their own site updates"
 -- (the insert fails with 23P01) — the tab detects that and offers this same
 -- statement in its setup card.
 alter table public.site_updates drop constraint if exists site_updates_no_overlap;
+
+-- Both logs were created read-then-insert-then-delete: nothing edited a saved
+-- record, so neither table had an UPDATE policy. Both tabs now hand back an
+-- editable table, and an update with no policy is not an error — row-level
+-- security simply matches no row, so the save silently does nothing. The tabs
+-- detect that and offer these two statements in the setup card.
+create policy "owners can update their own extractions"
+  on public.uqn_extractions for update
+  to authenticated
+  using (owner_id = auth.uid())
+  with check (owner_id = auth.uid());
+
+create policy "owners can update their own site updates"
+  on public.site_updates for update
+  to authenticated
+  using (owner_id = auth.uid())
+  with check (owner_id = auth.uid());

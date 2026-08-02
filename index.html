@@ -637,13 +637,88 @@
   }
   table.src-table .col-date{min-width:104px;white-space:nowrap;}
   table.src-table .col-type{min-width:96px;}
-  .su-undated{
+  /* the unified table carries every field any of the thirteen sites publishes,
+     so the columns most of them leave blank stay narrow */
+  table.src-table .col-entity{min-width:160px;}
+  table.src-table .col-hijri{min-width:110px;}
+  table.src-table .col-status{min-width:84px;}
+  table.src-table .col-num{min-width:104px;}
+  .su-note{
     margin-top:14px;padding:12px 14px;border-radius:10px;
     background:var(--bg-soft);border:1px solid var(--border);
     font-size:12.5px;color:var(--text-muted);line-height:1.9;
   }
-  .su-undated-title{font-weight:700;color:var(--text);margin-bottom:4px;}
-  .su-undated ul{margin:0;padding-inline-start:18px;}
+  .su-note-title{font-weight:700;color:var(--text);margin-bottom:4px;}
+  .su-note ul{margin:6px 0 0;padding-inline-start:18px;}
+  /* a site that failed mid-sweep is a hole in the answer, not a footnote, so it
+     is coloured like the warning it is rather than like the grey hints */
+  .su-note.warn{background:var(--lvl2-bg);border-color:var(--lvl2-border);color:var(--lvl2-text);}
+
+  /* ---------- choosing what to sweep ---------- */
+  .su-scope{margin-bottom:16px;}
+  .su-modes{display:flex;gap:8px;flex-wrap:wrap;}
+  .su-mode{
+    display:inline-flex;align-items:center;gap:7px;cursor:pointer;
+    padding:9px 15px;border-radius:999px;font-size:12.5px;font-weight:600;
+    background:var(--bg-soft);border:1px solid var(--border);color:var(--text-muted);
+  }
+  .su-mode:has(input:checked){
+    background:var(--blue-bg);border-color:var(--blue);color:var(--blue);
+  }
+  .su-mode input{accent-color:var(--blue);margin:0;}
+  .su-picker{
+    margin-top:12px;padding:12px;border-radius:11px;
+    background:var(--bg-soft);border:1px solid var(--border);
+  }
+  .su-picker-top{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    flex-wrap:wrap;margin-bottom:10px;
+  }
+  .su-picker-count{font-size:12px;font-weight:700;color:var(--text-muted);}
+  .su-picker-list{
+    display:grid;gap:6px;grid-template-columns:repeat(auto-fill,minmax(272px,1fr));
+  }
+  .su-pick{
+    display:flex;align-items:flex-start;gap:8px;cursor:pointer;
+    padding:8px 10px;border-radius:9px;font-size:12.5px;line-height:1.6;
+    background:var(--surface);border:1px solid var(--border);
+  }
+  .su-pick:has(input:checked){border-color:var(--blue);background:var(--blue-bg);}
+  .su-pick input{accent-color:var(--blue);margin-top:3px;flex:none;}
+  .su-pick span{font-weight:600;}
+  .su-pick em{display:block;font-style:normal;font-size:11.5px;color:var(--text-muted);font-weight:400;}
+
+  /* ---------- an editable result ---------- */
+  .ed-bar{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    flex-wrap:wrap;margin:12px 0;
+  }
+  .ed-bar-note{font-size:12px;color:var(--text-muted);line-height:1.8;}
+  .ed-bar-note b{color:var(--text);}
+  .ed-bar-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .ed-bar-actions .btn-primary{padding:9px 20px;font-size:13px;}
+  .ed-dirty{color:var(--lvl2-text);font-weight:700;}
+  table.src-table td.ed-td{padding:6px 8px;}
+  .ed-cell{
+    width:100%;min-width:74px;box-sizing:border-box;
+    padding:7px 9px;border-radius:7px;font:inherit;font-size:12.5px;
+    background:var(--surface);border:1px solid transparent;color:var(--text);
+  }
+  .ed-cell:hover{border-color:var(--border);}
+  .ed-cell:focus{outline:none;border-color:var(--blue);background:var(--surface);}
+  .ed-cell[type="date"]{min-width:132px;font-family:inherit;}
+  select.ed-cell{min-width:150px;cursor:pointer;}
+  .ed-url{display:flex;align-items:center;gap:7px;}
+  .ed-url .ed-cell{direction:ltr;text-align:left;font-size:11.5px;min-width:150px;}
+  .ed-del{
+    background:none;border:1px solid var(--border);border-radius:7px;
+    width:26px;height:26px;line-height:1;cursor:pointer;
+    color:var(--text-muted);font-size:15px;
+  }
+  .ed-del:hover{border-color:var(--danger,#c0392b);color:var(--danger,#c0392b);}
+  table.src-table .col-row-actions{width:44px;text-align:center;}
+  /* a row the site gave no date for is the one row a person has to act on */
+  table.src-table tr.ed-undated td.ed-td{background:var(--lvl2-bg);}
 </style>
 </head>
 <body>
@@ -889,7 +964,7 @@
     <div class="home-header">
       <div class="eyebrow">أداة داخلية · استخراج من المصدر</div>
       <h1>تشريعات أم القرى</h1>
-      <p class="sub">اختر تاريخ العدد، ويُستخرج جدول تشريعاته من جريدة أم القرى مباشرة: اسم التشريع، ورقم القرار، والجهة المصدرة، ورابط كل تشريع في مصدره.</p>
+      <p class="sub">اختر تاريخ العدد، ويُستخرج جدول تشريعاته من جريدة أم القرى مباشرة: اسم التشريع، ورقم القرار، والجهة المصدرة، ورابط كل تشريع في مصدره. الجدول قابل للتعديل ولإضافة صفوف، ولا يُسجَّل الاستخراج إلا بعد الضغط على «حفظ».</p>
     </div>
 
     <div class="card">
@@ -925,15 +1000,18 @@
     <div class="home-header">
       <div class="eyebrow">أداة داخلية · استخراج من المصدر</div>
       <h1>تحديثات المواقع</h1>
-      <p class="sub">اختر الموقع ونطاق التواريخ، ويُستخرج ما نُشر أو حُدِّث على الموقع خلال تلك الفترة. النطاق الافتراضي دائمًا آخر سبعة أيام، وإن تداخل النطاق مع بحث سابق على الموقع نفسه فسيُسأل عن التأكيد قبل البدء حتى لا يتكرر العمل دون قصد.</p>
+      <p class="sub">اختر الجهات ونطاق التواريخ، ويُستخرج ما نُشر أو حُدِّث خلال تلك الفترة في جدول واحد. النطاق الافتراضي دائمًا آخر سبعة أيام، وإن تداخل النطاق مع بحث سابق على الجهة نفسها فسيُسأل عن التأكيد قبل البدء حتى لا يتكرر العمل دون قصد. النتيجة قابلة للتعديل ولإضافة صفوف، ولا يُسجَّل شيء في السجل إلا بعد الضغط على «حفظ».</p>
     </div>
 
     <div class="card">
-      <div class="src-fields">
-        <div class="src-field su-field">
-          <label for="suSite">الموقع</label>
-          <select id="suSite"></select>
+      <div class="su-scope">
+        <div class="su-modes" role="radiogroup" aria-label="نطاق البحث">
+          <label class="su-mode"><input type="radio" name="suScope" value="all" checked><span>جميع الجهات</span></label>
+          <label class="su-mode"><input type="radio" name="suScope" value="some"><span>جهات محددة</span></label>
         </div>
+        <div class="su-picker" id="suPicker" hidden></div>
+      </div>
+      <div class="src-fields">
         <div class="src-field su-field">
           <label for="suFrom">من تاريخ</label>
           <input id="suFrom" type="date">
@@ -1313,15 +1391,21 @@ function homeRenderSuState(res){
     homeSetState('#prodSuState', 'لم يبدأ أي بحث بعد');
     return;
   }
+  /* with thirteen sources, naming one untouched جهة would read as if it were the
+     only one — the number is what tells you how much is still uncovered */
   if(untouched.length){
-    homeSetState('#prodSuState', `${escapeHtml(untouched[0].site.name)} — لم يبدأ أي بحث بعد`, 'attention');
+    homeSetState('#prodSuState',
+      untouched.length === 1
+        ? `${escapeHtml(untouched[0].site.name)} — لم يبدأ أي بحث بعد`
+        : `<b>${arCount(untouched.length, 'جهة واحدة', 'جهتان', 'جهات', 'جهة')}</b> لم يبدأ البحث فيها بعد`,
+      'attention');
     return;
   }
   const worst = states.slice().sort((a, b) => b.gap - a.gap)[0];
   homeSetState('#prodSuState',
     worst.gap
-      ? `<b>${arCount(worst.gap, 'يوم واحد', 'يومان', 'أيام', 'يومًا')}</b> بلا تغطية حتى اليوم`
-      : 'مغطى حتى اليوم',
+      ? `<b>${arCount(worst.gap, 'يوم واحد', 'يومان', 'أيام', 'يومًا')}</b> بلا تغطية على ${escapeHtml(worst.site.name)}`
+      : 'كل الجهات مغطاة حتى اليوم',
     worst.gap ? 'attention' : 'clear');
 }
 
@@ -1436,15 +1520,13 @@ $('#homeActivity').addEventListener('click', e => {
     const rec = homeUqnCache.find(r => r.id === btn.dataset.id);
     if(!rec) return;
     goToView('uqn');
-    uqnRenderResult({ hijriLabel:rec.hijriLabel, issueNumber:rec.issueNumber, iso:rec.iso }, rec.items);
-    $('#uqnResult').scrollIntoView({ behavior:'smooth', block:'start' });
+    uqnOpenRecord(rec);
     return;
   }
   const rec = homeSuCache.find(r => r.id === btn.dataset.id);
   if(!rec) return;
   goToView('siteUpdates');
-  suRenderResult({ siteName:rec.siteName, from:rec.from, to:rec.to }, rec.items);
-  $('#suResult').scrollIntoView({ behavior:'smooth', block:'start' });
+  suOpenRecord(rec);
 });
 
 document.addEventListener('click', async e=>{
@@ -2540,35 +2622,92 @@ function uqnBuildRows(items){
   return rows;
 }
 
-/* ---------- rendering ---------- */
-function uqnRowsTableHtml(rows){
-  const body = rows.map((r,i) => `<tr>
-    <td class="col-idx">${i+1}</td>
-    <td class="col-name">${escapeHtml(r.title)}${r.sub ? `<span class="src-sub">${escapeHtml(r.sub)}</span>` : ''}</td>
-    <td class="col-no${r.decisionNo === '—' ? ' muted' : ''}">${escapeHtml(r.decisionNo)}${r.note ? `<span class="src-sub">${escapeHtml(r.note)}</span>` : ''}</td>
-    <td class="col-authority">${escapeHtml(r.authority)}</td>
-    <td class="col-link"><a class="src-link" href="${escapeHtml(r.link)}" target="_blank" rel="noopener noreferrer">فتح</a></td>
-  </tr>`).join('');
-  return `<div class="src-table-wrap"><table class="src-table">
-    <thead><tr>
-      <th class="col-idx">#</th>
-      <th class="col-name">اسم التشريع</th>
-      <th class="col-no">رقم القرار</th>
-      <th class="col-authority">الجهة المصدرة</th>
-      <th class="col-link">الرابط</th>
-    </tr></thead>
-    <tbody>${body}</tbody>
-  </table></div>`;
+/* ---------- the result, as an editable draft ----------
+   Same rule as تحديثات المواقع: the extraction is a starting point. أم القرى
+   leaves رقم القرار out of its archive entirely, and a wrong تصنيف is a thing a
+   person can see and the parser cannot — so the table is editable, rows can be
+   added, and nothing is written to the log until حفظ. */
+const UQN_COLS = [
+  { key:'title',      label:'اسم التشريع',   cls:'col-name' },
+  { key:'sub',        label:'التصنيف',       cls:'col-type' },
+  { key:'decisionNo', label:'رقم القرار',    cls:'col-no' },
+  { key:'authority',  label:'الجهة المصدرة', cls:'col-authority' },
+  { key:'link',       label:'الرابط',        cls:'col-link', type:'url' }
+];
+const uqnDraft = {
+  hostSel: '#uqnResult',
+  cols: UQN_COLS,
+  rows: [], sites: [], meta: null,
+  recordIds: null, readOnly: false,
+  head: '', note: '', footer: '', emptyHint: '',
+  dirty: false, saving: false,
+  save: function(){ return uqnSaveDraft(); }
+};
+function uqnResetDraft(){
+  Object.assign(uqnDraft, {
+    rows: [], meta: null, recordIds: null, readOnly: false,
+    head: '', note: '', footer: '', emptyHint: '', dirty: false, saving: false
+  });
+  $('#uqnResult').innerHTML = '';
 }
-function uqnRenderResult(meta, rows){
-  $('#uqnResult').innerHTML = `
-    <div class="src-result-top">
-      <div class="src-result-title">
-        تشريعات ${escapeHtml(meta.hijriLabel)}
-        <span>· العدد ${escapeHtml(meta.issueNumber || '—')} · ${escapeHtml(meta.iso)} · ${rows.length} تشريعًا</span>
-      </div>
-    </div>
-    ${uqnRowsTableHtml(rows)}`;
+function uqnHead(meta, n){
+  return `تشريعات ${escapeHtml(meta.hijriLabel)}
+    <span>· العدد ${escapeHtml(meta.issueNumber || '—')} · ${escapeHtml(meta.iso)} · ${n} تشريعًا</span>`;
+}
+function uqnOpenRecord(rec){
+  const mine = rec.ownerId === currentUser.id;
+  Object.assign(uqnDraft, {
+    rows: rec.items.slice(),
+    meta: { hijriLabel: rec.hijriLabel, issueNumber: rec.issueNumber, iso: rec.iso, sourceUrl: rec.sourceUrl },
+    recordIds: rec.id,
+    readOnly: !mine,
+    dirty: false, saving: false,
+    head: uqnHead({ hijriLabel: rec.hijriLabel, issueNumber: rec.issueNumber, iso: rec.iso }, rec.items.length),
+    note: mine ? 'استخراج محفوظ — أي تعديل هنا يحدّثه في مكانه بعد الضغط على حفظ.' : 'استخراج محفوظ.',
+    emptyHint: 'هذا الاستخراج لا يحتوي أي تشريع.',
+    footer: ''
+  });
+  edRender(uqnDraft);
+  $('#uqnResult').scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+async function uqnSaveDraft(){
+  if(!currentUser || uqnDraft.saving || uqnDraft.readOnly) return;
+  if(!uqnDraft.meta){ showToast('لا يوجد استخراج لحفظه'); return; }
+  uqnDraft.saving = true;
+  edRender(uqnDraft);
+  const meta = uqnDraft.meta;
+  const payload = {
+    owner_id: currentUser.id,
+    owner_name: currentUser.fullName,
+    issue_number: meta.issueNumber || '',
+    hijri_label: meta.hijriLabel,
+    gregorian_date: meta.iso,
+    source_url: meta.sourceUrl || '',
+    item_count: uqnDraft.rows.length,
+    items: uqnDraft.rows
+  };
+  const { data, error } = uqnDraft.recordIds
+    ? await sb.from('uqn_extractions').update(payload).eq('id', uqnDraft.recordIds).select().maybeSingle()
+    : await sb.from('uqn_extractions').insert(payload).select().single();
+  uqnDraft.saving = false;
+  /* an update that matched no row was filtered out by row-level security, and
+     the only thing missing is the UPDATE policy — the site-updates setup card
+     is where that statement is handed over, so the message points at it */
+  if(error || !data){
+    const noPolicy = !error || error.code === '42501';
+    uqnSetStatus(noPolicy
+      ? 'تعذر حفظ التعديل — التعديل على سجل محفوظ يحتاج صلاحية UPDATE. افتح تبويب «تحديثات المواقع» وستجد الأمر جاهزًا في بطاقة التجهيزة.'
+      : `تعذر الحفظ — ${escapeHtml(error.message || 'خطأ غير معروف')}`, true);
+    edRender(uqnDraft);
+    return;
+  }
+  uqnDraft.recordIds = data.id;
+  uqnDraft.dirty = false;
+  uqnSetStatus(`تم حفظ ${uqnDraft.rows.length} تشريعًا في السجل.`);
+  showToast('تم الحفظ');
+  edRender(uqnDraft);
+  uqnRenderLog();
 }
 
 /* ---------- persistence: the log of past extractions ---------- */
@@ -2585,21 +2724,6 @@ function uqnMapRow(row){
     items: Array.isArray(row.items) ? row.items : [],
     createdAt: row.created_at
   };
-}
-async function uqnSaveExtraction(meta, rows){
-  if(!currentUser) return null;
-  const { data, error } = await sb.from('uqn_extractions').insert({
-    owner_id: currentUser.id,
-    owner_name: currentUser.fullName,
-    issue_number: meta.issueNumber || '',
-    hijri_label: meta.hijriLabel,
-    gregorian_date: meta.iso,
-    source_url: meta.sourceUrl,
-    item_count: rows.length,
-    items: rows
-  }).select().single();
-  if(error) return null;
-  return uqnMapRow(data);
 }
 async function uqnLoadExtractions(){
   const { data, error } = await sb.from('uqn_extractions')
@@ -2719,13 +2843,15 @@ $('#uqnLogList').addEventListener('click', async e => {
   const rec = uqnLogCache.find(r => r.id === btn.dataset.id);
   if(!rec) return;
   if(btn.dataset.action === 'view'){
-    uqnRenderResult({ hijriLabel:rec.hijriLabel, issueNumber:rec.issueNumber, iso:rec.iso }, rec.items);
-    $('#uqnResult').scrollIntoView({ behavior:'smooth', block:'start' });
+    if(uqnDraft.dirty && !confirm('في الجدول تعديلات غير محفوظة، وفتح استخراج آخر سيستبدلها. أتريد المتابعة؟')) return;
+    uqnOpenRecord(rec);
     return;
   }
+  if(!confirm(`حذف استخراج ${rec.hijriLabel}؟`)) return;
   const { error } = await sb.from('uqn_extractions').delete().eq('id', rec.id);
   if(error){ showToast('تعذر حذف الاستخراج'); return; }
   showToast('تم الحذف');
+  if(uqnDraft.recordIds === rec.id) uqnResetDraft();
   uqnRenderLog();
 });
 
@@ -2759,11 +2885,13 @@ async function uqnExtract(){
     uqnSetStatus('أدخل تاريخًا هجريًا صحيحًا (اليوم والشهر والسنة).', true);
     return;
   }
+  if(uqnDraft.dirty && !confirm('في الجدول تعديلات غير محفوظة، واستخراج جديد سيستبدلها. أتريد المتابعة؟')) return;
+
   uqnBusy = true;
   uqnUpdateHint();   // never let a stale hint contradict the table below it
   const btn = $('#uqnFetchBtn');
   btn.disabled = true;
-  $('#uqnResult').innerHTML = '';
+  uqnResetDraft();
   const hLabel = hijriLabel(picked.hy, picked.hm, picked.hd);
 
   try{
@@ -2804,23 +2932,26 @@ async function uqnExtract(){
 
     const rows = uqnBuildRows(items);
     const meta = { hijriLabel:hLabel, issueNumber, iso:picked.iso, sourceUrl };
-    uqnRenderResult(meta, rows);
 
     const missing = rows.filter(r => r.failed).length;
     const archived = rows.filter(r => r.archived).length;
-    let warn = missing ? ` تعذر جلب تفاصيل ${missing} منها — أعد المحاولة لاستكمالها.` : '';
+    const gaps = [];
+    if(missing) gaps.push(`تعذر جلب تفاصيل ${missing} منها — أعد الاستخراج لاستكمالها`);
     /* pre-2026 issues sit in the gazette's archive, which serves no
        article_subtitle — the field رقم القرار is read from */
-    if(archived) warn += ` ${archived} منها من الأرشيف القديم، ولا يوفّر أم القرى رقم القرار لها عبر الـAPI.`;
-    const saved = await uqnSaveExtraction(meta, rows);
-    if(saved){
-      uqnSetStatus(`تم استخراج ${rows.length} تشريعًا وحفظها في السجل.${warn}`, !!(missing || archived));
-      uqnRenderLog();
-    }else{
-      /* surface the setup card right below, so the reason is one glance away */
-      uqnRenderLog();
-      uqnSetStatus(`تم استخراج ${rows.length} تشريعًا، لكن لم تُحفظ في السجل — أكمل التجهيزة أدناه ثم أعد الاستخراج.${warn}`, true);
-    }
+    if(archived) gaps.push(`${archived} منها من الأرشيف القديم، ولا يوفّر أم القرى رقم القرار لها عبر الـAPI — تُكتب يدويًا`);
+    Object.assign(uqnDraft, {
+      rows, meta, recordIds: null, readOnly: false, dirty: false,
+      head: uqnHead(meta, rows.length),
+      note: 'لم يُحفظ شيء بعد — عدّل ما تريد ثم اضغط حفظ.',
+      emptyHint: 'لا تشريعات في هذا العدد.',
+      footer: gaps.length
+        ? `<div class="su-note"><div class="su-note-title">ما لم يستطع الاستخراج الإجابة عنه</div>
+           <ul>${gaps.map(g => `<li>${escapeHtml(g)}</li>`).join('')}</ul></div>`
+        : ''
+    });
+    edRender(uqnDraft);
+    uqnSetStatus(`استُخرج ${rows.length} تشريعًا. راجع الجدول ثم اضغط حفظ لتسجيله.`, !!(missing || archived));
   }catch(err){
     uqnSetStatus('تعذر الوصول إلى بيانات أم القرى. تحقق من الاتصال ثم أعد المحاولة.', true);
   }finally{
@@ -2842,6 +2973,7 @@ async function uqnExtract(){
   ['#uqnDay','#uqnMonth','#uqnYear'].forEach(sel =>
     $(sel).addEventListener('input', uqnUpdateHint));
   $('#uqnFetchBtn').addEventListener('click', uqnExtract);
+  edBind(uqnDraft);
   $('#viewUqn').addEventListener('keydown', e => {
     if(e.key === 'Enter' && e.target.closest('.uqn-hijri')) uqnExtract();
   });
@@ -2944,7 +3076,7 @@ async function suProxyFetch(urls, method){
 }
 /* site-proxy refuses more than 24 urls in one call. A listing longer than that
    is read in consecutive calls rather than by raising the cap, so a single
-   invocation stays short and the allow-list stays the only limit on reach. */
+   invocation stays short and the host policy stays the only limit on reach. */
 const SU_PROXY_MAX_URLS = 24;
 async function suProxyFetchMany(urls, method, onBatch){
   const out = [];
@@ -2956,85 +3088,209 @@ async function suProxyFetchMany(urls, method, onBatch){
   return out;
 }
 
-/* ---------- adapter: وزارة البلديات والإسكان — الأنظمة واللوائح ----------
-   The listing is a plain server-rendered table (10 rows per page, ordered by
-   the entry's own "last changed" newest-first) and it shows no date column.
-   What it does give is the link to each regulation's published file, and the
-   file carries a real Last-Modified — so that header is the entry's date. */
+/* ==================================================================
+   The adapters — one per source listing.
+
+   Each is handed the range and a progress callback, and returns its entries in
+   a single shape, whatever the site looks like:
+
+     { section, title, date, hijri, status, number, fileUrl }
+
+   `date` is the only field the range is tested against, and it is always a
+   Gregorian ISO day. Every other field is whatever that site publishes, and is
+   left empty when it publishes nothing — the result table shows a blank rather
+   than inventing a value or dropping the column for everyone else.
+
+   There are two kinds of listing here, and the difference is only where the
+   date comes from:
+     * the site prints a date per entry — read it
+     * the site prints none, but links a file whose Last-Modified is the real
+       publish moment — HEAD the file
+   An entry that ends up with no date either way is not dropped and not guessed
+   at: it comes back in `undated` and is reported under the table.
+   ================================================================== */
+
+/* ---------- shared parsing ---------- */
+function suDoc(html){ return new DOMParser().parseFromString(html, 'text/html'); }
+function suText(el){
+  /* bidi marks are data-entry residue in the sites' own titles: invisible, and
+     dropping them keeps the stored text comparable */
+  return ((el && el.textContent) || '').replace(/[\u200e\u200f]/g, '').replace(/\s+/g, ' ').trim();
+}
+/* <br> carries meaning in some of these cells — a list of sectors, a title and
+   its note — and textContent runs the lines together, so they are separated
+   before the text is read */
+function suTextLines(el, sep){
+  if(!el) return '';
+  const clone = el.cloneNode(true);
+  clone.querySelectorAll('br').forEach(br => br.replaceWith(document.createTextNode(sep || ' · ')));
+  return suText(clone);
+}
+/* A link is only kept when it stays on the site being swept: a listing that
+   points off-site points at something this sweep did not read. `origins` is a
+   list because an authority can hold more than one domain — cma.gov.sa serves
+   the listing but keeps every file on cma.org.sa. */
+function suSameOrigin(href, base, origins){
+  if(!href) return '';
+  const allowed = Array.isArray(origins) ? origins : [origins];
+  try{
+    const u = new URL(href, base);
+    return allowed.includes(u.origin) ? u.href : '';
+  }catch(e){ return ''; }
+}
+function suIsFile(url){ return /\.(pdf|docx?|xlsx?|pptx?)(\?|#|$)/i.test(url || ''); }
+
+const SU_MONTHS = (function(){
+  const map = new Map();
+  ['يناير','فبراير','مارس','ابريل','مايو','يونيو','يوليو','اغسطس','سبتمبر','اكتوبر','نوفمبر','ديسمبر']
+    .forEach((n, i) => map.set(n, i + 1));
+  ['january','february','march','april','may','june','july','august','september','october','november','december']
+    .forEach((n, i) => { map.set(n, i + 1); map.set(n.slice(0, 3), i + 1); });
+  return map;
+})();
+function suNormWord(s){
+  return String(s || '').replace(/[أإآ]/g, 'ا').trim().toLowerCase();
+}
+function suIsoParts(y, m, d){
+  if(!(y >= 1900 && y <= 2200) || !(m >= 1 && m <= 12) || !(d >= 1 && d <= 31)) return '';
+  return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+}
+/* These sites write a Gregorian date five different ways, and two of the shapes
+   are ambiguous on their own — rulebook.sama.gov.sa prints both 2026/7/31 and
+   31/07/2026 in the same column — so the four-digit component decides which end
+   is the year. The 1900–2200 guard is what keeps a hijri cell from being read as
+   a Gregorian one. A month-precision date such as sba's "2024/11 م" is
+   deliberately left unresolved: choosing a day would be inventing one. */
+function suGregToIso(raw){
+  const s = String(raw || '').replace(/[\u200e\u200f]/g, ' ').replace(/\s+/g, ' ').trim();
+  if(!s) return '';
+  let m;
+  if((m = /(\d{4})-(\d{1,2})-(\d{1,2})(?!\d)/.exec(s))) return suIsoParts(+m[1], +m[2], +m[3]);
+  if((m = /(\d{4})\s*[/.]\s*(\d{1,2})\s*[/.]\s*(\d{1,2})(?!\d)/.exec(s))) return suIsoParts(+m[1], +m[2], +m[3]);
+  if((m = /(\d{1,2})\s*[/.]\s*(\d{1,2})\s*[/.]\s*(\d{4})(?!\d)/.exec(s))) return suIsoParts(+m[3], +m[2], +m[1]);
+  if((m = /(\d{1,2})\s*[-\s]\s*([^\d\s/,-]{3,12})\s*[-\s]\s*(\d{4})(?!\d)/.exec(s))){
+    const mo = SU_MONTHS.get(suNormWord(m[2]));
+    if(mo) return suIsoParts(+m[3], mo, +m[1]);
+  }
+  /* "June 2026 23" — the caption ncnp prints under every circular */
+  if((m = /([^\d\s/,-]{3,12})\s+(\d{4})\s+(\d{1,2})(?!\d)/.exec(s))){
+    const mo = SU_MONTHS.get(suNormWord(m[1]));
+    if(mo) return suIsoParts(+m[2], mo, +m[3]);
+  }
+  return '';
+}
+
+/* ---------- the tails every adapter shares ---------- */
+function suEntry(o){
+  return {
+    section: o.section || '', title: o.title || '', date: o.date || '',
+    hijri: o.hijri || '', status: o.status || '', number: o.number || '',
+    fileUrl: o.fileUrl || ''
+  };
+}
+/* one GET, checked — a listing page that did not arrive is not an empty listing,
+   and treating it as one would report "no updates" for a range nobody read */
+async function suGetPage(url, label){
+  const [page] = await suProxyFetch([url], 'GET');
+  if(!page.ok) throw new Error(`تعذر فتح ${label} (${page.status || page.error || 'خطأ'})`);
+  return page.body;
+}
+/* the momah/saff pattern: the listing prints no date, so the file's own
+   Last-Modified is the entry's date */
+async function suDateByFile(entries, onProgress){
+  const urls = Array.from(new Set(entries.map(e => e.fileUrl).filter(Boolean)));
+  if(!urls.length) return entries.map(e => ({ ...e, date: '' }));
+  const heads = await suProxyFetchMany(urls, 'HEAD', (done, total) =>
+    onProgress(`جاري قراءة تواريخ الملفات… (${done} من ${total})`));
+  const dateFor = new Map(heads.map(h => [h.url, h.ok ? suHttpDateToIso(h.lastModified) : '']));
+  return entries.map(e => ({ ...e, date: (e.fileUrl && dateFor.get(e.fileUrl)) || '' }));
+}
+function suSplitByRange(entries, range){
+  const rows = [], undated = [];
+  entries.forEach(e => {
+    if(!e.date){ undated.push({ ...e, undated: true }); return; }
+    if(e.date >= range.from && e.date <= range.to) rows.push(e);
+  });
+  rows.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+  return { rows, undated };
+}
+/* Drupal's pager is identical on three of these sites: ?page=N counting from
+   zero, newest first, and a page past the end renders the view empty. So a page
+   whose every entry predates the window ends the sweep — nothing behind it can
+   still be inside. */
+async function suScanDrupalPages(cfg, range, onProgress){
+  const entries = [];
+  let pagesRead = 0;
+  for(let pg = 0; pg < cfg.maxPages; pg++){
+    onProgress(`${cfg.label} — الصفحة ${pg + 1}…`);
+    const sep = cfg.url.includes('?') ? '&' : '?';
+    const url = pg ? `${cfg.url}${sep}page=${pg}` : cfg.url;
+    const page = cfg.parse(await suGetPage(url, `${cfg.label} (صفحة ${pg + 1})`));
+    if(!page) throw new Error(`تعذر قراءة ${cfg.label} — تغيّر شكل الصفحة`);
+    if(!page.length) break;
+    pagesRead = pg + 1;
+    entries.push(...page);
+    if(page.every(e => e.date && e.date < range.from)) break;
+  }
+  return { entries, pagesRead };
+}
+
+/* ---------- وزارة البلديات والإسكان — الأنظمة واللوائح ----------
+   A server-rendered table, ten rows a page, ordered by the entry's own "last
+   changed" newest-first and showing no date column. What it does give is the
+   link to each regulation's published file, and the file carries a real
+   Last-Modified. Because publishing a file bumps its entry to the top, three
+   consecutive pages with nothing at or after `from` mean the rest is older. */
 const MOMAH_ORIGIN = 'https://momah.gov.sa';
 const MOMAH_LIST_URL = MOMAH_ORIGIN + '/ar/regulations';
 const MOMAH_MAX_PAGES = 40;   // the list runs ~21 pages today; this is the guard
-/* pages run newest-changed first and publishing a file bumps its entry to the
-   top, so anything dated inside the window sits near the front. Three pages
-   in a row with nothing at or after `from` means the rest is older still. */
 const MOMAH_LOOKAHEAD = 3;
 
-function momahParseListPage(html){
-  const doc = new DOMParser().parseFromString(html, 'text/html');
+function momahParse(html){
+  const doc = suDoc(html);
   const table = doc.getElementById('table_regulations');
   if(!table) return null;   // past the last page — the view renders no table
   return Array.from(table.querySelectorAll('tr')).map(tr => {
     const titleCell = tr.querySelector('[data-label="العنوان"]');
     if(!titleCell) return null;   // the header row
-    const typeCell = tr.querySelector('[data-label="النوع"]');
     const link = tr.querySelector('a[href]');
-    let fileUrl = '';
-    if(link){
-      try{
-        const u = new URL(link.getAttribute('href'), MOMAH_ORIGIN);
-        if(u.origin === MOMAH_ORIGIN) fileUrl = u.href;
-      }catch(e){ /* a malformed href just leaves the entry undated */ }
-    }
-    const clean = el => (el ? (el.textContent || '') : '').replace(/\s+/g,' ').trim();
-    return { title: clean(titleCell), type: clean(typeCell), fileUrl };
+    return suEntry({
+      title: suText(titleCell),
+      section: suText(tr.querySelector('[data-label="النوع"]')),
+      fileUrl: link ? suSameOrigin(link.getAttribute('href'), MOMAH_ORIGIN, MOMAH_ORIGIN) : ''
+    });
   }).filter(Boolean);
 }
 
-async function momahScanRegulations(range, onProgress){
+async function momahScan(range, onProgress){
   const rows = [], undated = [];
   let scanned = 0, quietPages = 0, pagesRead = 0;
-
   for(let pg = 1; pg <= MOMAH_MAX_PAGES; pg++){
     onProgress(`جاري قراءة الصفحة ${pg} من قائمة الأنظمة واللوائح…`);
-    const [page] = await suProxyFetch([`${MOMAH_LIST_URL}?pageNumber=${pg}`], 'GET');
-    if(!page.ok) throw new Error(`تعذر فتح الصفحة ${pg} من الموقع (${page.status || page.error || 'خطأ'})`);
-    const entries = momahParseListPage(page.body);
+    const entries = momahParse(await suGetPage(`${MOMAH_LIST_URL}?pageNumber=${pg}`, `الصفحة ${pg}`));
     if(!entries || !entries.length) break;
     pagesRead = pg;
-
-    /* one HEAD per file, batched into a single proxy call per page */
-    const withFile = entries.filter(e => e.fileUrl);
     onProgress(`جاري قراءة تواريخ الملفات… (الصفحة ${pg} · ${scanned + entries.length} عنصرًا)`);
-    const heads = withFile.length ? await suProxyFetch(withFile.map(e => e.fileUrl), 'HEAD') : [];
-    const dateFor = new Map(heads.map(h => [h.url, h.ok ? suHttpDateToIso(h.lastModified) : '']));
-
-    let touchedWindow = false;
-    entries.forEach(entry => {
-      scanned++;
-      const date = entry.fileUrl ? (dateFor.get(entry.fileUrl) || '') : '';
-      /* an entry with no published file has no date to test against. Guessing
-         one from its place in the list would be a claim we cannot back, so it
-         is set aside to be reported rather than dropped or dated. */
-      if(!date){ undated.push({ ...entry, undated:true }); return; }
-      if(date >= range.from){
-        touchedWindow = true;
-        if(date <= range.to) rows.push({ ...entry, date });
-      }
-    });
-
-    quietPages = touchedWindow ? 0 : quietPages + 1;
+    const dated = await suDateByFile(entries, () => {});
+    const part = suSplitByRange(dated, range);
+    scanned += entries.length;
+    rows.push(...part.rows);
+    undated.push(...part.undated);
+    /* the lookahead asks whether the page reached into the window at all, which
+       is not the same as whether anything on it landed inside */
+    const touched = dated.some(e => e.date && e.date >= range.from);
+    quietPages = touched ? 0 : quietPages + 1;
     if(quietPages >= MOMAH_LOOKAHEAD) break;
   }
-
+  rows.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
   return { rows, undated, scanned, pagesRead };
 }
 
-/* ---------- adapter: الاتحاد السعودي لكرة القدم — الملفات ----------
-   files.php is one flat page, no pagination: five headed sections (اللوائح،
-   المستندات، الجداول، التقارير، التقارير الشهرية) and under each a run of rows
-   linking straight to the published file. As on momah the page shows no dates
-   and the file's own Last-Modified is the date — here corroborated by the unix
-   timestamp the site bakes into every upload's filename.
+/* ---------- الاتحاد السعودي لكرة القدم — الملفات ----------
+   files.php is one flat page, no pagination: five headed sections and under
+   each a run of rows linking straight to the published file. No dates, so the
+   file's Last-Modified is the date — here corroborated by the unix timestamp
+   the site bakes into every upload's filename.
 
    Two things momah did not have:
    * the page is served as windows-1256, so site-proxy has to decode it by the
@@ -3049,7 +3305,7 @@ const SAFF_LIST_URL = SAFF_ORIGIN + '/files.php';
 const SAFF_MAX_ARCHIVES = 12;   // one link per past year; this is the guard
 
 function saffParseFilesPage(html){
-  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const doc = suDoc(html);
   /* the files column only: the news rail beside it keeps its images under the
      same /uploadcenter/ path, so a document-wide selector would collect them */
   const column = doc.querySelector('.col-sm-9');
@@ -3059,136 +3315,592 @@ function saffParseFilesPage(html){
   /* headings and rows are siblings, so the section a row belongs to is whichever
      heading was last seen — querySelectorAll walks them in document order */
   column.querySelectorAll('p[align="center"], .p-3').forEach(el => {
-    /* bidi marks are data-entry residue in the site's own titles; they are
-       invisible, and dropping them keeps the stored text comparable */
-    const text = (el.textContent || '').replace(/[\u200e\u200f]/g, '').replace(/\s+/g, ' ').trim();
+    const text = suText(el);
     if(el.tagName === 'P'){
       section = text.replace(/^[-–—\s]+|[-–—\s]+$/g, '');   // "- اللوائح -"
       return;
     }
     const link = el.querySelector('a[href]');
     if(!link || !text) return;
-    let url;
-    try{ url = new URL(link.getAttribute('href'), SAFF_LIST_URL); }
-    catch(e){ return; }        // a malformed href points at nothing to read
-    if(url.origin !== SAFF_ORIGIN) return;
-    const year = url.pathname.endsWith('/files.php') ? url.searchParams.get('year') : '';
-    if(year) archives.push({ year, url: url.href });
-    else files.push({ title: text, type: section, fileUrl: url.href });
+    const url = suSameOrigin(link.getAttribute('href'), SAFF_LIST_URL, SAFF_ORIGIN);
+    if(!url) return;
+    let parsed;
+    try{ parsed = new URL(url); }catch(e){ return; }
+    const year = parsed.pathname.endsWith('/files.php') ? parsed.searchParams.get('year') : '';
+    if(year) archives.push({ year, url });
+    else files.push(suEntry({ title: text, section, fileUrl: url }));
   });
   return { files, archives };
 }
 
-async function saffScanFiles(range, onProgress){
+async function saffScan(range, onProgress){
   onProgress('جاري قراءة صفحة الملفات…');
-  const [main] = await suProxyFetch([SAFF_LIST_URL], 'GET');
-  if(!main.ok) throw new Error(`تعذر فتح صفحة الملفات (${main.status || main.error || 'خطأ'})`);
-  const parsed = saffParseFilesPage(main.body);
+  const parsed = saffParseFilesPage(await suGetPage(SAFF_LIST_URL, 'صفحة الملفات'));
   if(!parsed) throw new Error('تعذر قراءة قائمة الملفات — تغيّر شكل الصفحة');
 
   const entries = parsed.files.slice();
   let pagesRead = 1;
   /* each archive year is read as its own page, and its section keeps the year so
-     a result says which archive the entry came from. Only the links on the main
+     a result says which archive an entry came from. Only the links on the main
      page are followed: an archive page carries no year links of its own. */
   for(const archive of parsed.archives.slice(0, SAFF_MAX_ARCHIVES)){
     onProgress(`جاري قراءة أرشيف ${archive.year}…`);
-    const [page] = await suProxyFetch([archive.url], 'GET');
-    if(!page.ok) throw new Error(`تعذر فتح أرشيف ${archive.year} (${page.status || page.error || 'خطأ'})`);
-    const sub = saffParseFilesPage(page.body);
+    const sub = saffParseFilesPage(await suGetPage(archive.url, `أرشيف ${archive.year}`));
     if(!sub) throw new Error(`تعذر قراءة أرشيف ${archive.year} — تغيّر شكل الصفحة`);
     pagesRead++;
-    sub.files.forEach(f => entries.push({ ...f, type: `${f.type} ${archive.year}`.trim() }));
+    sub.files.forEach(f => entries.push({ ...f, section: `${f.section} ${archive.year}`.trim() }));
   }
 
-  /* one HEAD per distinct file, batched — the page links ~76 files, well past
-     what a single proxy call takes */
-  const urls = Array.from(new Set(entries.map(e => e.fileUrl)));
-  const heads = await suProxyFetchMany(urls, 'HEAD', (done, total) =>
-    onProgress(`جاري قراءة تواريخ الملفات… (${done} من ${total})`));
-  const dateFor = new Map(heads.map(h => [h.url, h.ok ? suHttpDateToIso(h.lastModified) : '']));
-
-  const rows = [], undated = [];
-  entries.forEach(entry => {
-    const date = dateFor.get(entry.fileUrl) || '';
-    /* a file whose date could not be read is not evidence of anything, so it is
-       set aside to be reported rather than dropped or dated by guesswork */
-    if(!date){ undated.push({ ...entry, undated:true }); return; }
-    if(date >= range.from && date <= range.to) rows.push({ ...entry, date });
-  });
-  /* nothing on this page is in date order, so the result is put in one */
-  rows.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
-
-  return { rows, undated, scanned: entries.length, pagesRead };
+  const dated = await suDateByFile(entries, onProgress);
+  return { ...suSplitByRange(dated, range), scanned: entries.length, pagesRead };
 }
 
-/* ---------- the site registry ---------- */
+/* ---------- البنك المركزي السعودي — تعاميم ----------
+   The richest listing of the lot and the cheapest to read: one page, no
+   pagination, ~690 circulars in a table that prints the number, both calendars,
+   whether the circular is still in force, and which sectors it applies to. */
+const SAMA_ORIGIN = 'https://rulebook.sama.gov.sa';
+const SAMA_LIST_URL = SAMA_ORIGIN + '/ar/' + encodeURIComponent('تعاميم-البنك-المركزي');
+
+function samaParse(html){
+  const doc = suDoc(html);
+  const table = Array.from(doc.querySelectorAll('table'))
+    .find(t => /تاريخ الإصدار/.test(t.textContent || ''));
+  if(!table) return null;
+  return Array.from(table.querySelectorAll('tbody tr')).map(tr => {
+    const td = tr.querySelectorAll('td');
+    if(td.length < 4) return null;
+    const link = tr.querySelector('a[href]');
+    return suEntry({
+      number: suText(td[0]),
+      title: suTextLines(td[1], ' '),
+      hijri: suText(td[2]),
+      date: suGregToIso(suText(td[3])),
+      status: suText(td[4]),
+      section: suTextLines(td[5], ' · '),
+      fileUrl: link ? suSameOrigin(link.getAttribute('href'), SAMA_LIST_URL, SAMA_ORIGIN) : ''
+    });
+  }).filter(e => e && e.title);
+}
+
+async function samaScan(range, onProgress){
+  onProgress('جاري قراءة قائمة التعاميم…');
+  const entries = samaParse(await suGetPage(SAMA_LIST_URL, 'قائمة التعاميم'));
+  if(!entries) throw new Error('تعذر قراءة جدول التعاميم — تغيّر شكل الصفحة');
+  return { ...suSplitByRange(entries, range), scanned: entries.length, pagesRead: 1 };
+}
+
+/* ---------- وزارة الموارد البشرية والتنمية الاجتماعية — القرارات الوزارية ----------
+   A Drupal view whose every card prints both calendars through the site's own
+   hijri_dual_date_formatter, so the hijri date here is the ministry's, not one
+   this app converted. */
+const HRSD_ORIGIN = 'https://www.hrsd.gov.sa';
+const HRSD_LIST_URL = HRSD_ORIGIN + '/knowledge-centre/decisions-and-regulations/ministerial-decisions';
+const HRSD_MAX_PAGES = 25;
+
+function hrsdParse(html){
+  const doc = suDoc(html);
+  const cards = doc.querySelectorAll('.views-row');
+  if(!cards.length) return [];
+  return Array.from(cards).map(card => {
+    const link = card.querySelector('h2 a[href], h3 a[href]');
+    return suEntry({
+      title: suText(link) || suText(card.querySelector('h2, h3')),
+      hijri: suText(card.querySelector('.hijri-date')),
+      date: suGregToIso(suText(card.querySelector('.gregorian-date'))),
+      section: Array.from(card.querySelectorAll('.card-tags .tag-md')).map(suText).filter(Boolean).join(' · '),
+      fileUrl: link ? suSameOrigin(link.getAttribute('href'), HRSD_ORIGIN, HRSD_ORIGIN) : ''
+    });
+  }).filter(e => e.title);
+}
+
+async function hrsdScan(range, onProgress){
+  const got = await suScanDrupalPages(
+    { url: HRSD_LIST_URL, maxPages: HRSD_MAX_PAGES, label: 'القرارات الوزارية', parse: hrsdParse },
+    range, onProgress);
+  return { ...suSplitByRange(got.entries, range), scanned: got.entries.length, pagesRead: got.pagesRead };
+}
+
+/* ---------- هيئة السوق المالية — التشريعات، والتعاميم ----------
+   Both pages are the same card grid, so one parser serves them. The
+   regulations page prints a date on every card and tags it with a category; the
+   circulars page prints neither, so its dates come from the files. The pager at
+   the bottom only hides cards — every entry is already in the HTML, so one
+   request is the whole list. */
+const CMA_ORIGIN = 'https://cma.gov.sa';
+/* the listing lives on cma.gov.sa and every file it links lives on cma.org.sa */
+const CMA_ORIGINS = [CMA_ORIGIN, 'https://cma.org.sa', 'https://www.cma.org.sa'];
+const CMA_REGULATIONS_URL = CMA_ORIGIN + '/RulesRegulations/Regulations/Pages/default.aspx';
+const CMA_CIRCULARS_URL = CMA_ORIGIN + '/RulesRegulations/circulars/Pages/default.aspx';
+
+function cmaParse(html, base){
+  const doc = suDoc(html);
+  const cards = doc.querySelectorAll('.card-wrapper');
+  if(!cards.length) return null;
+  return Array.from(cards).map(card => {
+    const holder = card.parentElement && card.parentElement.hasAttribute('data-title')
+      ? card.parentElement : null;
+    const heading = card.querySelector('h3[title], h3');
+    const file = card.querySelector('a[href$=".pdf"]');
+    const page = card.querySelector('a[href*="details.aspx"]');
+    /* the date sits in a plain span beside a calendar glyph, with no class of
+       its own, so it is found by shape: the first child whose text reads as a
+       date. On the regulations page the card also carries data-year/data-month,
+       which turns that guess into a checked one — a date that disagrees with
+       the card's own attributes is dropped rather than reported. */
+    let date = '';
+    card.querySelectorAll('span, p, time').forEach(el => {
+      if(!date) date = suGregToIso(suText(el));
+    });
+    const year = holder && holder.getAttribute('data-year');
+    const month = holder && holder.getAttribute('data-month');
+    if(date && year && month && date.slice(0, 7) !== `${year}-${String(month).padStart(2, '0')}`) date = '';
+    const link = file || page;
+    return suEntry({
+      title: (holder && holder.getAttribute('data-title'))
+        || (heading && heading.getAttribute('title')) || suText(heading),
+      section: holder ? (holder.getAttribute('data-category') || '').trim() : '',
+      date,
+      fileUrl: link ? suSameOrigin(link.getAttribute('href'), base, CMA_ORIGINS) : ''
+    });
+  }).filter(e => e.title);
+}
+
+function cmaScanner(url, label, datedInPage){
+  return async function(range, onProgress){
+    onProgress(`جاري قراءة ${label}…`);
+    let entries = cmaParse(await suGetPage(url, label), url);
+    if(!entries) throw new Error(`تعذر قراءة ${label} — تغيّر شكل الصفحة`);
+    if(!datedInPage) entries = await suDateByFile(entries, onProgress);
+    return { ...suSplitByRange(entries, range), scanned: entries.length, pagesRead: 1 };
+  };
+}
+
+/* ---------- الهيئة العامة للغذاء والدواء — اللوائح ----------
+   Nine cards a page across ~20 pages, each printing its date and its category
+   tags and linking the regulation's own file. */
+const SFDA_ORIGIN = 'https://www.sfda.gov.sa';
+const SFDA_LIST_URL = SFDA_ORIGIN + '/ar/regulations?tags=All';
+const SFDA_MAX_PAGES = 30;
+
+function sfdaParse(html){
+  const doc = suDoc(html);
+  const items = doc.querySelectorAll('article.warning-item');
+  if(!items.length) return [];
+  return Array.from(items).map(it => {
+    const file = it.querySelector('a.download-doc-link[href], a[href$=".pdf"]');
+    return suEntry({
+      title: suText(it.querySelector('.m-c-title')),
+      date: suGregToIso(suText(it.querySelector('.news-date'))),
+      section: Array.from(it.querySelectorAll('a.cat')).map(suText).filter(Boolean).join(' · '),
+      fileUrl: file ? suSameOrigin(file.getAttribute('href'), SFDA_ORIGIN, SFDA_ORIGIN) : ''
+    });
+  }).filter(e => e.title);
+}
+
+async function sfdaScan(range, onProgress){
+  const got = await suScanDrupalPages(
+    { url: SFDA_LIST_URL, maxPages: SFDA_MAX_PAGES, label: 'لوائح الغذاء والدواء', parse: sfdaParse },
+    range, onProgress);
+  return { ...suSplitByRange(got.entries, range), scanned: got.entries.length, pagesRead: got.pagesRead };
+}
+
+/* ---------- الهيئة الوطنية للأمن السيبراني — الوثائق التنظيمية ----------
+   A Next.js page whose class names are utility soup, so an entry is found by
+   structure instead: a heading followed by a sibling whose text reads as a date.
+
+   Only the first batch is server-rendered — the rest arrives behind an
+   "عرض المزيد" the proxy cannot press — so this sweep sees the newest documents
+   and no more. The registry says so, rather than leaving it to be discovered. */
+const NCA_ORIGIN = 'https://nca.gov.sa';
+const NCA_LIST_URL = NCA_ORIGIN + '/ar/regulatory-documents/';
+
+function ncaParse(html){
+  const doc = suDoc(html);
+  const out = [];
+  doc.querySelectorAll('h3').forEach(h => {
+    const title = suText(h);
+    if(!title) return;
+    let date = '';
+    let sib = h.nextElementSibling;
+    for(let i = 0; i < 3 && sib && !date; i++, sib = sib.nextElementSibling){
+      date = suGregToIso(suText(sib));
+    }
+    if(!date) return;
+    /* the card's own link sits several wrappers above the heading, so the walk
+       climbs until it finds one rather than assuming a depth */
+    let block = h.parentElement, link = h.closest('a[href]'), tag = null;
+    for(let i = 0; i < 4 && block; i++, block = block.parentElement){
+      if(!tag) tag = block.querySelector('[data-testid^="tag"]');
+      if(!link) link = block.querySelector('a[href]');
+      if(link && tag) break;
+    }
+    out.push(suEntry({
+      title, date,
+      section: suText(tag),
+      fileUrl: link ? suSameOrigin(link.getAttribute('href'), NCA_LIST_URL, NCA_ORIGIN) : ''
+    }));
+  });
+  return out;
+}
+
+async function ncaScan(range, onProgress){
+  onProgress('جاري قراءة الوثائق التنظيمية…');
+  const entries = ncaParse(await suGetPage(NCA_LIST_URL, 'الوثائق التنظيمية'));
+  return { ...suSplitByRange(entries, range), scanned: entries.length, pagesRead: 1 };
+}
+
+/* ---------- مركز التحكيم الرياضي السعودي — الأنظمة واللوائح ----------
+   One page, one list, and every row prints its date inside the heading beside
+   the title — so the date has to be taken back out of the title. */
+const SSAC_ORIGIN = 'https://ssac.sa';
+const SSAC_LIST_URL = SSAC_ORIGIN + '/ar/rules-and-regulations';
+
+function ssacParse(html){
+  const doc = suDoc(html);
+  const items = doc.querySelectorAll('.download-item');
+  if(!items.length) return null;
+  return Array.from(items).map(a => {
+    const h = a.querySelector('h6');
+    const dateEl = h ? h.querySelector('span') : null;
+    const dateText = suText(dateEl);
+    let title = suText(h);
+    if(dateText) title = title.replace(dateText, '').trim();
+    return suEntry({
+      title,
+      date: suGregToIso(dateText),
+      fileUrl: suSameOrigin(a.getAttribute('href'), SSAC_LIST_URL, SSAC_ORIGIN)
+    });
+  }).filter(e => e.title);
+}
+
+async function ssacScan(range, onProgress){
+  onProgress('جاري قراءة الأنظمة واللوائح…');
+  const entries = ssacParse(await suGetPage(SSAC_LIST_URL, 'الأنظمة واللوائح'));
+  if(!entries) throw new Error('تعذر قراءة قائمة الأنظمة — تغيّر شكل الصفحة');
+  return { ...suSplitByRange(entries, range), scanned: entries.length, pagesRead: 1 };
+}
+
+/* ---------- المركز الوطني لتنمية القطاع غير الربحي — التعاميم ----------
+   Twenty circulars a page behind Drupal's pager, each with a caption written
+   month-year-day ("June 2026 23") and a separate button holding the file. */
+const NCNP_ORIGIN = 'https://ncnp.gov.sa';
+const NCNP_LIST_URL = NCNP_ORIGIN + '/ar/circulars';
+const NCNP_MAX_PAGES = 20;
+
+function ncnpParse(html){
+  const doc = suDoc(html);
+  const out = [];
+  doc.querySelectorAll('.caption').forEach(cap => {
+    const date = suGregToIso(suText(cap));
+    if(!date) return;
+    const card = cap.parentElement;
+    if(!card) return;
+    const titleLink = card.querySelector('a[href*="/circulars/"]');
+    const title = suText(card.querySelector('.body-content-block')) || suText(titleLink);
+    if(!title) return;
+    /* the file button is a sibling of the card, not a child of it */
+    const scope = card.parentElement || card;
+    const file = card.querySelector('a[href$=".pdf"]') || scope.querySelector('a[href$=".pdf"]');
+    const link = file || titleLink;
+    out.push(suEntry({
+      title, date,
+      fileUrl: link ? suSameOrigin(link.getAttribute('href'), NCNP_LIST_URL, NCNP_ORIGIN) : ''
+    }));
+  });
+  return out;
+}
+
+async function ncnpScan(range, onProgress){
+  const got = await suScanDrupalPages(
+    { url: NCNP_LIST_URL, maxPages: NCNP_MAX_PAGES, label: 'تعاميم القطاع غير الربحي', parse: ncnpParse },
+    range, onProgress);
+  return { ...suSplitByRange(got.entries, range), scanned: got.entries.length, pagesRead: got.pagesRead };
+}
+
+/* ---------- الهيئة السعودية للتخصصات الصحية — أدلة التصنيف واللوائح ----------
+   A grid of cards, each a title and a تحميل link straight to the file, and no
+   date anywhere on the page — so the files carry them. */
+const SCFHS_ORIGIN = 'https://scfhs.org.sa';
+const SCFHS_LIST_URL = SCFHS_ORIGIN + '/ar/ClassGuide';
+
+function scfhsParse(html){
+  const doc = suDoc(html);
+  const cards = doc.querySelectorAll('.card-content');
+  if(!cards.length) return null;
+  return Array.from(cards).map(card => {
+    /* a card can hold more than one link, and only one of them is the file */
+    const file = Array.from(card.querySelectorAll('a[href]'))
+      .map(a => suSameOrigin(a.getAttribute('href'), SCFHS_LIST_URL, SCFHS_ORIGIN))
+      .find(suIsFile);
+    if(!file) return null;   // the page's other cards link to pages, not files
+    return suEntry({ title: suText(card.querySelector('span')) || suText(card), fileUrl: file });
+  }).filter(Boolean);
+}
+
+/* ---------- فرص — اللوائح والأنظمة ----------
+   Each card holds the title in its own element and links the file twice, from
+   the title and from a تحميل button. No dates on the page. */
+const FURAS_ORIGIN = 'https://furas.momah.gov.sa';
+const FURAS_LIST_URL = FURAS_ORIGIN + '/ar/regulations-and-bylaws';
+
+function furasParse(html){
+  const doc = suDoc(html);
+  const cards = doc.querySelectorAll('.card-body');
+  if(!cards.length) return null;
+  const seen = new Set(), out = [];
+  Array.from(cards).forEach(card => {
+    const title = suText(card.querySelector('.title'));
+    if(!title) return;
+    const link = Array.from(card.querySelectorAll('a[href]'))
+      .map(a => suSameOrigin(a.getAttribute('href'), FURAS_LIST_URL, FURAS_ORIGIN))
+      .find(suIsFile);
+    if(!link || seen.has(link)) return;
+    seen.add(link);
+    out.push(suEntry({ title, fileUrl: link }));
+  });
+  return out;
+}
+
+/* ---------- الهيئة السعودية للمحامين — اللوائح ----------
+   Cards linking each regulation's file. The site prints a تاريخ الإصدار, but
+   only to the month ("2024/11 م"), which cannot answer a question asked in
+   days — so the file's Last-Modified is what the range is tested against. */
+const SBA_ORIGIN = 'https://sba.gov.sa';
+const SBA_LIST_URL = SBA_ORIGIN + '/regulations/';
+
+function sbaParse(html){
+  const doc = suDoc(html);
+  const seen = new Set(), out = [];
+  doc.querySelectorAll('a[href]').forEach(a => {
+    const file = suSameOrigin(a.getAttribute('href'), SBA_LIST_URL, SBA_ORIGIN);
+    if(!suIsFile(file) || seen.has(file)) return;
+    const title = suText(a.querySelector('h6, h5, h4, h3')) || suText(a);
+    if(!title) return;
+    seen.add(file);
+    out.push(suEntry({ title, fileUrl: file }));
+  });
+  return out;
+}
+
+/* the three listings above differ only in their parser: one page, titles and
+   files, and every date read from the file itself */
+function suFileDatedScanner(url, label, parse){
+  return async function(range, onProgress){
+    onProgress(`جاري قراءة ${label}…`);
+    const entries = parse(await suGetPage(url, label));
+    if(!entries) throw new Error(`تعذر قراءة ${label} — تغيّر شكل الصفحة`);
+    const dated = await suDateByFile(entries, onProgress);
+    return { ...suSplitByRange(dated, range), scanned: entries.length, pagesRead: 1 };
+  };
+}
+
+/* ---------- the site registry ----------
+   `dateMeaning` is shown next to the range, because "published on" means two
+   different things across these sites and an employee reading a result has to
+   know which one they are looking at. `note` carries a limit worth stating up
+   front rather than leaving to be inferred from a short result. */
 const SU_SITES = [
-  {
-    key: 'momah-regulations',
-    name: 'وزارة البلديات والإسكان',
-    section: 'الأنظمة واللوائح',
-    home: MOMAH_LIST_URL,
-    dateMeaning: 'تاريخ نشر ملف التشريع على الموقع (Last-Modified للملف)',
-    scan: momahScanRegulations
-  },
-  {
-    key: 'saff-files',
-    name: 'الاتحاد السعودي لكرة القدم',
-    section: 'الملفات',
-    home: SAFF_LIST_URL,
-    dateMeaning: 'تاريخ نشر الملف على الموقع (Last-Modified للملف)',
-    scan: saffScanFiles
-  }
+  { key: 'sama-circulars', name: 'البنك المركزي السعودي', section: 'التعاميم',
+    home: SAMA_LIST_URL, dateMeaning: 'تاريخ الإصدار المنشور في الجدول (ميلادي، ومعه الهجري كما نشره البنك)',
+    scan: samaScan },
+  { key: 'hrsd-decisions', name: 'وزارة الموارد البشرية والتنمية الاجتماعية', section: 'القرارات الوزارية',
+    home: HRSD_LIST_URL, dateMeaning: 'تاريخ القرار المنشور في البطاقة (ميلادي، ومعه الهجري كما نشرته الوزارة)',
+    scan: hrsdScan },
+  { key: 'cma-regulations', name: 'هيئة السوق المالية', section: 'التشريعات',
+    home: CMA_REGULATIONS_URL, dateMeaning: 'التاريخ المنشور على بطاقة التشريع',
+    scan: cmaScanner(CMA_REGULATIONS_URL, 'تشريعات هيئة السوق المالية', true) },
+  { key: 'cma-circulars', name: 'هيئة السوق المالية', section: 'التعاميم',
+    home: CMA_CIRCULARS_URL, dateMeaning: 'تاريخ نشر ملف التعميم على الموقع (Last-Modified للملف)',
+    scan: cmaScanner(CMA_CIRCULARS_URL, 'تعاميم هيئة السوق المالية', false) },
+  { key: 'sfda-regulations', name: 'الهيئة العامة للغذاء والدواء', section: 'اللوائح',
+    home: SFDA_LIST_URL, dateMeaning: 'التاريخ المنشور على بطاقة اللائحة',
+    scan: sfdaScan },
+  { key: 'nca-documents', name: 'الهيئة الوطنية للأمن السيبراني', section: 'الوثائق التنظيمية',
+    home: NCA_LIST_URL, dateMeaning: 'التاريخ المنشور تحت اسم الوثيقة',
+    note: 'الموقع يبني بقية القائمة بجافاسكربت خلف زر «عرض المزيد»، فيقرأ البحث أحدث الوثائق فقط لا القائمة كاملة.',
+    scan: ncaScan },
+  { key: 'ssac-regulations', name: 'مركز التحكيم الرياضي السعودي', section: 'الأنظمة واللوائح',
+    home: SSAC_LIST_URL, dateMeaning: 'التاريخ المنشور بجانب اسم الوثيقة',
+    scan: ssacScan },
+  { key: 'ncnp-circulars', name: 'المركز الوطني لتنمية القطاع غير الربحي', section: 'التعاميم',
+    home: NCNP_LIST_URL, dateMeaning: 'التاريخ المنشور تحت اسم التعميم',
+    scan: ncnpScan },
+  { key: 'momah-regulations', name: 'وزارة البلديات والإسكان', section: 'الأنظمة واللوائح',
+    home: MOMAH_LIST_URL, dateMeaning: 'تاريخ نشر ملف التشريع على الموقع (Last-Modified للملف)',
+    scan: momahScan },
+  { key: 'saff-files', name: 'الاتحاد السعودي لكرة القدم', section: 'الملفات',
+    home: SAFF_LIST_URL, dateMeaning: 'تاريخ نشر الملف على الموقع (Last-Modified للملف)',
+    scan: saffScan },
+  { key: 'scfhs-guides', name: 'الهيئة السعودية للتخصصات الصحية', section: 'أدلة التصنيف واللوائح',
+    home: SCFHS_LIST_URL, dateMeaning: 'تاريخ نشر الملف على الموقع (Last-Modified للملف)',
+    scan: suFileDatedScanner(SCFHS_LIST_URL, 'أدلة التخصصات الصحية', scfhsParse) },
+  { key: 'furas-regulations', name: 'فرص', section: 'اللوائح والأنظمة',
+    home: FURAS_LIST_URL, dateMeaning: 'تاريخ نشر الملف على الموقع (Last-Modified للملف)',
+    scan: suFileDatedScanner(FURAS_LIST_URL, 'لوائح فرص', furasParse) },
+  { key: 'sba-regulations', name: 'الهيئة السعودية للمحامين', section: 'اللوائح',
+    home: SBA_LIST_URL, dateMeaning: 'تاريخ نشر الملف على الموقع (Last-Modified للملف)',
+    note: 'الموقع ينشر تاريخ إصدار بالشهر فقط (مثل «2024/11 م») ولا يصلح لنطاق محسوب بالأيام، فالتاريخ المعتمد هو تاريخ الملف.',
+    scan: suFileDatedScanner(SBA_LIST_URL, 'لوائح المحامين', sbaParse) }
 ];
 function suSiteByKey(key){ return SU_SITES.find(s => s.key === key) || SU_SITES[0]; }
+function suSiteLabel(site){ return `${site.name} — ${site.section}`; }
 
-/* ---------- rendering the result ---------- */
-function suRowsTableHtml(rows){
-  const body = rows.map((r,i) => `<tr>
-    <td class="col-idx">${i+1}</td>
-    <td class="col-name">${escapeHtml(r.title)}</td>
-    <td class="col-type">${escapeHtml(r.type || '—')}</td>
-    <td class="col-date">${escapeHtml(r.date)}<span class="src-sub">${escapeHtml(suHijriOf(r.date))}</span></td>
-    <td class="col-link">${r.fileUrl
-      ? `<a class="src-link" href="${escapeHtml(r.fileUrl)}" target="_blank" rel="noopener noreferrer">فتح</a>`
-      : '—'}</td>
-  </tr>`).join('');
+/* ==================================================================
+   Editable results — shared by أم القرى and تحديثات المواقع
+   ------------------------------------------------------------------
+   An extraction is a starting point, not a verdict: these sites misspell their
+   own titles, leave fields blank, and sometimes publish something their listing
+   does not carry at all. So a result is a draft — every cell an input, rows
+   addable and removable — and nothing reaches the log until حفظ is pressed.
+   Until then the sweep has cost nothing and claimed nothing.
+
+   The draft's `rows` array is the model and the table is only its view. Typing
+   writes straight into the model, so adding or deleting a row (which re-renders)
+   never loses an edit, and a save writes exactly what is on the screen.
+   ================================================================== */
+function edCellHtml(col, row, i, draft){
+  const value = row[col.key] || '';
+  const label = escapeHtml(col.label);
+  if(col.type === 'site'){
+    /* a row added by hand has to say which جهة it belongs to, because that is
+       what decides the record it is saved into */
+    const opts = draft.sites.map(s =>
+      `<option value="${escapeHtml(s.key)}"${s.key === value ? ' selected' : ''}>${escapeHtml(s.label)}</option>`).join('');
+    return `<select class="ed-cell" data-i="${i}" data-key="${escapeHtml(col.key)}" aria-label="${label}">${opts}</select>`;
+  }
+  const input = `<input class="ed-cell" type="${col.type === 'date' ? 'date' : 'text'}"
+    data-i="${i}" data-key="${escapeHtml(col.key)}" value="${escapeHtml(value)}" aria-label="${label}">`;
+  if(col.type !== 'url') return input;
+  /* the url stays editable, and stays openable while it is still valid */
+  return `<div class="ed-url">${input}${/^https?:\/\//.test(value)
+    ? `<a class="src-link" href="${escapeHtml(value)}" target="_blank" rel="noopener noreferrer">فتح</a>`
+    : ''}</div>`;
+}
+function edTableHtml(draft){
+  const body = draft.rows.map((row, i) => `<tr${row.undated ? ' class="ed-undated"' : ''}>
+      <td class="col-idx">${i + 1}</td>
+      ${draft.cols.map(c => `<td class="ed-td ${c.cls}">${edCellHtml(c, row, i, draft)}</td>`).join('')}
+      <td class="col-row-actions"><button class="ed-del" data-i="${i}" title="حذف هذا الصف" aria-label="حذف الصف ${i + 1}">×</button></td>
+    </tr>`).join('');
   return `<div class="src-table-wrap"><table class="src-table">
     <thead><tr>
       <th class="col-idx">#</th>
-      <th class="col-name">العنوان</th>
-      <th class="col-type">النوع</th>
-      <th class="col-date">تاريخ النشر</th>
-      <th class="col-link">الملف</th>
+      ${draft.cols.map(c => `<th class="${c.cls}">${escapeHtml(c.label)}</th>`).join('')}
+      <th class="col-row-actions"></th>
     </tr></thead>
     <tbody>${body}</tbody>
   </table></div>`;
 }
-/* undated entries are not a result — they are the part of the sweep that
-   could not be answered, so they sit under the table as their own list
-   instead of being mixed into it with a dash for a date */
-function suUndatedHtml(undated){
-  if(!undated.length) return '';
-  return `<div class="su-undated">
-    <div class="su-undated-title">${undated.length} عنصرًا على الصفحات المفحوصة بلا تاريخ يمكن التحقق منه — يُراجع يدويًا</div>
-    <ul>${undated.map(u => `<li>${escapeHtml(u.title)}${u.type ? ` <span>· ${escapeHtml(u.type)}</span>` : ''}</li>`).join('')}</ul>
+const ED_DIRTY_HTML = ' <span class="ed-dirty">· فيه تعديلات غير محفوظة</span>';
+function edBarHtml(draft){
+  if(draft.readOnly){
+    return `<div class="ed-bar"><div class="ed-bar-note">${draft.note || ''}
+      <b>هذا السجل لزميل آخر — يمكن عرضه لا تعديله.</b></div></div>`;
+  }
+  return `<div class="ed-bar">
+    <div class="ed-bar-note">${draft.note || ''}${draft.dirty ? ED_DIRTY_HTML : ''}</div>
+    <div class="ed-bar-actions">
+      <button class="pill-btn" data-ed-add>إضافة صف</button>
+      <button class="btn-primary" data-ed-save${draft.saving ? ' disabled' : ''}>${
+        draft.saving ? 'جاري الحفظ…' : (draft.recordIds ? 'حفظ التعديلات' : 'حفظ في السجل')}</button>
+    </div>
   </div>`;
 }
-function suRenderResult(meta, items){
-  const rows = items.filter(i => !i.undated);
-  const undated = items.filter(i => i.undated);
-  const head = rows.length
-    ? `تحديثات ${escapeHtml(meta.siteName)}
-       <span>· من ${escapeHtml(meta.from)} إلى ${escapeHtml(meta.to)} · ${rows.length} عنصرًا</span>`
-    : `لا تحديثات على ${escapeHtml(meta.siteName)}
-       <span>· من ${escapeHtml(meta.from)} إلى ${escapeHtml(meta.to)}</span>`;
-  $('#suResult').innerHTML = `
-    <div class="src-result-top"><div class="src-result-title">${head}</div></div>
-    ${rows.length
-      ? suRowsTableHtml(rows)
-      : '<div class="empty-hint">لم يُنشر أي ملف على الموقع خلال هذه الفترة</div>'}
-    ${suUndatedHtml(undated)}`;
+function edRender(draft){
+  const host = $(draft.hostSel);
+  if(!draft.head && !draft.rows.length){ host.innerHTML = ''; return; }
+  const bar = edBarHtml(draft);
+  host.innerHTML = `
+    <div class="src-result-top"><div class="src-result-title">${draft.head || ''}</div></div>
+    ${bar}
+    ${draft.rows.length
+      ? edTableHtml(draft)
+      : `<div class="empty-hint">${escapeHtml(draft.emptyHint || 'لا يوجد شيء')}</div>`}
+    ${draft.footer || ''}
+    ${draft.rows.length > 6 ? bar : ''}`;
+}
+function edBlankRow(draft){
+  const row = {};
+  draft.cols.forEach(c => { row[c.key] = ''; });
+  if(draft.sites && draft.sites.length) row.siteKey = draft.sites[0].key;
+  row.manual = true;   // kept so a hand-written row can be told from a scraped one
+  return row;
+}
+function edMarkDirty(draft, host){
+  if(draft.dirty) return;
+  draft.dirty = true;
+  /* re-rendering here would pull the focus out of the cell being typed in, so
+     only the note that reports the state is touched */
+  host.querySelectorAll('.ed-bar-note').forEach(n => {
+    if(!n.querySelector('.ed-dirty')) n.insertAdjacentHTML('beforeend', ED_DIRTY_HTML);
+  });
+}
+function edBind(draft){
+  const host = $(draft.hostSel);
+  const write = e => {
+    const cell = e.target.closest('.ed-cell');
+    if(!cell || draft.readOnly) return;
+    const row = draft.rows[+cell.dataset.i];
+    if(!row) return;
+    row[cell.dataset.key] = cell.value;
+    /* a row somebody has now dated is no longer one of the undated */
+    if(cell.dataset.key === 'date' && cell.value) delete row.undated;
+    edMarkDirty(draft, host);
+  };
+  host.addEventListener('input', write);
+  host.addEventListener('change', write);
+  host.addEventListener('click', e => {
+    if(draft.readOnly) return;
+    if(e.target.closest('[data-ed-add]')){
+      draft.rows.push(edBlankRow(draft));
+      draft.dirty = true;
+      edRender(draft);
+      const first = host.querySelector('tbody tr:last-child .ed-cell');
+      if(first) first.focus();
+      return;
+    }
+    const del = e.target.closest('.ed-del');
+    if(del){
+      draft.rows.splice(+del.dataset.i, 1);
+      draft.dirty = true;
+      edRender(draft);
+      return;
+    }
+    if(e.target.closest('[data-ed-save]')) draft.save();
+  });
+}
+
+/* ---------- the unified result table ----------
+   One shape for thirteen listings, so a sweep across them reads as one answer.
+   A site that publishes no النوع, no هجري, no الحالة and no رقم leaves those
+   cells blank rather than having its rows shaped differently from the rest. */
+const SU_COLS = [
+  { key:'siteKey', label:'الجهة',          cls:'col-entity', type:'site' },
+  { key:'section', label:'القسم / النوع',  cls:'col-type' },
+  { key:'title',   label:'اسم الملف',      cls:'col-name' },
+  { key:'date',    label:'تاريخ النشر',    cls:'col-date', type:'date' },
+  { key:'hijri',   label:'التاريخ الهجري', cls:'col-hijri' },
+  { key:'status',  label:'الحالة',         cls:'col-status' },
+  { key:'number',  label:'الرقم',          cls:'col-num' },
+  { key:'fileUrl', label:'رابط الملف',     cls:'col-link', type:'url' }
+];
+const suDraft = {
+  hostSel: '#suResult',
+  cols: SU_COLS,
+  rows: [], sites: [], range: null, stats: {}, failures: [],
+  recordIds: null, readOnly: false,
+  head: '', note: '', footer: '', emptyHint: '',
+  dirty: false, saving: false,
+  save: function(){ return suSaveDraft(); }
+};
+function suResetDraft(){
+  Object.assign(suDraft, {
+    rows: [], sites: [], range: null, stats: {}, failures: [],
+    recordIds: null, readOnly: false,
+    head: '', note: '', footer: '', emptyHint: '', dirty: false, saving: false
+  });
+  $('#suResult').innerHTML = '';
 }
 
 /* ---------- persistence: the log of past searches ---------- */
@@ -3208,36 +3920,81 @@ function suMapRow(row){
     createdAt: row.created_at
   };
 }
-async function suSaveSearch(site, range, result){
-  if(!currentUser) return { error:{ message:'no session' } };
-  const { data, error } = await sb.from('site_updates').insert({
-    owner_id: currentUser.id,
-    owner_name: currentUser.fullName,
-    site_key: site.key,
-    site_name: `${site.name} — ${site.section}`,
-    range_from: range.from,
-    range_to: range.to,
-    source_url: site.home,
-    scanned_count: result.scanned,
-    item_count: result.rows.length,
-    /* the undated entries ride along flagged, so re-opening a past search
-       still shows what that sweep could not answer */
-    items: result.rows.concat(result.undated)
-  }).select().single();
-  if(error) return { error };
-  return { row: suMapRow(data) };
-}
 async function suLoadSearches(){
   const { data, error } = await sb.from('site_updates')
-    .select('*').order('created_at', { ascending:false }).limit(200);
+    .select('*').order('created_at', { ascending:false }).limit(300);
   if(error) return { error };
   return { rows: data.map(suMapRow) };
 }
 
-/* ---------- the two one-time setup steps ----------
-   Neither can be done from here: the table needs an owner in the SQL editor,
-   and the proxy needs a function deployed. So the tab hands over exactly what
-   to paste instead of only reporting that something is missing. */
+/* A save writes one record per جهة: the overlap question is asked per site and
+   so is deleting a coverage, and both would blur if a thirteen-site sweep
+   landed as a single row. A site whose sweep failed is not written at all — its
+   range was never actually read. */
+async function suSaveDraft(){
+  if(!currentUser || suDraft.saving || suDraft.readOnly) return;
+  if(!suDraft.sites.length || !suDraft.range){ showToast('لا يوجد بحث لحفظه'); return; }
+  suDraft.saving = true;
+  edRender(suDraft);
+  const ids = Object.assign({}, suDraft.recordIds || {});
+  const problems = [];
+  for(const site of suDraft.sites){
+    const rows = suDraft.rows.filter(r => r.siteKey === site.key);
+    const stat = suDraft.stats[site.key] || {};
+    const payload = {
+      owner_id: currentUser.id,
+      owner_name: currentUser.fullName,
+      site_key: site.key,
+      site_name: site.label,
+      range_from: suDraft.range.from,
+      range_to: suDraft.range.to,
+      source_url: site.home,
+      scanned_count: stat.scanned || 0,
+      item_count: rows.length,
+      items: rows
+    };
+    const existing = ids[site.key];
+    const { data, error } = existing
+      ? await sb.from('site_updates').update(payload).eq('id', existing).select().maybeSingle()
+      : await sb.from('site_updates').insert(payload).select().single();
+    if(error){ problems.push({ site, code: error.code, message: error.message || '' }); continue; }
+    /* an update that matched no row was filtered out by row-level security, and
+       the only thing missing is the UPDATE policy — a silent no-op here would
+       read to the employee as a save that worked */
+    if(!data){ problems.push({ site, code: 'no-update-policy', message: '' }); continue; }
+    ids[site.key] = data.id;
+  }
+  suDraft.saving = false;
+  suDraft.recordIds = ids;
+
+  const oldConstraint = problems.some(p => p.code === '23P01');
+  const noPolicy = problems.some(p => p.code === 'no-update-policy' || p.code === '42501');
+  if(oldConstraint) suSetupState.overlap = true;
+  if(noPolicy) suSetupState.policy = true;
+  if(oldConstraint || noPolicy) suRenderSetup();
+
+  const savedCount = suDraft.sites.length - problems.length;
+  if(!problems.length){
+    suDraft.dirty = false;
+    suSetStatus(`تم الحفظ — ${arCount(savedCount, 'سجل واحد', 'سجلان', 'سجلات', 'سجلًا')} في السجل.`);
+    showToast('تم الحفظ');
+  }else{
+    suSetStatus(`حُفظ ${savedCount} من ${suDraft.sites.length}. تعذّر حفظ: ${
+      problems.map(p => escapeHtml(p.site.label)).join('، ')}${
+      noPolicy ? ' — التعديل على سجل محفوظ يحتاج صلاحية UPDATE، والخطوة أدناه تعطيها.'
+               : oldConstraint ? ' — قيد قديم يرفض النطاقات المتداخلة؛ أزِله بالخطوة أدناه.'
+               : ' — ' + escapeHtml(problems[0].message || 'خطأ غير معروف')}`, true);
+  }
+  edRender(suDraft);
+  await suRenderLog();
+  suRenderRangeNote();
+}
+
+/* ---------- the one-time setup steps ----------
+   None can be done from here: the table needs an owner in the SQL editor, the
+   proxy needs a function deployed, and editing a saved record needs a policy.
+   So the tab hands over exactly what to paste instead of only reporting that
+   something is missing. */
 const SU_TABLE_SQL = `create table public.site_updates (
   id uuid primary key default gen_random_uuid(),
   owner_id uuid not null references auth.users(id) on delete cascade,
@@ -3269,36 +4026,68 @@ create policy "owners can insert their own site updates"
   to authenticated
   with check (owner_id = auth.uid());
 
+create policy "owners can update their own site updates"
+  on public.site_updates for update
+  to authenticated
+  using (owner_id = auth.uid())
+  with check (owner_id = auth.uid());
+
 create policy "owners can delete their own site updates"
   on public.site_updates for delete
   to authenticated
   using (owner_id = auth.uid());`;
 
 /* Overlap used to be refused outright, and the table was created with an
-   exclusion constraint that held that rule even against two people searching
-   at the same moment. It is a question now, so a database created under the
-   old shape needs this one statement — offered only after a save actually
-   hits the constraint. */
+   exclusion constraint that held that rule even against two people searching at
+   the same moment. It is a question now, so a database created under the old
+   shape needs this one statement — offered only after a save actually hits it. */
 const SU_DROP_OVERLAP_SQL =
   `alter table public.site_updates drop constraint if exists site_updates_no_overlap;`;
 
-/* the same function as supabase/functions/site-proxy/index.ts, with the type
-   annotations dropped so it pastes cleanly into the Dashboard editor. That
-   file is what `supabase functions deploy` ships and is the one to edit
-   first; this copy exists so the setup card can hand over something runnable
-   without the repo. Keep the two in step. */
-const SU_PROXY_SOURCE = `// Taqseem — site-proxy
-// Fetches an allow-listed public page server-side and returns it with CORS
-// enabled, because the source sites send no Access-Control-Allow-Origin.
-// Only ALLOWED_HOSTS are reachable and only GET/HEAD are issued, so this can
-// never be pointed at internal services nor change anything upstream.
+/* Both logs were created read-then-insert-then-delete, with no UPDATE policy,
+   because nothing used to edit a saved record. Editing one does. */
+const SU_UPDATE_POLICY_SQL = `create policy "owners can update their own site updates"
+  on public.site_updates for update
+  to authenticated
+  using (owner_id = auth.uid())
+  with check (owner_id = auth.uid());
 
-const ALLOWED_HOSTS = new Set([
-  'momah.gov.sa',
-  'www.momah.gov.sa',
-  'saff.com.sa',
-  'www.saff.com.sa',
-]);
+create policy "owners can update their own extractions"
+  on public.uqn_extractions for update
+  to authenticated
+  using (owner_id = auth.uid())
+  with check (owner_id = auth.uid());`;
+
+/* The same function as supabase/functions/site-proxy/index.ts with the type
+   annotations stripped, so it pastes straight into the Dashboard editor. That
+   file is what `supabase functions deploy` ships and is the one to edit first;
+   this copy exists so the setup card can hand over something runnable without
+   the repo. Regenerate it from that file rather than editing it here. */
+const SU_PROXY_SOURCE = `// Taqseem — site-proxy
+//
+// The "تحديثات المواقع" tab reads public pages on the source sites. Those
+// sites send no \`Access-Control-Allow-Origin\` header (unlike uqn.gov.sa's
+// /api/* routes, which the أم القرى tab calls straight from the browser), so
+// the browser is not allowed to read their responses at all. This function is
+// the one hop that can: it fetches a permitted public URL server-side and
+// hands the result back with CORS enabled.
+//
+//
+// Safety:
+//   * only public Saudi hosts over https are reachable (see resolveTarget), so
+//     the function can never be pointed at the project's own services or at a
+//     cloud metadata endpoint
+//   * only GET and HEAD, so it can never change anything upstream
+//   * JWT verification stays on (Supabase's default), so only a signed-in
+//     employee can drive it
+
+// This used to be a literal set of hostnames, which meant every new source site
+// needed this file redeployed before the tab could read it — and until that
+// happened all the tab could do was tell the employee their proxy was out of
+// date. It is a policy now: any public host under the .sa namespace. Nothing
+// internal answers to a .sa name, so the guard the name list existed for still
+// holds, while adding a site is pure client-side work.
+const SAUDI_HOST = /^(?!-)[a-z0-9-]+(\\.(?!-)[a-z0-9-]+)*\\.sa$/;
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -3306,13 +4095,25 @@ const CORS = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
-const MAX_URLS = 24;
-const MAX_BODY = 4_000_000;
-const POOL = 6;
+const MAX_URLS = 24;          // one listing page's worth of files, plus slack
+const MAX_BODY = 4_000_000;   // bytes; the largest listing runs ~460 KB
+const POOL = 6;               // parallel upstream requests per call
+const TIMEOUT_MS = 40_000;    // a source site that hangs must not hang the call,
+                              // but a slow-and-working one must not be cut off either
 
-// res.text() decodes as UTF-8 whatever the response declares, so a page served
-// in a legacy encoding would come back as mojibake — saff.com.sa sends
-// windows-1256. The declared charset is honoured instead.
+// Some of these sites sit behind a WAF that answers TaqseemBot with a block
+// page — cma.gov.sa returns "خطأ في الوصول" and hrsd.gov.sa a 503 — while the
+// same public page is served normally to a browser. Nothing here is hidden
+// behind a login or a robots rule; the honest bot string simply trips a filter.
+const USER_AGENT =
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 ' +
+  '(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
+
+// \`res.text()\` decodes as UTF-8 no matter what the response declares, so a page
+// served in a legacy encoding would come back as mojibake — saff.com.sa serves
+// windows-1256. The declared charset is honoured instead, and it wins over any
+// <meta charset> inside the document, which is what a browser does too (and
+// what saff needs: its header says windows-1256 while its meta claims utf-8).
 function charsetOf(contentType) {
   const m = /charset\\s*=\\s*"?([\\w-]+)/i.exec(contentType);
   return (m ? m[1] : 'utf-8').toLowerCase();
@@ -3321,6 +4122,7 @@ function decodeBody(bytes, charset) {
   try {
     return new TextDecoder(charset).decode(bytes);
   } catch {
+    // an encoding label this runtime does not know is not worth failing over
     return new TextDecoder('utf-8').decode(bytes);
   }
 }
@@ -3330,7 +4132,11 @@ function resolveTarget(raw) {
   let u;
   try { u = new URL(raw); } catch { return null; }
   if (u.protocol !== 'https:') return null;
-  return ALLOWED_HOSTS.has(u.hostname) ? u : null;
+  // credentials in the url, or a port other than the public one, are how an
+  // internal service would be reached — neither belongs to a public page
+  if (u.username || u.password || u.port) return null;
+  // an IP literal can never match, since the name has to end in .sa
+  return SAUDI_HOST.test(u.hostname.toLowerCase()) ? u : null;
 }
 
 async function fetchOne(raw, method) {
@@ -3340,9 +4146,11 @@ async function fetchOne(raw, method) {
     const res = await fetch(target, {
       method,
       redirect: 'follow',
+      signal: AbortSignal.timeout(TIMEOUT_MS),
       headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; TaqseemBot/1.0)',
-        'Accept-Language': 'ar',
+        'User-Agent': USER_AGENT,
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'ar,en;q=0.9',
       },
     });
     const contentType = res.headers.get('content-type') || '';
@@ -3356,14 +4164,19 @@ async function fetchOne(raw, method) {
       contentLength: res.headers.get('content-length') || '',
     };
     if (method === 'GET') {
+      // refuse before buffering when the upstream declares an oversized body,
+      // and still clamp afterwards for the chunked responses that declare none
       if (Number(out.contentLength || 0) > MAX_BODY) {
         return { ...out, ok: false, error: 'response too large' };
       }
       const charset = charsetOf(contentType);
       const buf = await res.arrayBuffer();
       out.charset = charset;
+      // clamped in bytes, the same unit MAX_BODY is compared against above
       out.body = decodeBody(new Uint8Array(buf, 0, Math.min(buf.byteLength, MAX_BODY)), charset);
     } else {
+      // a HEAD is only worth making when the upstream answers it honestly;
+      // some servers do not, which shows up as a missing lastModified
       await res.body?.cancel();
     }
     return out;
@@ -3381,7 +4194,9 @@ async function fetchAll(urls, method) {
       out[i] = await fetchOne(urls[i], method);
     }
   }
-  await Promise.all(Array.from({ length: Math.min(POOL, urls.length) }, worker));
+  await Promise.all(
+    Array.from({ length: Math.min(POOL, urls.length) }, worker),
+  );
   return out;
 }
 
@@ -3419,23 +4234,15 @@ function suFunctionsUrl(){
   return ref ? `https://supabase.com/dashboard/project/${ref}/functions` : 'https://supabase.com/dashboard';
 }
 
-/* `staleSite` holds the key of the site the deployed proxy refused, not a flag:
-   the refusal is about one site's host missing from that copy's allow-list, so
-   the step belongs to that site. Kept as a flag it followed the employee around
-   — onto the other site, and back onto every visit to the tab — describing a
-   problem that was not on the screen. */
-const suSetupState = { table:false, fn:false, staleSite:'', overlap:false, detail:'' };
-function suStaleHere(){
-  return !!suSetupState.staleSite && suSetupState.staleSite === $('#suSite').value;
-}
+const suSetupState = { table:false, fn:false, fnStale:false, overlap:false, policy:false, detail:'' };
 function suRenderSetup(){
   const host = $('#suSetup');
-  const stale = suStaleHere();
-  if(!suSetupState.table && !suSetupState.fn && !stale && !suSetupState.overlap){ host.innerHTML = ''; return; }
+  const st = suSetupState;
+  if(!st.table && !st.fn && !st.overlap && !st.policy){ host.innerHTML = ''; return; }
   const steps = [];
-  if(suSetupState.table){
+  if(st.table){
     steps.push(`<div class="src-setup-step">
-      <div class="src-setup-step-title">١ · جدول <b>site_updates</b> غير موجود في Supabase</div>
+      <div class="src-setup-step-title">جدول <b>site_updates</b> غير موجود في Supabase</div>
       <div class="src-setup-body">
         بدونه لا يُحفظ أي بحث ولا يظهر شيء في السجل.
         انسخ الأوامر أدناه والصقها في SQL Editor ثم اضغط Run.
@@ -3448,19 +4255,19 @@ function suRenderSetup(){
       <pre data-su-select title="اضغط لتحديد الأوامر كاملة">${escapeHtml(SU_TABLE_SQL)}</pre>
     </div>`);
   }
-  if(suSetupState.fn || stale){
+  if(st.fn){
     steps.push(`<div class="src-setup-step">
-      <div class="src-setup-step-title">٢ · دالة <b>site-proxy</b> ${stale ? 'منشورة بنسخة أقدم' : 'غير منشورة'}</div>
+      <div class="src-setup-step-title">دالة <b>site-proxy</b> ${st.fnStale ? 'منشورة بنسخة أقدم' : 'غير منشورة'}</div>
       <div class="src-setup-body">
-        ${stale
-          ? `الدالة تعمل، لكنها منشورة بنسخة سابقة لإضافة <b>${escapeHtml(suSiteByKey(suSetupState.staleSite).name)}</b>،
-             فهي ترفض قراءته. ليست دالة جديدة: افتح <b>site-proxy</b> نفسها من لوحة Supabase،
-             <b>Edit function</b>، استبدل الكود كاملًا بالكود أدناه ثم اضغط Deploy — مرة واحدة.
-             <br>بقية المواقع تعمل كالمعتاد في هذه الأثناء.`
+        ${st.fnStale
+          ? `الدالة تعمل، لكنها منشورة بنسخة سابقة كانت تحمل قائمة مواقع بالأسماء.
+             النسخة أدناه تسمح بأي موقع سعودي عام تحت النطاق <b>.sa</b>، فهي آخر إعادة نشر تحتاجها —
+             أي جهة تُضاف بعدها تعمل بلا لمس الدالة. من لوحة Supabase: <b>Edge Functions</b> ثم
+             <b>site-proxy</b> ثم <b>Edit function</b>، استبدل الكود كاملًا ثم اضغط Deploy.`
           : `مواقع الجهات لا ترسل ترويسة CORS، فلا يستطيع المتصفح قراءتها مباشرة؛ هذه الدالة هي الوسيط الذي يقرأها.
              من لوحة Supabase: <b>Edge Functions</b> ثم <b>Deploy a new function</b> ثم <b>Via Editor</b>،
              وسمِّ الدالة <b>site-proxy</b> بالضبط، والصق الكود أدناه ثم اضغط Deploy.`}
-        ${suSetupState.detail ? `<br>الخطأ الحالي: ${escapeHtml(suSetupState.detail)}` : ''}
+        ${st.detail ? `<br>الخطأ الحالي: ${escapeHtml(st.detail)}` : ''}
       </div>
       <div class="src-setup-actions">
         <button class="pill-btn blue" data-su-copy="fn"><span class="icon icon-copy"></span> نسخ الكود</button>
@@ -3469,9 +4276,23 @@ function suRenderSetup(){
       <pre data-su-select title="اضغط لتحديد الكود كاملًا">${escapeHtml(SU_PROXY_SOURCE)}</pre>
     </div>`);
   }
-  if(suSetupState.overlap){
+  if(st.policy){
     steps.push(`<div class="src-setup-step">
-      <div class="src-setup-step-title">٣ · قيد قديم يمنع حفظ النطاقات المتداخلة</div>
+      <div class="src-setup-step-title">التعديل على سجل محفوظ يحتاج صلاحية <b>UPDATE</b></div>
+      <div class="src-setup-body">
+        الجدولان أُنشئا بصلاحيات قراءة وإضافة وحذف فقط، لأن التعديل على سجل محفوظ لم يكن موجودًا.
+        الأمران أدناه يعطيان كل شخص صلاحية تعديل سجلاته وحدها — الصقهما في SQL Editor واضغط Run، مرة واحدة.
+      </div>
+      <div class="src-setup-actions">
+        <button class="pill-btn blue" data-su-copy="policy"><span class="icon icon-copy"></span> نسخ الأوامر</button>
+        <a class="pill-btn" href="${uqnSqlEditorUrl()}" target="_blank" rel="noopener noreferrer">فتح SQL Editor</a>
+      </div>
+      <pre data-su-select title="اضغط لتحديد الأوامر كاملة">${escapeHtml(SU_UPDATE_POLICY_SQL)}</pre>
+    </div>`);
+  }
+  if(st.overlap){
+    steps.push(`<div class="src-setup-step">
+      <div class="src-setup-step-title">قيد قديم يمنع حفظ النطاقات المتداخلة</div>
       <div class="src-setup-body">
         صار التداخل يُسأل عنه قبل البحث بدل أن يُمنع، لكن الجدول أُنشئ سابقًا بقيد
         <b>site_updates_no_overlap</b> يرفض حفظ أي نطاق يلامس نطاقًا محفوظًا.
@@ -3516,17 +4337,52 @@ async function suRenderLog(){
     ? res.rows.map(r => `<div class="log-card">
         <div class="log-card-main">
           <div class="log-title">${escapeHtml(r.siteName || '')} · من ${escapeHtml(r.from)} إلى ${escapeHtml(r.to)}</div>
-          <div class="log-meta">${escapeHtml(r.user || 'غير معروف')} · ${formatDate(r.createdAt)} · ${r.itemCount} تحديثًا من ${r.scannedCount} عنصرًا مفحوصًا</div>
+          <div class="log-meta">${escapeHtml(r.user || 'غير معروف')} · ${formatDate(r.createdAt)} · ${r.itemCount} عنصرًا من ${r.scannedCount} عنصرًا مفحوصًا</div>
         </div>
         <div class="log-card-actions">
-          <button class="btn-ghost su-log-btn" data-id="${r.id}" data-action="view">عرض</button>
+          <button class="btn-ghost su-log-btn" data-id="${r.id}" data-action="view">${
+            r.ownerId === currentUser.id ? 'عرض وتعديل' : 'عرض'}</button>
           ${r.ownerId === currentUser.id ? `<button class="btn-ghost su-log-btn log-danger" data-id="${r.id}" data-action="delete">حذف</button>` : ''}
         </div>
       </div>`).join('')
     : '<div class="empty-hint">لا يوجد أي بحث محفوظ بعد</div>';
 }
 
-/* ---------- the range: default, coverage, and the overlap refusal ---------- */
+/* ---------- choosing which جهات to sweep ---------- */
+function suScopeMode(){
+  const picked = document.querySelector('input[name="suScope"]:checked');
+  return picked ? picked.value : 'all';
+}
+function suChosenSites(){
+  if(suScopeMode() === 'all') return SU_SITES.slice();
+  const keys = Array.from($('#suPicker').querySelectorAll('input[type="checkbox"]:checked')).map(c => c.value);
+  return SU_SITES.filter(s => keys.includes(s.key));
+}
+function suRenderPicker(){
+  $('#suPicker').innerHTML = `
+    <div class="su-picker-top">
+      <div class="su-picker-count" id="suPickCount"></div>
+      <div class="src-setup-actions">
+        <button class="pill-btn" data-su-pick="all">تحديد الكل</button>
+        <button class="pill-btn" data-su-pick="none">إلغاء التحديد</button>
+      </div>
+    </div>
+    <div class="su-picker-list">
+      ${SU_SITES.map(s => `<label class="su-pick">
+        <input type="checkbox" value="${escapeHtml(s.key)}">
+        <span>${escapeHtml(s.name)}<em>${escapeHtml(s.section)}</em></span>
+      </label>`).join('')}
+    </div>`;
+}
+function suSyncScope(){
+  const some = suScopeMode() === 'some';
+  $('#suPicker').hidden = !some;
+  const count = suChosenSites().length;
+  const el = $('#suPickCount');
+  if(el) el.textContent = count ? `${count} من ${SU_SITES.length} جهة محددة` : 'لم تُحدَّد أي جهة بعد';
+}
+
+/* ---------- the range: default, coverage, and the overlap question ---------- */
 function suReadRange(){
   const from = $('#suFrom').value, to = $('#suTo').value;
   return (from && to) ? { from, to } : null;
@@ -3543,53 +4399,59 @@ function suCoveredFor(siteKey){
 function suConflictsFor(siteKey, range){
   return suCoveredFor(siteKey).filter(r => suRangesOverlap(range, r));
 }
-/* the natural next sweep: pick up the day after the newest day the team has
-   already covered on this site, and run to today */
-function suFreeRangeFor(siteKey){
-  const covered = suCoveredFor(siteKey);
-  if(!covered.length) return null;
-  const newest = covered.reduce((max, r) => (r.to > max ? r.to : max), '');
+/* the natural next sweep across everything chosen: start the day after the
+   newest day already covered on any of them, and run to today */
+function suFreeRangeForSites(sites){
+  let newest = '';
+  sites.forEach(s => suCoveredFor(s.key).forEach(r => { if(r.to > newest) newest = r.to; }));
+  if(!newest) return null;
   const from = suShiftIso(newest, 1);
   const to = suTodayIso();
   return from <= to ? { from, to } : null;
 }
 
 function suRenderRangeNote(){
-  const site = suSiteByKey($('#suSite').value);
+  const sites = suChosenSites();
   const range = suReadRange();
-  const covered = suCoveredFor(site.key);
   const parts = [];
   if(range && range.from <= range.to){
     parts.push(`النطاق المحدد <b>${escapeHtml(suFormatIso(range.from))}</b> — <b>${escapeHtml(suFormatIso(range.to))}</b> (${escapeHtml(suHijriOf(range.from))} — ${escapeHtml(suHijriOf(range.to))})`);
   }
-  parts.push(`التاريخ المعتمد لكل عنصر: ${escapeHtml(site.dateMeaning)}`);
-  /* "من X إلى Y" rather than an arrow: a bare → between two latin-digit dates
-     flips under RTL and reads as if the range ran backwards */
+  parts.push(sites.length === 1
+    ? `التاريخ المعتمد: ${escapeHtml(sites[0].dateMeaning)}`
+    : `${sites.length} جهة محددة — التاريخ المعتمد يختلف بينها (تاريخ منشور على الصفحة، أو تاريخ الملف نفسه)، وهو مذكور في عمود «تاريخ النشر» لكل صف.`);
+  const notes = sites.filter(s => s.note);
+  if(notes.length){
+    parts.push(`<span class="su-note-title">حدود يجدر معرفتها:</span>` +
+      notes.map(s => `<br>· <b>${escapeHtml(s.name)}</b> — ${escapeHtml(s.note)}`).join(''));
+  }
+  /* coverage is per site, so with many chosen only the ones that were already
+     swept are worth listing — the rest have nothing to say */
+  const covered = [];
+  sites.forEach(s => suCoveredFor(s.key).slice(0, 2).forEach(r =>
+    covered.push(`${s.name}: من ${r.from} إلى ${r.to}`)));
   const chips = covered.length
-    ? `<div class="su-covered">${covered.slice(0,8)
-        .map(r => `<span class="su-covered-chip">من ${escapeHtml(r.from)} إلى ${escapeHtml(r.to)}</span>`).join('')}${
+    ? `<div class="su-covered">${covered.slice(0, 8)
+        .map(t => `<span class="su-covered-chip">${escapeHtml(t)}</span>`).join('')}${
         covered.length > 8 ? `<span class="su-covered-chip">و${covered.length - 8} نطاقًا آخر</span>` : ''}</div>`
     : '';
   $('#suRangeNote').innerHTML = parts.join('<br>') +
-    (covered.length ? `<br>نطاقات مغطاة سابقًا على هذا الموقع:${chips}` : '');
+    (covered.length ? `<br>نطاقات مغطاة سابقًا:${chips}` : '');
 }
 
-/* An out-of-order range is the only thing that still blocks the button: there
-   is nothing there to search. Overlap no longer blocks and no longer shows
-   itself while typing — it is asked about once, on the search itself. */
+/* An out-of-order range is the only thing that still blocks the button: there is
+   nothing there to search. Overlap no longer blocks and no longer shows itself
+   while typing — it is asked about once, on the search itself. */
 function suValidateRange(){
   const range = suReadRange();
   const bad = !!(range && range.from > range.to);
   $('#suConflict').innerHTML = bad
     ? '<div class="su-conflict">تاريخ البداية بعد تاريخ النهاية — صحّح النطاق قبل البحث.</div>'
     : '';
-  /* a running search owns the button and must not have it handed back mid-scan */
   if(!suBusy) $('#suFetchBtn').disabled = bad;
   return !bad;
 }
 
-/* the overlap question, asked in place of the old refusal: it lists what the
-   range collides with, and the search only runs on an explicit "نعم" */
 let suPendingConfirm = null;
 function suCloseConfirm(answer){
   if(!suPendingConfirm) return;
@@ -3598,11 +4460,15 @@ function suCloseConfirm(answer){
   $('#suConflict').innerHTML = '';
   resolve(answer);
 }
-function suConfirmOverlap(clashes, site){
-  const free = suFreeRangeFor(site.key);
+/* asked once for the whole sweep and not once per جهة: thirteen interruptions
+   would be answered blind */
+function suConfirmOverlap(clashes, sites){
+  const free = suFreeRangeForSites(sites);
+  const shown = clashes.slice(0, 8);
   $('#suConflict').innerHTML = `<div class="su-conflict">
-    <b>هل أنت متأكد؟</b> هذا النطاق يتداخل مع ${clashes.length === 1 ? 'بحث سابق' : clashes.length + ' عمليات بحث سابقة'} على الموقع نفسه، وقد يتكرر العمل نفسه.
-    <ul>${clashes.map(c => `<li>من ${escapeHtml(c.from)} إلى ${escapeHtml(c.to)} — ${escapeHtml(c.user || 'غير معروف')} · ${escapeHtml(formatDateOnly(c.createdAt))}</li>`).join('')}</ul>
+    <b>هل أنت متأكد؟</b> هذا النطاق يتداخل مع ${clashes.length === 1 ? 'بحث سابق' : clashes.length + ' عمليات بحث سابقة'}، وقد يتكرر العمل نفسه.
+    <ul>${shown.map(c => `<li>${escapeHtml(c.siteName)} — من ${escapeHtml(c.from)} إلى ${escapeHtml(c.to)} — ${escapeHtml(c.user || 'غير معروف')} · ${escapeHtml(formatDateOnly(c.createdAt))}</li>`).join('')}
+    ${clashes.length > shown.length ? `<li>و${clashes.length - shown.length} غيرها</li>` : ''}</ul>
     <div class="su-confirm-actions">
       <button class="btn-primary" data-su-confirm="yes">نعم، ابحث</button>
       <button class="btn-ghost" data-su-confirm="no">إلغاء</button>
@@ -3624,85 +4490,104 @@ function suSetStatus(msg, isError){
 let suBusy = false;
 async function suSearch(){
   if(suBusy) return;
-  const site = suSiteByKey($('#suSite').value);
+  const sites = suChosenSites();
   const range = suReadRange();
+  if(!sites.length){
+    suSetStatus('اختر جهة واحدة على الأقل، أو اختر «جميع الجهات».', true);
+    return;
+  }
   if(!range || range.from > range.to){
     suSetStatus('حدّد نطاقًا صحيحًا (من تاريخ / إلى تاريخ).', true);
     return;
   }
+  if(suDraft.dirty && !confirm('في الجدول تعديلات غير محفوظة، وبحث جديد سيستبدلها. أتريد المتابعة؟')) return;
 
   suBusy = true;
-  const btn = $('#suFetchBtn');
-  btn.disabled = true;
-  $('#suResult').innerHTML = '';
+  $('#suFetchBtn').disabled = true;
+  suResetDraft();
 
   try{
-    /* re-read the log first: another employee may have covered these days
-       while this tab sat open, and the question has to account for that */
+    /* re-read the log first: another employee may have covered these days while
+       this tab sat open, and the question has to account for that */
     suSetStatus('<span class="src-spinner"></span>جاري التحقق من النطاقات المغطاة سابقًا…');
     await suRenderLog();
     if(suSetupState.table){
       suSetStatus('لم يبدأ البحث — أكمل تجهيزة الجدول أدناه أولًا، وإلا لن يُحفظ البحث ولن يظهر في السجل.', true);
       return;
     }
-    const clashes = suConflictsFor(site.key, range);
+    const clashes = [];
+    sites.forEach(site => suConflictsFor(site.key, range)
+      .forEach(c => clashes.push({ ...c, siteName: suSiteLabel(site) })));
     if(clashes.length){
       suSetStatus('');
-      if(!await suConfirmOverlap(clashes, site)){
+      if(!await suConfirmOverlap(clashes, sites)){
         suSetStatus('أُلغي البحث — لم يتغيّر شيء.');
         return;
       }
     }
 
-    const result = await site.scan(range, msg => suSetStatus(`<span class="src-spinner"></span>${msg}`));
-    /* a sweep that ran to the end is the proof a redeployed proxy knows this site */
-    if(suSetupState.staleSite === site.key){
-      suSetupState.staleSite = '';
-      suRenderSetup();
-    }
-
-    const meta = { siteName:`${site.name} — ${site.section}`, from:range.from, to:range.to };
-    suRenderResult(meta, result.rows.concat(result.undated));
-
-    const saved = await suSaveSearch(site, range, result);
-    const undatedNote = result.undated.length
-      ? ` (${result.undated.length} عنصرًا بلا تاريخ يمكن التحقق منه)`
-      : '';
-    const summary = `فُحص ${result.scanned} عنصرًا على الموقع خلال ${result.pagesRead} صفحة، منها ${result.rows.length} ضمن النطاق.${undatedNote}`;
-    if(saved.row){
-      suSetupState.overlap = false;   // a save that landed is proof the constraint is gone
-      suSetStatus(`${summary} وسُجّل النطاق في السجل.`);
-      await suRenderLog();
-      suRenderRangeNote();
-    }else{
-      /* 23P01 = the old no-overlap exclusion constraint. Overlap is a question
-         now, not a rule, so a database still carrying that constraint needs
-         one statement run against it — which the setup card hands over. */
-      const oldConstraint = (saved.error || {}).code === '23P01';
-      if(oldConstraint){
-        suSetupState.overlap = true;
-        suRenderSetup();
+    const rows = [], done = [], failures = [], stats = {};
+    for(let i = 0; i < sites.length; i++){
+      const site = sites[i];
+      const at = sites.length > 1 ? `(${i + 1}/${sites.length}) ${site.name} — ` : '';
+      try{
+        const res = await site.scan(range, msg =>
+          suSetStatus(`<span class="src-spinner"></span>${at}${msg}`));
+        stats[site.key] = { scanned: res.scanned, pagesRead: res.pagesRead };
+        res.rows.concat(res.undated).forEach(r => rows.push({ ...r, siteKey: site.key }));
+        done.push({ key: site.key, label: suSiteLabel(site), home: site.home });
+      }catch(err){
+        /* a proxy that is missing would fail every جهة, so it stops the sweep;
+           one site refusing is a hole in the answer, not the end of it —
+           twelve good results are worth having, and the hole gets named so
+           nobody reads the table as complete */
+        if(err && (err.proxyMissing || err.proxyStale)) throw err;
+        failures.push({ label: suSiteLabel(site), message: (err && err.message) || 'خطأ غير معروف' });
       }
-      suSetStatus(`${summary} لكن لم يُحفظ البحث — ${oldConstraint
-        ? 'قاعدة البيانات ما زالت تحمل قيدًا قديمًا يرفض النطاقات المتداخلة؛ أزِله بالخطوة أدناه ثم أعد البحث ليُحفظ.'
-        : escapeHtml((saved.error || {}).message || 'خطأ غير معروف')}`, true);
-      await suRenderLog();
     }
+
+    /* newest first across every جهة, with the undated last — that is where the
+       work is, so it does not belong scattered through the table */
+    rows.sort((a, b) => {
+      if(!a.date && !b.date) return 0;
+      if(!a.date) return 1;
+      if(!b.date) return -1;
+      return a.date < b.date ? 1 : a.date > b.date ? -1 : 0;
+    });
+
+    const scanned = Object.values(stats).reduce((n, s) => n + (s.scanned || 0), 0);
+    const undatedCount = rows.filter(r => r.undated).length;
+    Object.assign(suDraft, {
+      rows, sites: done, range, stats, failures,
+      recordIds: null, readOnly: false, dirty: false,
+      head: rows.length
+        ? `تحديثات ${done.length === 1 ? escapeHtml(done[0].label) : done.length + ' جهة'}
+           <span>· من ${escapeHtml(range.from)} إلى ${escapeHtml(range.to)} · ${rows.length} عنصرًا</span>`
+        : `لا تحديثات <span>· من ${escapeHtml(range.from)} إلى ${escapeHtml(range.to)}</span>`,
+      note: `فُحص <b>${scanned}</b> عنصرًا على ${done.length === 1 ? 'الجهة' : done.length + ' جهات'}.
+             لم يُحفظ شيء بعد — عدّل ما تريد ثم اضغط حفظ.`,
+      emptyHint: 'لم يُنشر شيء على الجهات المحددة خلال هذه الفترة — يمكنك إضافة صف يدويًا إن كان لديك ما تسجّله.',
+      footer: [
+        undatedCount ? `<div class="su-note"><div class="su-note-title">${undatedCount} عنصرًا وصل بلا تاريخ يمكن التحقق منه</div>
+          صفوفها مميّزة في الجدول وخانة التاريخ فيها فارغة — املأها يدويًا أو احذف الصف.</div>` : '',
+        failures.length ? `<div class="su-note warn"><div class="su-note-title">${failures.length === 1 ? 'جهة واحدة' : failures.length + ' جهات'} لم تُقرأ، ولا تُحفظ ولا يُسجَّل نطاقها</div>
+          <ul>${failures.map(f => `<li>${escapeHtml(f.label)} — ${escapeHtml(f.message)}</li>`).join('')}</ul></div>` : ''
+      ].join('')
+    });
+    edRender(suDraft);
+    suSetStatus(failures.length
+      ? `انتهى البحث على ${done.length} من ${sites.length} جهة. راجع الجدول ثم اضغط حفظ.`
+      : `انتهى البحث. راجع الجدول ثم اضغط حفظ لتسجيله.`, !!failures.length);
   }catch(err){
-    /* a half-finished sweep is not a result: nothing is saved, so the range
-       stays open and the next attempt starts clean */
+    /* a sweep that did not finish is not a result: nothing is saved, so the
+       range stays open and the next attempt starts clean */
     if(err && (err.proxyMissing || err.proxyStale)){
-      /* the refusal is this site's, the outage is everyone's — so one is filed
-         against the site and the other against the function */
-      if(err.proxyStale){
-        suSetupState.staleSite = site.key;
-      }else{
-        suSetupState.fn = true;
-        suSetupState.detail = /Failed to send/i.test(err.message || '') ? '' : (err.message || '');
-      }
+      suSetupState.fn = true;
+      suSetupState.fnStale = !!err.proxyStale;
+      suSetupState.detail = (!err.proxyStale && err.message && !/Failed to send/i.test(err.message)) ? err.message : '';
       suRenderSetup();
       suSetStatus(err.proxyStale
-        ? 'وسيط القراءة منشور بنسخة أقدم لا تعرف هذا الموقع — أعد نشره بالكود أدناه ثم أعد المحاولة.'
+        ? 'وسيط القراءة منشور بنسخة أقدم لا تعرف هذه المواقع — أعد نشره بالكود أدناه ثم أعد المحاولة.'
         : 'وسيط القراءة (site-proxy) غير منشور أو غير قابل للوصول — أكمل التجهيزة أدناه ثم أعد المحاولة.', true);
     }else{
       suSetStatus(`تعذر إتمام البحث ولم يُحفظ شيء — ${escapeHtml((err && err.message) || 'خطأ غير معروف')}`, true);
@@ -3714,31 +4599,75 @@ async function suSearch(){
   }
 }
 
+/* ---------- opening a saved record for editing ---------- */
+function suOpenRecord(rec){
+  const site = suSiteByKey(rec.siteKey);
+  const mine = rec.ownerId === currentUser.id;
+  Object.assign(suDraft, {
+    rows: rec.items.map(it => ({ ...it, siteKey: site.key })),
+    sites: [{ key: site.key, label: rec.siteName || suSiteLabel(site), home: rec.sourceUrl || site.home }],
+    range: { from: rec.from, to: rec.to },
+    stats: { [site.key]: { scanned: rec.scannedCount, pagesRead: 0 } },
+    failures: [],
+    recordIds: { [site.key]: rec.id },
+    readOnly: !mine,
+    dirty: false, saving: false,
+    head: `${escapeHtml(rec.siteName || suSiteLabel(site))}
+           <span>· من ${escapeHtml(rec.from)} إلى ${escapeHtml(rec.to)} · ${rec.items.length} عنصرًا · ${escapeHtml(rec.user || '')}</span>`,
+    note: mine ? 'سجل محفوظ — أي تعديل هنا يحدّثه في مكانه بعد الضغط على حفظ.' : 'سجل محفوظ.',
+    emptyHint: 'هذا السجل لا يحتوي أي عنصر.',
+    footer: ''
+  });
+  edRender(suDraft);
+  $('#suResult').scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
 /* ---------- wiring ---------- */
 async function suOnEnter(){
-  /* "الافتراضي دائمًا آخر سبع أيام" — the range resets on every visit rather
-     than keeping whatever the last search left behind */
-  suApplyDefaultRange();
-  $('#suResult').innerHTML = '';
-  suSetStatus('');
+  /* "الافتراضي دائمًا آخر سبع أيام" — the range resets on every visit rather than
+     keeping whatever the last search left behind. An unsaved draft is left
+     alone: throwing away edits nobody saved is the one thing a tab switch
+     must not do. */
+  if(!suDraft.dirty){
+    suApplyDefaultRange();
+    if(!suDraft.rows.length) suSetStatus('');
+  }
   await suRenderLog();
+  suSyncScope();
   suRenderRangeNote();
   suValidateRange();
 }
 
 (function initSiteUpdatesTab(){
-  $('#suSite').innerHTML = SU_SITES
-    .map(s => `<option value="${escapeHtml(s.key)}">${escapeHtml(s.name)} — ${escapeHtml(s.section)}</option>`).join('');
+  suRenderPicker();
   suApplyDefaultRange();
+  edBind(suDraft);
 
-  ['#suSite','#suFrom','#suTo'].forEach(sel => $(sel).addEventListener('change', ()=>{
+  document.querySelectorAll('input[name="suScope"]').forEach(radio =>
+    radio.addEventListener('change', () => {
+      suCloseConfirm(false);
+      if(!suBusy) suSetStatus('');
+      suSyncScope();
+      suRenderRangeNote();
+    }));
+  $('#suPicker').addEventListener('click', e => {
+    const bulk = e.target.closest('[data-su-pick]');
+    if(bulk){
+      const on = bulk.dataset.suPick === 'all';
+      $('#suPicker').querySelectorAll('input[type="checkbox"]').forEach(c => { c.checked = on; });
+    }
+    suSyncScope();
+    suRenderRangeNote();
+  });
+  $('#suPicker').addEventListener('change', () => { suSyncScope(); suRenderRangeNote(); });
+
+  ['#suFrom','#suTo'].forEach(sel => $(sel).addEventListener('change', ()=>{
     /* an open "هل أنت متأكد؟" was asked about the old range, so editing the
        range answers it with no */
     suCloseConfirm(false);
     /* the previous search's outcome does not describe the new range, and
        leaving it up would read as a verdict on it */
-    if(!suBusy) suSetStatus('');
-    suRenderSetup();   // the redeploy step belongs to one site; switching hides it
+    if(!suBusy && !suDraft.rows.length) suSetStatus('');
     suRenderRangeNote();
     suValidateRange();
   }));
@@ -3746,7 +4675,7 @@ async function suOnEnter(){
 
   $('#suConflict').addEventListener('click', e => {
     if(e.target.closest('[data-su-usefree]')){
-      const free = suFreeRangeFor($('#suSite').value);
+      const free = suFreeRangeForSites(suChosenSites());
       suCloseConfirm(false);
       if(free){
         $('#suFrom').value = free.from;
@@ -3763,21 +4692,27 @@ async function suOnEnter(){
   $('#suSetup').addEventListener('click', async e => {
     const copy = e.target.closest('[data-su-copy]');
     if(copy){
-      const text = { sql:SU_TABLE_SQL, fn:SU_PROXY_SOURCE, overlap:SU_DROP_OVERLAP_SQL }[copy.dataset.suCopy];
+      const text = {
+        sql: SU_TABLE_SQL, fn: SU_PROXY_SOURCE,
+        overlap: SU_DROP_OVERLAP_SQL, policy: SU_UPDATE_POLICY_SQL
+      }[copy.dataset.suCopy];
       showToast(await copyTextToClipboard(text) ? 'تم النسخ' : 'تعذر النسخ، حدّد النص يدويًا');
       return;
     }
     if(e.target.closest('[data-su-recheck]')){
-      suSetupState.fn = false;        // only a fresh search can prove the proxy works
-      suSetupState.staleSite = '';    // ...or that the deployed copy knows this site
-      suSetupState.overlap = false;   // ...and only a fresh save can prove the constraint is gone
+      /* only a fresh search can prove the proxy works, only a fresh save can
+         prove the constraint is gone and the policy is there */
+      suSetupState.fn = false;
+      suSetupState.fnStale = false;
+      suSetupState.overlap = false;
+      suSetupState.policy = false;
       await suRenderLog();
       suRenderRangeNote();
       suValidateRange();
       return;
     }
-    /* clipboard writes can be refused by the browser; selecting the block
-       makes the manual path a single click away */
+    /* clipboard writes can be refused by the browser; selecting the block makes
+       the manual path a single click away */
     const block = e.target.closest('[data-su-select]');
     if(block){
       const range = document.createRange();
@@ -3794,13 +4729,16 @@ async function suOnEnter(){
     const rec = suLogCache.find(r => r.id === btn.dataset.id);
     if(!rec) return;
     if(btn.dataset.action === 'view'){
-      suRenderResult({ siteName:rec.siteName, from:rec.from, to:rec.to }, rec.items);
-      $('#suResult').scrollIntoView({ behavior:'smooth', block:'start' });
+      if(suDraft.dirty && !confirm('في الجدول تعديلات غير محفوظة، وفتح سجل آخر سيستبدلها. أتريد المتابعة؟')) return;
+      suOpenRecord(rec);
       return;
     }
+    if(!confirm(`حذف بحث ${rec.siteName} من ${rec.from} إلى ${rec.to}؟ سيصير نطاقه متاحًا للبحث من جديد.`)) return;
     const { error } = await sb.from('site_updates').delete().eq('id', rec.id);
     if(error){ showToast('تعذر حذف البحث'); return; }
     showToast('تم الحذف — صار نطاقه متاحًا للبحث من جديد');
+    /* the draft was a view of the record that no longer exists */
+    if(suDraft.recordIds && suDraft.recordIds[rec.siteKey] === rec.id) suResetDraft();
     await suRenderLog();
     suRenderRangeNote();
     suValidateRange();
