@@ -580,6 +580,175 @@ input[type="checkbox"]{width:16px;height:16px;accent-color:var(--color-brand-500
 }
 .hidden{display:none !important;}
 
+/* ---------------------------- تبديل الصفة ----------------------------
+   الاعتماد ليس عمل من أنشأ الملف. الشاشة تحتاج صفتين لتُجرَّب كاملة. */
+.role-switch{
+  display:inline-flex;align-items:center;gap:var(--space-md);
+  background:var(--color-gray-100);border-radius:999px;padding:3px;
+}
+.role-switch .rs-label{
+  font-size:var(--local-size-2xs);color:var(--color-gray-500);
+  padding-inline-start:var(--space-md);
+}
+.role-btn{
+  display:inline-flex;align-items:center;gap:var(--local-space-sm);
+  height:30px;padding-inline:var(--space-lg);border-radius:999px;
+  font-size:var(--local-size-xs);color:var(--color-text-secondary);
+}
+.role-btn.is-on{
+  background:var(--color-bg-primary);color:var(--color-brand-500);
+  font-weight:var(--font-weight-medium);box-shadow:var(--local-shadow-sm);
+}
+.who-pill{
+  display:inline-flex;align-items:center;gap:var(--space-md);
+  font-size:var(--local-size-xs);color:var(--color-text-secondary);
+}
+.avatar{
+  width:26px;height:26px;border-radius:50%;flex:none;display:grid;place-items:center;
+  background:var(--color-brand-500);color:var(--color-base-white);
+  font-size:var(--local-size-2xs);font-weight:var(--font-weight-medium);
+}
+.avatar.a-legal{background:var(--color-logo-blue-500);}
+
+/* ------------------------- أزرار المراجعة في الصف ------------------------- */
+.rv-acts{display:flex;align-items:center;gap:var(--space-xs);flex-wrap:wrap;}
+.rv-btn{
+  display:inline-flex;align-items:center;gap:var(--space-xs);
+  height:28px;padding-inline:var(--space-md);border-radius:var(--local-radius-sm);
+  font-size:var(--local-size-2xs);font-weight:var(--font-weight-medium);
+  border:1px solid var(--color-gray-300);background:var(--color-bg-primary);
+  color:var(--color-text-secondary);white-space:nowrap;
+}
+.rv-btn:hover{background:var(--color-gray-50);}
+.rv-btn.rv-ok{border-color:var(--color-success-100);color:var(--color-success-700);}
+.rv-btn.rv-ok:hover{background:var(--color-success-50);}
+.rv-btn.rv-fix{border-color:var(--color-amber-200);color:var(--color-amber-800);}
+.rv-btn.rv-fix:hover{background:var(--color-amber-50);}
+
+/* ظهور الصفوف متتابعًا, فيُقرأ الجدول كشيء وصل لا كشيء كان موجودًا */
+@keyframes rowIn{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
+table.grid tbody tr.rowin{animation:rowIn .26s ease both;}
+@media (prefers-reduced-motion:reduce){
+  table.grid tbody tr.rowin{animation:none;}
+  .spin{animation:none;}
+}
+
+/* ------------------------------ الطبقة والحوار ------------------------------ */
+.scrim{
+  position:fixed;inset:0;z-index:60;
+  background:rgba(10,28,109,.45);          /* نيفي البرند لا أسود */
+  display:grid;place-items:center;padding:var(--space-2xl);
+  animation:fadeIn .16s ease both;
+}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+.modal{
+  width:min(520px,100%);background:var(--color-bg-primary);
+  border-radius:var(--radius-xl);box-shadow:0 24px 64px rgba(10,28,109,.28);
+  overflow:hidden;animation:popIn .18s ease both;
+}
+@keyframes popIn{from{opacity:0;transform:translateY(8px) scale(.985);}to{opacity:1;transform:none;}}
+.modal-head{
+  display:flex;align-items:flex-start;gap:var(--space-lg);
+  padding:var(--space-2xl) var(--space-2xl) var(--space-lg);
+}
+.modal-head .m-icon{
+  width:38px;height:38px;border-radius:50%;flex:none;display:grid;place-items:center;
+  background:var(--color-brand-25);color:var(--color-brand-500);
+}
+.modal-head .m-icon.m-warn{background:var(--color-amber-50);color:var(--color-amber-700);}
+.modal-title{font-size:var(--font-size-text-md);font-weight:var(--font-weight-medium);}
+.modal-sub{font-size:var(--local-size-xs);color:var(--color-gray-500);}
+.modal-body{
+  padding:0 var(--space-2xl) var(--space-2xl);
+  font-size:var(--local-size-sm);color:var(--color-text-secondary);line-height:1.85;
+}
+.modal-body b{color:var(--color-text-primary);font-weight:var(--font-weight-medium);}
+.modal-list{
+  margin-block-start:var(--space-lg);padding:var(--space-lg) var(--space-xl);
+  background:var(--color-gray-50);border-radius:var(--local-radius-md);
+  font-size:var(--local-size-xs);
+}
+.modal-list div{display:flex;align-items:center;gap:var(--space-md);}
+.modal-list div+div{margin-block-start:var(--local-space-sm);}
+.modal-foot{
+  display:flex;align-items:center;gap:var(--space-md);
+  padding:var(--space-lg) var(--space-2xl);background:var(--color-gray-50);
+  border-block-start:1px solid var(--color-border-secondary);
+}
+.modal-foot .spacer{flex:1;}
+
+/* ------------------------------ لوحة المراجعة ------------------------------
+   المراجع لا يعتمد صفًّا في جدول, يعتمد نصًّا قرأه. */
+.drawer-scrim{
+  position:fixed;inset:0;z-index:55;background:rgba(10,28,109,.35);
+  animation:fadeIn .16s ease both;
+}
+.drawer{
+  position:fixed;inset-block:0;inset-inline-end:0;z-index:56;
+  width:min(560px,100%);background:var(--color-bg-primary);
+  display:flex;flex-direction:column;
+  box-shadow:-12px 0 48px rgba(10,28,109,.18);
+  animation:slideIn .22s ease both;
+}
+@keyframes slideIn{from{transform:translateX(-24px);opacity:.4;}to{transform:none;opacity:1;}}
+.drawer-head{
+  display:flex;align-items:flex-start;gap:var(--space-lg);
+  padding:var(--space-2xl);border-block-end:1px solid var(--color-border-secondary);
+}
+.drawer-head .dh-main{flex:1;min-width:0;}
+.drawer-title{font-size:var(--font-size-text-md);font-weight:var(--font-weight-medium);line-height:1.5;}
+.drawer-meta{font-size:var(--local-size-xs);color:var(--color-gray-500);margin-block-start:var(--space-xs);}
+.drawer-body{flex:1;overflow-y:auto;padding:var(--space-2xl);}
+.drawer-foot{
+  padding:var(--space-xl) var(--space-2xl);background:var(--color-gray-50);
+  border-block-start:1px solid var(--color-border-secondary);
+}
+.kv{display:grid;grid-template-columns:112px 1fr;gap:var(--local-space-sm) var(--space-lg);font-size:var(--local-size-sm);}
+.kv dt{color:var(--color-gray-500);font-size:var(--local-size-xs);padding-block-start:2px;}
+.kv dd{margin:0;}
+.sect-title{
+  font-size:var(--local-size-xs);font-weight:var(--font-weight-medium);
+  color:var(--color-text-secondary);margin:var(--local-space-xxl) 0 var(--space-lg);
+  display:flex;align-items:center;gap:var(--space-md);
+}
+.sect-title .icon-sm{color:var(--color-gray-400);}
+.excerpt{
+  padding:var(--space-xl);background:var(--color-gray-50);
+  border-radius:var(--local-radius-md);border:1px solid var(--color-border-secondary);
+  font-size:var(--local-size-sm);line-height:2;color:var(--color-text-secondary);
+}
+.reason{
+  width:100%;min-height:74px;resize:vertical;
+  padding:var(--space-lg);border:1px solid var(--color-gray-300);
+  border-radius:var(--local-radius-md);font-size:var(--local-size-sm);
+  font-family:inherit;outline:none;line-height:1.7;
+}
+.reason:focus{border-color:var(--color-brand-400);box-shadow:0 0 0 3px var(--color-brand-25);}
+.reason-wrap{margin-block-end:var(--space-lg);}
+.reason-wrap label{
+  display:block;font-size:var(--local-size-xs);font-weight:var(--font-weight-medium);
+  color:var(--color-text-secondary);margin-block-end:var(--local-space-sm);
+}
+
+/* -------------------------------- التنبيهات -------------------------------- */
+.toast-stack{
+  position:fixed;inset-block-end:var(--local-space-xxl);inset-inline-start:var(--local-space-xxl);
+  z-index:70;display:flex;flex-direction:column;gap:var(--space-md);
+}
+.toast{
+  display:flex;align-items:center;gap:var(--space-lg);
+  padding:var(--space-lg) var(--space-xl);border-radius:var(--local-radius-md);
+  background:var(--color-gray-900);color:var(--color-base-white);
+  font-size:var(--local-size-xs);box-shadow:0 8px 28px rgba(10,28,109,.24);
+  animation:toastIn .2s ease both;max-width:400px;
+}
+@keyframes toastIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+.toast.is-out{animation:toastOut .2s ease both;}
+@keyframes toastOut{to{opacity:0;transform:translateY(6px);}}
+.toast .icon-sm{flex:none;}
+.toast.t-ok .icon-sm{color:var(--color-success-400);}
+.toast.t-warn .icon-sm{color:var(--color-amber-400);}
+
 @media (max-width:1100px){
   .sidenav{display:none;}
   .main{margin-inline-start:0;}
@@ -841,22 +1010,8 @@ input[type="checkbox"]{width:16px;height:16px;accent-color:var(--color-brand-500
         محاكاة تصميمية. البيانات المعروضة تجريبية ولا تعبّر عن عدد حقيقي
       </span>
       <h1>تحديثات أم القرى</h1>
-      <p class="lead">
-        أدخل تاريخ العدد، فتُجلَب تشريعاته من الجريدة في جدول واحد، ثم تُنشأ منها ملفات
-        المكتبة بضغطة واحدة. كل خطوة تُسجَّل باسم من نفّذها ووقتها، فلا حاجة إلى ملف
-        إكسل خارجي لتتبّع العمل.
-      </p>
     </div>
-    <div class="head-actions">
-      <button class="btn btn-secondary btn-sm" id="btnReset">
-        <svg class="icon-sm"><use href="#i-refresh"/></svg>
-        إعادة المحاكاة
-      </button>
-      <button class="btn btn-secondary btn-sm">
-        <svg class="icon-sm"><use href="#i-export"/></svg>
-        تصدير السجل
-      </button>
-    </div>
+    <div class="head-actions" id="headActions"></div>
   </div>
 
   <!-- شريط الخطوات -->
@@ -864,21 +1019,6 @@ input[type="checkbox"]{width:16px;height:16px;accent-color:var(--color-brand-500
 
   <!-- ---------------------- 1. تحديد العدد ---------------------- -->
   <section id="secPick">
-    <div class="banners">
-      <div class="banner banner-info">
-        <svg class="icon-sm"><use href="#i-info-circle"/></svg>
-        <div>الجريدة تصدر كل جمعة. آخر عدد متاح هو <b>العدد 5137</b> بتاريخ <bdi>17 صفر 1448هـ</bdi>.</div>
-      </div>
-      <div class="banner">
-        <svg class="icon-sm"><use href="#i-task-square"/></svg>
-        <div>يُقارَن كل تشريع بالمكتبة قبل الإنشاء، فلا يتكرر ملف موجود.</div>
-      </div>
-      <div class="banner">
-        <svg class="icon-sm"><use href="#i-verify"/></svg>
-        <div>الملفات المنشأة تذهب إلى <b>المراجعة القانونية</b> ولا تُنشر قبل اعتمادها.</div>
-      </div>
-    </div>
-
     <div class="card">
       <div class="card-head">
         <svg class="icon"><use href="#i-newspaper"/></svg>
@@ -920,21 +1060,6 @@ input[type="checkbox"]{width:16px;height:16px;accent-color:var(--color-brand-500
             <svg class="icon-sm"><use href="#i-document-download"/></svg>
             جلب التشريعات
           </button>
-        </div>
-
-        <div class="how">
-          <div class="how-title">
-            <svg class="icon-sm"><use href="#i-info-circle"/></svg>
-            كيف يُجلَب العدد
-          </div>
-          <div class="how-grid">
-            <div class="how-item"><span class="n">1</span><div><b>حصر تشريعات التاريخ</b>تُقرأ قائمة القرارات والأنظمة حتى يُستوفى تاريخ العدد بالكامل.</div></div>
-            <div class="how-item"><span class="n">2</span><div><b>قراءة كل تشريع من صفحته</b>لا من القائمة، لأن الرقم وتاريخ الأداة لا يظهران في القائمة.</div></div>
-            <div class="how-item"><span class="n">3</span><div><b>استخراج الحقول من نص الأداة</b>الرقم والتاريخ والجهة تُقرأ من مطلع النص لا من عنوانه.</div></div>
-            <div class="how-item"><span class="n">4</span><div><b>مطابقة اللوائح بقرارات اعتمادها</b>اللائحة لا تحمل رقمًا، فتأخذ رقم القرار المنشور معها في العدد نفسه.</div></div>
-            <div class="how-item"><span class="n">5</span><div><b>تحديد الموضوع الرئيسي</b>يُقترَح من تصنيفات المكتبة، ويظل قابلًا للتعديل قبل الإنشاء.</div></div>
-            <div class="how-item"><span class="n">6</span><div><b>المقارنة بالمكتبة</b>ما له ملف منشور يُستثنى من الإنشاء ويُشار إليه في الجدول.</div></div>
-          </div>
         </div>
       </div>
     </div>
@@ -1041,6 +1166,11 @@ input[type="checkbox"]{width:16px;height:16px;accent-color:var(--color-brand-500
 
 </main>
 
+<!-- لوحة مراجعة ملف واحد, وحوار التأكيد, والتنبيهات -->
+<div id="drawerHost"></div>
+<div id="modalHost"></div>
+<div class="toast-stack" id="toastHost"></div>
+
 <script>
 /* ==========================================================================
    المحاكاة: آلة حالات من خمس خطوات، والجدول عرض لمصفوفة الصفوف.
@@ -1127,19 +1257,47 @@ const SEED = [
 const TYPES = ['نظام','لائحة','لائحة تنفيذية','مرسوم ملكي','أمر ملكي','قرار مجلس الوزراء',
                'قرار وزاري','قرار مجالس وهيئات','تعميم','اتفاقية'];
 
-/* حالات المراجعة القانونية، تُسنَد عند الوصول إلى خطوة legal */
-const LEGAL_PRESET = { 0:'ok', 2:'ok', 6:'ok', 7:'ok', 1:'fix' };
+/* مطلع نص كل أداة, لأن المراجع لا يعتمد صفًّا في جدول بل نصًّا قرأه.
+   مقتطفات تجريبية بصياغة الجريدة, لا منقولة من عدد حقيقي. */
+const TEXTS = [
+  'المادة الأولى: يُقصد بالألفاظ والعبارات الآتية, أينما وردت في هذا النظام, المعاني المبينة أمام كل منها, ما لم يقتضِ السياق غير ذلك. المادة الثانية: يهدف هذا النظام إلى تنظيم الإجراءات المتعلقة بالأعمال والمشتريات وتحقيق أفضل قيمة للمال العام.',
+  'استنادًا إلى الفقرة (1) من المادة (السابعة والثمانين) من نظام المنافسات والمشتريات الحكومية, وبعد الاطلاع على قرار مجلس الوزراء ذي الصلة, تقرر إصدار اللائحة التنفيذية للنظام على النحو المبين في الملحق.',
+  'إن مجلس الوزراء بعد الاطلاع على المعاملة الواردة من الديوان الملكي, وبعد الاطلاع على نظام العمل, وبعد النظر في توصية اللجنة العامة لمجلس الوزراء, يقرر الموافقة على تعديل بعض مواد نظام العمل بالصيغة المرافقة.',
+  'إن محافظ البنك المركزي السعودي, بناءً على الصلاحيات الممنوحة له نظامًا, وبعد الاطلاع على نظام مراقبة شركات التمويل ولائحته التنفيذية, يقرر إصدار قواعد تنظيم أعمال شركات التمويل.',
+  'إلى كافة الجهات الحكومية: إشارة إلى ما تضمنته المادة (السبعون) من اللائحة التنفيذية بشأن غرامات التأخير, نود الإفادة بأن احتساب الغرامة يكون على أساس قيمة الأعمال المتأخرة لا قيمة العقد كاملًا.',
+  'إن مجلس الوزراء, بعد الاطلاع على مشروع الاتفاقية بين حكومة المملكة العربية السعودية وحكومة جمهورية سنغافورة بشأن الخدمات الجوية بين إقليميهما وما وراءهما, يقرر الموافقة على الاتفاقية بالصيغة المرافقة.',
+  'بعون الله تعالى, نحن ملك المملكة العربية السعودية, بناءً على المادة (الرابعة والأربعين) من النظام الأساسي للحكم, وبناءً على ما رفعه لنا سماحة المفتي العام, أمرنا بما هو آتٍ: أولًا: يُعين الأعضاء الواردة أسماؤهم في القائمة المرافقة.',
+  'إن مجلس إدارة الهيئة السعودية للملكية الفكرية, بناءً على المادة (الخامسة) من تنظيم الهيئة, وبعد الاطلاع على نظام حماية حقوق المؤلف ولائحته, يقرر إصدار لائحة حماية حقوق المؤلف بالصيغة المرافقة.',
+  'إن وزير الشؤون البلدية والقروية والإسكان, بناءً على الصلاحيات المخولة له, وبعد الاطلاع على نظام رسوم الأراضي البيضاء ولائحته, يقرر تحديد اشتراطات تراخيص الأنشطة التجارية على النحو الآتي.',
+  'إن محافظ هيئة الزكاة والضريبة والجمارك, بناءً على المادة (الثالثة والسبعين) من اللائحة التنفيذية لنظام ضريبة القيمة المضافة, يقرر تعديل الجدول الزمني لمراحل ربط أنظمة الفاتورة الإلكترونية.',
+  'إن مجلس الوزراء, بعد الاطلاع على المعاملة المشار إليها, وبعد النظر في توصية هيئة الخبراء, يقرر الموافقة على تنظيم المركز الوطني لتنمية القطاع غير الربحي بالصيغة المرافقة للقرار.',
+  'إن مجلس إدارة الهيئة السعودية للمراجعين والمحاسبين, بناءً على تنظيم الهيئة, يقرر إصدار قواعد الترخيص لمزاولة مهنة المحاسبة والمراجعة على النحو المبين في القواعد المرافقة.'
+];
+
+/* الاعتماد ليس عمل من أنشأ الملف, فللشاشة صفتان تُجرَّب بهما كاملة */
+const PEOPLE = {
+  staff: { name:'عمر بازمول',   title:'موظف المحتوى',  short:'عب', cls:'' },
+  legal: { name:'نورة الشهري', title:'مراجع قانوني', short:'نش', cls:'a-legal' }
+};
 
 let state = 'pick';
+let role = 'staff';
 let editing = false;
 let rows = [];
 let audit = [];
 let createdCount = 0;
+let drawerAt = null;
+
+const me = () => PEOPLE[role];
 
 function resetData(){
-  rows = SEED.map(r => Object.assign({}, r, { inferred:r.inferred.slice(), review:null }));
+  rows = SEED.map((r,i) => Object.assign({}, r, {
+    inferred:r.inferred.slice(), review:null, text:TEXTS[i] || '', reason:''
+  }));
   audit = [];
   createdCount = 0;
+  drawerAt = null;
+  role = 'staff';
   clockMin = 9 * 60 + 12;
 }
 
@@ -1159,17 +1317,21 @@ function renderStepper(){
   }).join('');
 }
 
-/* ------------------------------ تقدّم الجلب ------------------------------ */
+/* ------------------------------ تقدّم الجلب ------------------------------
+   لكل خطوة زمنها: تحديد رقم العدد طلب واحد, وقراءة اثني عشر تشريعًا من صفحاتها
+   اثنا عشر. زمن واحد لكل الخطوات يجعل الشريط عدّادًا لا عملًا. الخطوة التي
+   تقرأ التشريعات تعدّ أمام المستخدم بدل أن تصمت حتى تنتهي. */
 const FETCH_STEPS = [
-  { text:'تحديد رقم العدد من أرشيف الجريدة',        out:'العدد 5137' },
-  { text:'حصر تشريعات التاريخ',                     out:'12 تشريعًا' },
-  { text:'قراءة كل تشريع من صفحته',                 out:'12 من 12' },
-  { text:'استخراج الرقم والتاريخ والجهة',           out:'10 صريحة, 2 مستنبطة' },
-  { text:'مطابقة اللوائح بقرارات اعتمادها',         out:'زوج واحد' },
-  { text:'اقتراح الموضوع الرئيسي من تصنيفات المكتبة', out:'12 اقتراحًا' },
-  { text:'المقارنة بالمكتبة لاستثناء المتكرر',       out:'ملف واحد موجود' }
+  { text:'تحديد رقم العدد من أرشيف الجريدة',          out:() => `العدد ${ISSUE.no}`,      ms:700 },
+  { text:'حصر تشريعات التاريخ',                       out:() => `${rows.length} تشريعًا`, ms:1500 },
+  { text:'قراءة كل تشريع من صفحته',                   out:() => `${rows.length} من ${rows.length}`,
+    ms:2600, counter:true },
+  { text:'استخراج الرقم والتاريخ والجهة',             out:() => `${rows.length - warnRows()} صريحة, ${warnRows()} مستنبطة`, ms:900 },
+  { text:'مطابقة اللوائح بقرارات اعتمادها',           out:() => arCount(warnRows(),'زوج واحد','زوجان','أزواج'), ms:800 },
+  { text:'اقتراح الموضوع الرئيسي من تصنيفات المكتبة', out:() => `${rows.length} اقتراحًا`, ms:900 },
+  { text:'المقارنة بالمكتبة لاستثناء المتكرر',         out:() => arCount(dupeRows(),'ملف واحد موجود','ملفان موجودان','ملفات موجودة'), ms:1000 }
 ];
-let fetchAt = 0, fetchTimer = null;
+let fetchAt = 0, fetchTimer = null, fetchCount = 0, fetchTick = null;
 
 function renderProgress(){
   $('#progressList').innerHTML = FETCH_STEPS.map((s,i) => {
@@ -1177,30 +1339,55 @@ function renderProgress(){
     const mark = done ? '<svg class="icon-sm"><use href="#i-tick-circle"/></svg>'
       : run ? '<svg class="icon-sm spin"><use href="#i-refresh"/></svg>'
       : '<span class="dotbox"></span>';
+    let out = '';
+    if(done) out = s.out();
+    else if(run && s.counter) out = `${fetchCount} من ${rows.length}`;
     return `<div class="pstep ${done?'is-done':run?'is-run':''}">
       ${mark}
       <span class="pstep-text">${esc(s.text)}</span>
-      ${done ? `<span class="pstep-out"><bdi>${esc(s.out)}</bdi></span>` : ''}
+      ${out ? `<span class="pstep-out"><bdi>${esc(out)}</bdi></span>` : ''}
     </div>`;
   }).join('');
 }
-function startFetch(){
-  fetchAt = 0;
+
+function stopFetch(){
+  clearTimeout(fetchTimer); clearInterval(fetchTick);
+  fetchTimer = null; fetchTick = null;
+}
+
+function runFetchStep(){
+  const step = FETCH_STEPS[fetchAt];
+  if(!step){
+    stopFetch();
+    addAudit(tick(0), PEOPLE.staff.name,
+      `جلب <b>العدد ${esc(ISSUE.no)}</b>. ${rows.length} تشريعًا, `
+      + `منها ${esc(arCount(warnRows(),'واحد يحتاج تحققًا','اثنان يحتاجان تحققًا','تحتاج تحققًا'))} `
+      + `و ${esc(arCount(dupeRows(),'واحد موجود في المكتبة','اثنان موجودان في المكتبة','موجودة في المكتبة'))}.`,'');
+    go('review');
+    return;
+  }
   renderProgress();
-  clearInterval(fetchTimer);
-  fetchTimer = setInterval(() => {
+  /* الخطوة العدّادة تتقدّم أمام العين طول مدتها */
+  if(step.counter){
+    fetchCount = 0;
+    const every = Math.max(90, Math.round(step.ms / rows.length));
+    fetchTick = setInterval(() => {
+      fetchCount = Math.min(rows.length, fetchCount + 1);
+      renderProgress();
+      if(fetchCount >= rows.length) clearInterval(fetchTick);
+    }, every);
+  }
+  fetchTimer = setTimeout(() => {
+    clearInterval(fetchTick);
     fetchAt++;
-    if(fetchAt > FETCH_STEPS.length){
-      clearInterval(fetchTimer);
-      addAudit(tick(0),'عمر بازمول',
-        `جلب <b>العدد ${esc(ISSUE.no)}</b>. ${rows.length} تشريعًا, `
-        + `منها ${esc(arCount(warnRows(),'واحد يحتاج تحققًا','اثنان يحتاجان تحققًا','تحتاج تحققًا'))} `
-        + `و ${esc(arCount(dupeRows(),'واحد موجود في المكتبة','اثنان موجودان في المكتبة','موجودة في المكتبة'))}.`,'');
-      go('review');
-      return;
-    }
-    renderProgress();
-  }, 620);
+    runFetchStep();
+  }, step.ms);
+}
+
+function startFetch(){
+  stopFetch();
+  fetchAt = 0; fetchCount = 0;
+  runFetchStep();
 }
 
 /* -------------------------------- الجدول -------------------------------- */
@@ -1273,17 +1460,29 @@ function renderBody(){
       cells.push(`<td class="c-status"><span class="chip ${cls}">
         <svg class="icon-xs"><use href="${ic}"/></svg> ${esc(txt)}</span></td>`);
     }
-    cells.push(`<td class="c-act"><div class="row-acts">${
-      inLegal()
-        ? `<button class="icon-act" title="فتح الملف"><svg class="icon-sm"><use href="#i-eye"/></svg></button>
-           <button class="icon-act" title="رابط المصدر"><svg class="icon-sm"><use href="#i-link"/></svg></button>`
-        : `<button class="icon-act" title="رابط المصدر"><svg class="icon-sm"><use href="#i-link"/></svg></button>
-           <button class="icon-act danger" data-del="${i}" title="حذف الصف"><svg class="icon-sm"><use href="#i-trash"/></svg></button>`
-    }</div></td>`);
-    return `<tr${off?' class="is-off"':''}>${cells.join('')}</tr>`;
+    cells.push(`<td class="c-act">${rowActsHtml(row,i)}</td>`);
+    /* التأخير المتتابع يجعل الجدول يصل صفًّا صفًّا لا يظهر جملة واحدة */
+    return `<tr class="rowin${off?' is-off':''}" style="animation-delay:${Math.min(i,10)*28}ms">${cells.join('')}</tr>`;
   }).join('');
   const all = $('#chkAll');
   if(all) all.checked = rows.length > 0 && rows.every(r => r.on);
+}
+
+/* أزرار الصف: المراجع يعتمد أو يطلب تعديلًا, والموظف يقرأ ولا يعتمد ما أنشأه */
+function rowActsHtml(row, i){
+  const open = `<button class="icon-act" data-open="${i}" title="فتح للمراجعة"><svg class="icon-sm"><use href="#i-eye"/></svg></button>`;
+  const src  = `<button class="icon-act" title="رابط المصدر"><svg class="icon-sm"><use href="#i-link"/></svg></button>`;
+  if(state === 'legal' && role === 'legal' && row.on && row.review !== 'pub'){
+    return `<div class="rv-acts">
+      <button class="rv-btn rv-ok" data-approve="${i}"><svg class="icon-xs"><use href="#i-tick-circle"/></svg> اعتماد</button>
+      <button class="rv-btn rv-fix" data-fix="${i}"><svg class="icon-xs"><use href="#i-warning-2"/></svg> تعديل</button>
+      ${open}
+    </div>`;
+  }
+  if(inLegal()) return `<div class="row-acts">${open}${src}</div>`;
+  return `<div class="row-acts">${open}${src}
+    <button class="icon-act danger" data-del="${i}" title="حذف الصف"><svg class="icon-sm"><use href="#i-trash"/></svg></button>
+  </div>`;
 }
 
 /* ------------------------- ما حول الجدول ------------------------- */
@@ -1307,10 +1506,20 @@ function renderSub(){
 function renderTools(){
   const t = $('#tableTools');
   if(inLegal()){
+    const c = counts();
+    const asLegal = role === 'legal';
     t.innerHTML = `
-      <svg class="icon-sm" style="color:var(--color-gray-400)"><use href="#i-verify"/></svg>
-      <span>الملفات أُنشئت وأُرسلت إلى المراجعة القانونية. المراجع وحده يعتمد أو يطلب تعديلًا.</span>
+      <span class="sel-count">${esc(arCount(c.wait,'ملف واحد بانتظار المراجعة','ملفان بانتظار المراجعة','ملفات بانتظار المراجعة','ملفًا بانتظار المراجعة'))}</span>
       <span class="spacer"></span>
+      ${state === 'legal' && asLegal && c.wait
+        ? `<button class="btn btn-secondary btn-sm" id="btnApproveAll">
+             <svg class="icon-sm"><use href="#i-tick-circle"/></svg>
+             اعتماد المتبقي (<bdi>${c.wait}</bdi>)
+           </button>` : ''}
+      ${state === 'legal' && !asLegal
+        ? `<button class="btn btn-secondary btn-sm" data-role-to="legal">
+             <svg class="icon-sm"><use href="#i-verify"/></svg> ابدأ المراجعة بصفة المراجع
+           </button>` : ''}
       <button class="btn btn-tertiary btn-sm"><svg class="icon-sm"><use href="#i-export"/></svg> تصدير الجدول</button>`;
     return;
   }
@@ -1342,10 +1551,24 @@ function renderBar(){
   }
   if(state === 'legal'){
     const c = counts();
+    /* النشر بيد الموظف, والاعتماد بيد المراجع. لا يجمعهما شخص واحد. */
+    if(role === 'legal'){
+      bar.innerHTML = `
+        <span class="ab-note">${c.wait
+          ? esc(arCount(c.wait,'ملف واحد ما زال بانتظار قرارك','ملفان ما زالا بانتظار قرارك','ملفات ما زالت بانتظار قرارك','ملفًا ما زال بانتظار قرارك'))
+          : 'أنهيتَ مراجعة كل الملفات.'}</span>
+        <span class="spacer"></span>
+        <button class="btn btn-secondary" data-role-to="staff">
+          <svg class="icon-sm mirror"><use href="#i-arrow-left"/></svg> عُد بصفة الموظف
+        </button>`;
+      return;
+    }
     bar.innerHTML = `
-      <span class="ab-note">النشر متاح للملفات المعتمدة فقط.</span>
+      <span class="ab-note">${c.wait
+        ? esc(arCount(c.wait,'ملف واحد لم يُراجع بعد ولن يُنشر','ملفان لم يُراجعا بعد ولن يُنشرا','ملفات لم تُراجع بعد ولن تُنشر','ملفًا لم يُراجع بعد ولن يُنشر')) + '.'
+        : ''}</span>
       <span class="spacer"></span>
-      <button class="btn btn-secondary" id="btnRemind">
+      <button class="btn btn-secondary" id="btnRemind"${c.wait?'':' disabled'}>
         <svg class="icon-sm"><use href="#i-send"/></svg> تذكير المراجعين (<bdi>${c.wait}</bdi>)
       </button>
       <button class="btn btn-primary" id="btnPublish"${c.ok?'':' disabled'}>
@@ -1363,61 +1586,52 @@ function renderBar(){
     <button class="btn btn-secondary" id="btnReset2"><svg class="icon-sm"><use href="#i-refresh"/></svg> عدد جديد</button>`;
 }
 
+/* اللافتات تقول ما حدث, لا ما ستحدثه الشاشة. كل رقم فيها من الصفوف. */
 function renderBanners(){
   const b = $('#tableBanners');
+  const out = [];
   if(state === 'review'){
-    const w = warnRows(), d = dupeRows();
-    b.innerHTML = `
-      <div class="banner banner-warn">
-        <svg class="icon-sm"><use href="#i-warning-2"/></svg>
-        <div><b>${esc(arCount(w,'صف واحد يحتاج تحققًا','صفان يحتاجان تحققًا','صفوف تحتاج تحققًا'))}.</b>
-        وفي الجدول ${esc(arCount(inferredCells(),'قيمة واحدة','قيمتان','قيم','قيمة'))} محددة بخط منقط,
-        مستنبطة من نص التشريع لا منقولة من حقل صريح.</div>
-      </div>
-      <div class="banner banner-info">
-        <svg class="icon-sm"><use href="#i-task-square"/></svg>
-        <div><b>${esc(arCount(d,'تشريع واحد مستثنى','تشريعان مستثنيان','تشريعات مستثناة'))}.</b>
-        له ملف منشور في المكتبة, ولن يُنشأ له ملف ثانٍ.</div>
-      </div>
-      <div class="banner">
-        <svg class="icon-sm"><use href="#i-info-circle"/></svg>
-        <div>لا شيء يُحفظ قبل الضغط على <b>إنشاء ملفات</b>. الجدول حتى الآن مسودة.</div>
-      </div>`;
-    return;
-  }
-  if(state === 'legal'){
-    b.innerHTML = `
-      <div class="banner banner-ok">
-        <svg class="icon-sm"><use href="#i-tick-circle"/></svg>
-        <div><b>أُنشئ ${esc(arCount(createdCount,'ملف واحد','ملفان','ملفات','ملفًا'))}</b>
-        في مجلد <b>${esc(ISSUE.folder)}</b> وأُرسلت إلى المراجعة القانونية.</div>
-      </div>
-      <div class="banner banner-info">
-        <svg class="icon-sm"><use href="#i-verify"/></svg>
-        <div>المراجعون: <b>نورة الشهري</b> و <b>سارة القحطاني</b>. لكل ملف مراجع واحد على الأقل.</div>
-      </div>
-      <div class="banner">
-        <svg class="icon-sm"><use href="#i-info-circle"/></svg>
-        <div>الملف الذي يحتاج تعديلًا يعود إلى الموظف مع سبب الرد, ولا يُنشر قبل اعتماده.</div>
-      </div>`;
-    return;
-  }
-  const c = counts();
-  b.innerHTML = `
-    <div class="banner banner-ok">
-      <svg class="icon-sm"><use href="#i-tick-circle"/></svg>
-      <div><b>نُشر ${esc(arCount(c.pub,'ملف واحد','ملفان','ملفات','ملفًا'))}</b>
-      من العدد ${esc(ISSUE.no)}. صارت ظاهرة في المكتبة للمستخدمين.</div>
-    </div>
-    <div class="banner banner-warn">
+    const w = warnRows(), d = dupeRows(), inf = inferredCells();
+    if(w) out.push(`<div class="banner banner-warn">
       <svg class="icon-sm"><use href="#i-warning-2"/></svg>
-      <div><b>${esc(arCount(c.fix,'ملف واحد يحتاج تعديلًا','ملفان يحتاجان تعديلًا','ملفات تحتاج تعديلًا'))}</b>
-      ولم يُنشر. عاد إلى الموظف مع ملاحظة المراجع.</div>
-    </div>
-    <div class="banner">
+      <div><b>${esc(arCount(w,'صف واحد يحتاج تحققًا','صفان يحتاجان تحققًا','صفوف تحتاج تحققًا'))}</b>,
+      و ${esc(arCount(inf,'قيمة واحدة مستنبطة','قيمتان مستنبطتان','قيم مستنبطة','قيمة مستنبطة'))}.</div>
+    </div>`);
+    if(d) out.push(`<div class="banner banner-info">
       <svg class="icon-sm"><use href="#i-task-square"/></svg>
-      <div>دورة العدد كاملة موثّقة أدناه, من الجلب إلى النشر.</div>
-    </div>`;
+      <div><b>${esc(arCount(d,'تشريع واحد مستثنى','تشريعان مستثنيان','تشريعات مستثناة'))}</b>: له ملف منشور في المكتبة.</div>
+    </div>`);
+  } else if(state === 'legal'){
+    const c = counts();
+    out.push(`<div class="banner banner-ok">
+      <svg class="icon-sm"><use href="#i-tick-circle"/></svg>
+      <div><b>أُنشئ ${esc(arCount(createdCount,'ملف واحد','ملفان','ملفات','ملفًا'))}</b> في مجلد <b>${esc(ISSUE.folder)}</b>.</div>
+    </div>`);
+    if(c.ok) out.push(`<div class="banner banner-ok">
+      <svg class="icon-sm"><use href="#i-verify"/></svg>
+      <div><b>${esc(arCount(c.ok,'ملف واحد معتمد','ملفان معتمدان','ملفات معتمدة','ملفًا معتمدًا'))}</b> من <b>${esc(PEOPLE.legal.name)}</b>.</div>
+    </div>`);
+    if(c.fix) out.push(`<div class="banner banner-warn">
+      <svg class="icon-sm"><use href="#i-warning-2"/></svg>
+      <div><b>${esc(arCount(c.fix,'ملف واحد مردود','ملفان مردودان','ملفات مردودة','ملفًا مردودًا'))}</b> بطلب تعديل.</div>
+    </div>`);
+  } else {
+    const c = counts();
+    out.push(`<div class="banner banner-ok">
+      <svg class="icon-sm"><use href="#i-tick-circle"/></svg>
+      <div><b>نُشر ${esc(arCount(c.pub,'ملف واحد','ملفان','ملفات','ملفًا'))}</b> من العدد ${esc(ISSUE.no)}.</div>
+    </div>`);
+    if(c.fix) out.push(`<div class="banner banner-warn">
+      <svg class="icon-sm"><use href="#i-warning-2"/></svg>
+      <div><b>${esc(arCount(c.fix,'ملف واحد مردود','ملفان مردودان','ملفات مردودة','ملفًا مردودًا'))}</b> لم يُنشر.</div>
+    </div>`);
+    if(c.wait) out.push(`<div class="banner">
+      <svg class="icon-sm"><use href="#i-clock"/></svg>
+      <div><b>${esc(arCount(c.wait,'ملف واحد','ملفان','ملفات','ملفًا'))}</b> ما زال بانتظار المراجعة.</div>
+    </div>`);
+  }
+  b.innerHTML = out.join('');
+  b.classList.toggle('hidden', !out.length);
 }
 
 function renderSummary(){
@@ -1425,14 +1639,16 @@ function renderSummary(){
   if(!inLegal()){ box.classList.add('hidden'); return; }
   box.classList.remove('hidden');
   const c = counts();
+  /* الأصفار لا تُعرض: خانة تقول "معتمد 0" بعد النشر ضجيج لا معلومة.
+     أما عدد الملفات المنشأة فيبقى دائمًا, لأنه أصل ما تُقاس عليه البقية. */
   const cells = [
-    ['ملفات منشأة', createdCount, ''],
+    ['ملفات منشأة', createdCount, '', true],
     ['معتمد', c.ok, 't-ok'],
     ['يحتاج تعديلًا', c.fix, 't-fix'],
     ['بانتظار المراجعة', c.wait, 't-wait'],
     ['منشور', c.pub, 't-pub'],
     ['مستثنى', c.skip, 't-wait']
-  ];
+  ].filter(([,v,,always]) => always || v);
   box.innerHTML = cells.map(([k,v,t]) =>
     `<div class="stat ${t}"><div class="stat-k">${esc(k)}</div><div class="stat-v"><bdi>${v}</bdi></div></div>`).join('');
 }
@@ -1460,36 +1676,189 @@ function renderAudit(){
     : '<div class="empty">لا يوجد إجراء بعد</div>';
 }
 
+/* -------------------------------- التنبيهات -------------------------------- */
+function toast(msg, kind){
+  const el = document.createElement('div');
+  el.className = 'toast t-' + (kind || 'ok');
+  const ic = kind === 'warn' ? '#i-warning-2' : kind === 'info' ? '#i-info-circle' : '#i-tick-circle';
+  el.innerHTML = `<svg class="icon-sm"><use href="${ic}"/></svg><span>${msg}</span>`;
+  $('#toastHost').appendChild(el);
+  setTimeout(() => {
+    el.classList.add('is-out');
+    setTimeout(() => el.remove(), 220);
+  }, 3200);
+}
+
+/* ------------------------------- حوار التأكيد ------------------------------- */
+let pendingConfirm = null;
+function askConfirm(o){
+  pendingConfirm = o.onConfirm;
+  $('#modalHost').innerHTML = `<div class="scrim" data-modal-scrim>
+    <div class="modal" role="dialog" aria-modal="true" aria-label="${esc(o.title)}">
+      <div class="modal-head">
+        <span class="m-icon ${o.kind === 'warn' ? 'm-warn' : ''}">
+          <svg class="icon"><use href="${o.kind === 'warn' ? '#i-warning-2' : '#i-verify'}"/></svg>
+        </span>
+        <div>
+          <div class="modal-title">${esc(o.title)}</div>
+          ${o.sub ? `<div class="modal-sub">${esc(o.sub)}</div>` : ''}
+        </div>
+      </div>
+      <div class="modal-body">${o.body}</div>
+      <div class="modal-foot">
+        <span class="spacer"></span>
+        <button class="btn btn-secondary" data-modal-cancel>إلغاء</button>
+        <button class="btn btn-primary" data-modal-ok>${esc(o.confirmLabel)}</button>
+      </div>
+    </div>
+  </div>`;
+  const ok = $('[data-modal-ok]');
+  if(ok) ok.focus();
+}
+function closeConfirm(){ pendingConfirm = null; $('#modalHost').innerHTML = ''; }
+
+/* ----------------------------- لوحة مراجعة ملف ----------------------------- */
+function openDrawer(i){ drawerAt = i; renderDrawer(); }
+function closeDrawer(){ drawerAt = null; renderDrawer(); }
+
+function renderDrawer(){
+  const host = $('#drawerHost');
+  if(drawerAt === null || !rows[drawerAt]){ host.innerHTML = ''; return; }
+  const row = rows[drawerAt];
+  const [cls,ic,txt] = REVIEW_CHIP[row.review];
+  const canReview = state === 'legal' && role === 'legal' && row.on && row.review !== 'pub';
+  const field = (label, key) => {
+    const v = row[key];
+    const inf = row.inferred.includes(key);
+    const body = v
+      ? (inf ? `<span class="inferred" title="قيمة مستنبطة من نص التشريع. راجعها قبل الاعتماد.">${esc(v)}</span>` : esc(v))
+      : '<span class="none">لا يوجد</span>';
+    return `<dt>${esc(label)}</dt><dd>${body}</dd>`;
+  };
+  host.innerHTML = `
+    <div class="drawer-scrim" data-drawer-scrim></div>
+    <aside class="drawer" role="dialog" aria-modal="true" aria-label="مراجعة ملف">
+      <div class="drawer-head">
+        <div class="dh-main">
+          <div class="drawer-title">${esc(row.name || 'صف بلا اسم')}</div>
+          <div class="drawer-meta">
+            <span class="chip ${cls}"><svg class="icon-xs"><use href="${ic}"/></svg> ${esc(txt)}</span>
+            <span> · العدد ${esc(ISSUE.no)} · <bdi>${esc(ISSUE.hijri)}</bdi></span>
+          </div>
+        </div>
+        <button class="icon-act" data-drawer-close title="إغلاق" aria-label="إغلاق">
+          <svg class="icon-sm"><use href="#i-close-circle"/></svg>
+        </button>
+      </div>
+      <div class="drawer-body">
+        <dl class="kv">
+          ${field('نوع الأداة','type')}
+          ${field('الرقم','no')}
+          ${field('التاريخ','date')}
+          ${field('الموضوع الرئيسي','topic')}
+          ${field('الجهة','auth')}
+        </dl>
+        ${row.note ? `<div class="row-note n-${row.note.kind}" style="margin-block-start:var(--space-xl)">
+          <svg class="icon-xs"><use href="${NOTE_ICON[row.note.kind]}"/></svg>
+          <span>${esc(row.note.text)}</span></div>` : ''}
+        ${row.reason ? `<div class="sect-title"><svg class="icon-sm"><use href="#i-warning-2"/></svg> سبب طلب التعديل</div>
+          <div class="excerpt" style="border-color:var(--color-amber-200);background:var(--color-amber-50)">${esc(row.reason)}</div>` : ''}
+        <div class="sect-title"><svg class="icon-sm"><use href="#i-document-text"/></svg> مطلع نص الأداة</div>
+        <div class="excerpt">${esc(row.text || 'لا يوجد نص محفوظ.')}</div>
+        <div class="sect-title"><svg class="icon-sm"><use href="#i-link"/></svg> المصدر</div>
+        <div style="font-size:var(--local-size-xs);color:var(--color-gray-500)">
+          جريدة أم القرى, العدد ${esc(ISSUE.no)}, <bdi>${esc(ISSUE.iso)}</bdi>
+        </div>
+      </div>
+      <div class="drawer-foot">
+        ${canReview ? `
+          <div class="reason-wrap">
+            <label for="rvReason">سبب طلب التعديل (يُشترط لرد الملف)</label>
+            <textarea class="reason" id="rvReason" placeholder="مثال: رقم الأداة يحتاج تثبيتًا من نص العدد.">${esc(row.reason)}</textarea>
+          </div>
+          <div style="display:flex;gap:var(--space-md)">
+            <button class="btn btn-success" data-drawer-approve="${drawerAt}">
+              <svg class="icon-sm"><use href="#i-tick-circle"/></svg> اعتماد الملف
+            </button>
+            <button class="btn btn-secondary" data-drawer-fix="${drawerAt}">
+              <svg class="icon-sm"><use href="#i-warning-2"/></svg> طلب تعديل
+            </button>
+            <span style="flex:1"></span>
+            <button class="btn btn-tertiary" data-drawer-close>إغلاق</button>
+          </div>`
+        : `<div style="display:flex;gap:var(--space-md);align-items:center">
+            <span class="ab-note">${state === 'legal' && role === 'staff'
+              ? 'الاعتماد من صلاحية المراجع القانوني.' : ''}</span>
+            <span style="flex:1"></span>
+            <button class="btn btn-secondary" data-drawer-close>إغلاق</button>
+          </div>`}
+      </div>
+    </aside>`;
+}
+
+/* ------------------------------ إجراءات المراجعة ------------------------------ */
+function approveRow(i, silent){
+  const row = rows[i];
+  if(!row || row.review === 'ok') return;
+  row.review = 'ok';
+  row.reason = '';
+  if(!silent){
+    addAudit(tick(4), PEOPLE.legal.name, `اعتماد ملف <b>${esc(row.name)}</b> بعد مطابقته بنص العدد.`,'m-ok');
+    toast('تم اعتماد الملف');
+  }
+}
+function fixRow(i, reason){
+  const row = rows[i];
+  if(!row) return false;
+  const why = String(reason || '').trim();
+  if(!why){ toast('اكتب سبب طلب التعديل قبل رد الملف', 'warn'); return false; }
+  row.review = 'fix';
+  row.reason = why;
+  addAudit(tick(4), PEOPLE.legal.name, `رد ملف <b>${esc(row.name)}</b> بطلب تعديل: ${esc(why)}`,'');
+  toast('أُرسل طلب التعديل إلى الموظف', 'info');
+  return true;
+}
+
 /* ------------------------------ آلة الحالات ------------------------------ */
 function go(next){
   state = next;
   if(state === 'legal'){
     createdCount = picked();
-    rows.forEach((r,i) => { r.review = r.on ? (LEGAL_PRESET[i] || null) : 'skip'; });
-    /* ما يفعله المراجعون يُقيَّد باسمهم, مشتقًا من حالة الصفوف لا مكتوبًا بالتخمين */
-    const ok = counts().ok;
-    if(ok) addAudit(tick(38),'نورة الشهري',
-      `اعتماد <b>${esc(arCount(ok,'ملف واحد','ملفين','ملفات','ملفًا'))}</b> بعد مطابقتها بنص العدد.`,'m-ok');
-    rows.filter(r => r.review === 'fix').forEach(r => {
-      addAudit(tick(11),'سارة القحطاني',
-        `رد ملف <b>${esc(r.name)}</b> بطلب تعديل: رقم الأداة يحتاج تثبيتًا من نص العدد.`,'');
-    });
+    /* لا اعتماد مسبقًا: كل ملف منشأ يبدأ بانتظار قرار المراجع */
+    rows.forEach(r => { r.review = r.on ? null : 'skip'; });
   }
   if(state === 'pub'){
-    /* المراجعون أنهوا ما بقي, فما لم يُطلب تعديله صار معتمدًا ثم منشورًا */
-    rows.forEach(r => { if(r.on && r.review === null) r.review = 'ok'; });
+    /* يُنشر المعتمد وحده. ما لم يُراجع يبقى بانتظار المراجعة, ولا يُعتمد بالنشر. */
     rows.forEach(r => { if(r.review === 'ok') r.review = 'pub'; });
   }
   render();
   window.scrollTo({ top:0, behavior:'smooth' });
 }
 
+function renderHeadActions(){
+  const p = me();
+  $('#headActions').innerHTML = `
+    <span class="who-pill">
+      <span class="avatar ${p.cls}">${esc(p.short)}</span>
+      <span>${esc(p.name)}</span>
+    </span>
+    ${inLegal() ? `<span class="role-switch">
+      <span class="rs-label">الصفة</span>
+      <button class="role-btn ${role==='staff'?'is-on':''}" data-role-to="staff">موظف المحتوى</button>
+      <button class="role-btn ${role==='legal'?'is-on':''}" data-role-to="legal">مراجع قانوني</button>
+    </span>` : ''}
+    <button class="btn btn-secondary btn-sm" id="btnReset">
+      <svg class="icon-sm"><use href="#i-refresh"/></svg> إعادة المحاكاة
+    </button>`;
+}
+
 function render(){
   renderStepper();
+  renderHeadActions();
   $('#secPick').classList.toggle('hidden', state !== 'pick');
   $('#secFetch').classList.toggle('hidden', state !== 'fetch');
   $('#secTable').classList.toggle('hidden', state === 'pick' || state === 'fetch');
-  if(state === 'pick' || state === 'fetch'){ renderAudit(); return; }
+  if(state === 'pick' || state === 'fetch'){ renderAudit(); renderDrawer(); return; }
   renderBanners();
   renderSummary();
   renderSub();
@@ -1498,14 +1867,16 @@ function render(){
   renderBody();
   renderBar();
   renderAudit();
+  renderDrawer();
   $('#resultHeadEnd').innerHTML = inLegal()
     ? `<button class="btn btn-secondary btn-sm"><svg class="icon-sm"><use href="#i-eye"/></svg> فتح المجلد</button>`
     : `<button class="btn btn-tertiary btn-sm" id="btnBackPick"><svg class="icon-sm mirror"><use href="#i-arrow-left"/></svg> عدد آخر</button>`;
 }
 
 function restart(){
-  clearInterval(fetchTimer);
+  stopFetch();
   editing = false;
+  closeConfirm();
   resetData();
   state = 'pick';
   render();
@@ -1518,8 +1889,73 @@ document.addEventListener('click', e => {
   const groupBtn = t.closest('[data-group-toggle]');
   if(groupBtn){ groupBtn.closest('[data-group]').classList.toggle('is-open'); return; }
 
+  /* ------- الحوار واللوحة أولًا: ما دام أحدهما مفتوحًا فهو صاحب النقرة ------- */
+  if(t.closest('[data-modal-ok]')){
+    const fn = pendingConfirm;
+    closeConfirm();
+    if(fn) fn();
+    return;
+  }
+  if(t.closest('[data-modal-cancel]') || t.closest('[data-modal-scrim]') === t){ closeConfirm(); return; }
+
+  const dApprove = t.closest('[data-drawer-approve]');
+  if(dApprove){
+    approveRow(+dApprove.dataset.drawerApprove);
+    closeDrawer();
+    render();
+    return;
+  }
+  const dFix = t.closest('[data-drawer-fix]');
+  if(dFix){
+    const ta = $('#rvReason');
+    if(fixRow(+dFix.dataset.drawerFix, ta ? ta.value : '')){ closeDrawer(); render(); }
+    return;
+  }
+  if(t.closest('[data-drawer-close]') || t.closest('[data-drawer-scrim]') === t){ closeDrawer(); return; }
+
+  const open = t.closest('[data-open]');
+  if(open){ openDrawer(+open.dataset.open); return; }
+
+  const roleBtn = t.closest('[data-role-to]');
+  if(roleBtn){
+    const to = roleBtn.dataset.roleTo;
+    if(to !== role){
+      role = to;
+      toast(`تعمل الآن بصفة ${me().title}: ${me().name}`, 'info');
+      render();
+    }
+    return;
+  }
+
+  const approve = t.closest('[data-approve]');
+  if(approve){ approveRow(+approve.dataset.approve); render(); return; }
+
+  /* الرد يحتاج سببًا, والسبب يُكتب في اللوحة لا في الجدول */
+  const fix = t.closest('[data-fix]');
+  if(fix){ openDrawer(+fix.dataset.fix); return; }
+
+  if(t.closest('#btnApproveAll')){
+    const pending = rows.map((r,i) => [r,i]).filter(([r]) => r.on && r.review === null);
+    if(!pending.length) return;
+    askConfirm({
+      title:'اعتماد المتبقي',
+      sub:`${me().title}: ${me().name}`,
+      confirmLabel:`اعتماد ${arCount(pending.length,'ملف واحد','ملفين','ملفات','ملفًا')}`,
+      body:`سيُعتمد <b>${esc(arCount(pending.length,'ملف واحد','ملفين','ملفات','ملفًا'))}</b> دفعة واحدة, `
+        + `ويُقيَّد الاعتماد باسمك في سجل التوثيق.`,
+      onConfirm(){
+        pending.forEach(([,i]) => approveRow(i, true));
+        addAudit(tick(9), PEOPLE.legal.name,
+          `اعتماد <b>${esc(arCount(pending.length,'ملف واحد','ملفين','ملفات','ملفًا'))}</b> دفعة واحدة.`,'m-ok');
+        toast(`تم اعتماد ${arCount(pending.length,'ملف واحد','ملفين','ملفات','ملفًا')}`);
+        render();
+      }
+    });
+    return;
+  }
+
   if(t.closest('#btnFetch')){ go('fetch'); startFetch(); return; }
-  if(t.closest('#btnCancelFetch')){ clearInterval(fetchTimer); go('pick'); return; }
+  if(t.closest('#btnCancelFetch')){ stopFetch(); go('pick'); return; }
   if(t.closest('#btnReset') || t.closest('#btnReset2')){ restart(); return; }
   if(t.closest('#btnBackPick')){ go('pick'); return; }
 
@@ -1536,20 +1972,20 @@ document.addEventListener('click', e => {
   const del = t.closest('[data-del]');
   if(del){
     const gone = rows.splice(+del.dataset.del, 1)[0];
-    addAudit(tick(1),'عمر بازمول',`حذف صف <b>${esc(gone.name || 'بلا اسم')}</b> من الجدول.`,'');
+    addAudit(tick(1), me().name,`حذف صف <b>${esc(gone.name || 'بلا اسم')}</b> من الجدول.`,'');
     render();
     return;
   }
 
   if(t.closest('#btnDraft')){
-    addAudit(tick(1),'عمر بازمول','حفظ الجدول <b>كمسودة</b> دون إنشاء ملفات.','');
+    addAudit(tick(1), me().name,'حفظ الجدول <b>كمسودة</b> دون إنشاء ملفات.','');
     renderAudit();
     return;
   }
 
   if(t.closest('#btnCreate')){
     const n = picked();
-    addAudit(tick(3),'عمر بازمول',
+    addAudit(tick(3), me().name,
       `إنشاء <b>${esc(arCount(n,'ملف واحد','ملفين','ملفات','ملفًا'))}</b> في مجلد `
       + `<b>${esc(ISSUE.folder)}</b> وإرسالها إلى المراجعة القانونية.`,'m-ok');
     go('legal');
@@ -1558,20 +1994,40 @@ document.addEventListener('click', e => {
 
   if(t.closest('#btnRemind')){
     const w = counts().wait;
-    addAudit('11:05','عمر بازمول',
+    addAudit(tick(6), PEOPLE.staff.name,
       `تذكير المراجعين بـ <b>${esc(arCount(w,'ملف واحد','ملفين','ملفات','ملفًا'))}</b> بانتظار المراجعة.`,'');
+    toast('أُرسل التذكير إلى المراجعين', 'info');
     renderAudit();
     return;
   }
 
+  /* النشر يُظهِر ما سيُنشر وما لن يُنشر قبل تنفيذه, لأنه الخطوة التي تُرى خارج الأدمن */
   if(t.closest('#btnPublish')){
     const c = counts();
-    const willPublish = c.ok + c.wait;   // المعتمد الآن, وما سيعتمده المراجع قبل النشر
-    if(c.wait) addAudit('11:40','نورة الشهري',
-      `اعتماد <b>${esc(arCount(c.wait,'ملف واحد','ملفين','ملفات','ملفًا'))}</b> بعد مطابقتها بنص العدد.`,'m-ok');
-    addAudit('11:52','عمر بازمول',
-      `نشر <b>${esc(arCount(willPublish,'ملف واحد','ملفين','ملفات','ملفًا'))}</b> من العدد ${esc(ISSUE.no)} في المكتبة.`,'m-pub');
-    go('pub');
+    if(!c.ok) return;
+    const held = [
+      c.wait ? [`${arCount(c.wait,'ملف واحد','ملفان','ملفات','ملفًا')} بانتظار المراجعة`, '#i-clock'] : null,
+      c.fix  ? [`${arCount(c.fix,'ملف واحد','ملفان','ملفات','ملفًا')} مردود بطلب تعديل`, '#i-warning-2'] : null,
+      c.skip ? [`${arCount(c.skip,'تشريع واحد','تشريعان','تشريعات','تشريعًا')} مستثنى`, '#i-close-circle'] : null
+    ].filter(Boolean);
+    askConfirm({
+      title:'تأكيد النشر',
+      sub:`العدد ${ISSUE.no} · ${ISSUE.hijri}`,
+      kind: held.length ? 'warn' : '',
+      confirmLabel:`نشر ${arCount(c.ok,'ملف واحد','ملفين','ملفات','ملفًا')}`,
+      body:`سيُنشر <b>${esc(arCount(c.ok,'ملف واحد معتمد','ملفان معتمدان','ملفات معتمدة','ملفًا معتمدًا'))}</b> `
+        + `في المكتبة, ويصبح ظاهرًا للمستخدمين.`
+        + (held.length ? `<div class="modal-list">${held.map(([txt,ic]) =>
+            `<div><svg class="icon-sm" style="color:var(--color-gray-400)"><use href="${ic}"/></svg>
+             <span>${esc(txt)}, لن يُنشر.</span></div>`).join('')}</div>` : ''),
+      onConfirm(){
+        const n = counts().ok;
+        addAudit(tick(12), PEOPLE.staff.name,
+          `نشر <b>${esc(arCount(n,'ملف واحد','ملفين','ملفات','ملفًا'))}</b> من العدد ${esc(ISSUE.no)} في المكتبة.`,'m-pub');
+        go('pub');
+        toast(`نُشر ${arCount(n,'ملف واحد','ملفان','ملفات','ملفًا')} في المكتبة`);
+      }
+    });
     return;
   }
 
@@ -1583,6 +2039,13 @@ document.addEventListener('click', e => {
     go(key);
     return;
   }
+});
+
+/* Escape يُغلق ما هو مفتوح: الحوار قبل اللوحة, لأنه الأعلى طبقةً */
+document.addEventListener('keydown', e => {
+  if(e.key !== 'Escape') return;
+  if(pendingConfirm !== null || $('#modalHost').innerHTML){ closeConfirm(); return; }
+  if(drawerAt !== null) closeDrawer();
 });
 
 const COL_LABEL = COLS.reduce((m,c) => (m[c.key] = c.label, m), {});
@@ -1624,7 +2087,7 @@ document.addEventListener('change', e => {
   if(pick){
     const row = rows[+pick.dataset.pick];
     row.on = pick.checked;
-    addAudit(tick(1),'عمر بازمول',
+    addAudit(tick(1), me().name,
       `${pick.checked ? 'إعادة' : 'استثناء'} <b>${esc(row.name || 'صف بلا اسم')}</b> ${pick.checked ? 'إلى' : 'من'} قائمة الإنشاء.`,'');
     renderTools(); renderBar(); renderBody(); renderAudit();
     return;
@@ -1637,7 +2100,7 @@ document.addEventListener('change', e => {
       && editBaseline.k === cell.dataset.k) ? editBaseline.value : '';
     editBaseline = null;
     if(String(base) === String(cell.value)) return;   // مغادرة بلا تغيير
-    addAudit(tick(2),'عمر بازمول',
+    addAudit(tick(2), me().name,
       `تعديل <b>${esc(COL_LABEL[w.key] || w.key)}</b> في <b>${esc(w.row.name || 'صف بلا اسم')}</b>: `
       + `من "${esc(base || 'فارغ')}" إلى "${esc(cell.value || 'فارغ')}".`,'');
     renderAudit();
