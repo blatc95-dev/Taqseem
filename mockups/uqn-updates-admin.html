@@ -318,7 +318,7 @@ a{color:inherit;text-decoration:none;}
 
 /* ---------------------------- شريط الخطوات ---------------------------- */
 .stepper{
-  display:flex;background:var(--color-bg-primary);
+  display:flex;position:relative;background:var(--color-bg-primary);
   border:1px solid var(--color-border-secondary);border-radius:var(--radius-xl);
   overflow:hidden;margin-block-end:var(--space-xl);box-shadow:var(--local-shadow-sm);
 }
@@ -340,18 +340,59 @@ a{color:inherit;text-decoration:none;}
   transform:rotate(-135deg);background:var(--color-bg-primary);
 }
 .step-num{
-  width:30px;height:30px;border-radius:50%;flex:none;
-  display:grid;place-items:center;font-size:var(--local-size-xs);
-  font-weight:var(--font-weight-medium);
+  width:30px;height:30px;border-radius:50%;flex:none;position:relative;
+  font-size:var(--local-size-xs);font-weight:var(--font-weight-medium);
   background:var(--color-gray-100);color:var(--color-gray-500);
+  transition:background .3s ease, color .3s ease;
 }
-.step-label{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+/* الرقم والعلامة كلاهما في الشارة, يتبادلان مكانهما بتلاشٍ لا بقطع */
+.sn-num,.sn-tick{
+  position:absolute;inset:0;display:grid;place-items:center;
+  transition:opacity .24s ease, transform .24s ease;
+}
+.sn-tick{opacity:0;transform:scale(.5);}
+.step.is-done .sn-num{opacity:0;transform:scale(.5);}
+.step.is-done .sn-tick{opacity:1;transform:none;}
+.step-label{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  transition:color .3s ease;}
+.step{transition:color .3s ease;}
 .step.is-done{color:var(--color-text-secondary);}
 .step.is-done .step-num{background:var(--color-success-50);color:var(--color-success-700);}
 .step.is-current{color:var(--color-brand-500);font-weight:var(--font-weight-medium);}
 .step.is-current .step-num{background:var(--color-brand-25);color:var(--color-brand-500);}
 .step:not(.is-done):not(.is-current){cursor:default;}
 .step.is-done,.step.is-current{cursor:pointer;}
+.step.is-done:hover,.step.is-current:hover{background:var(--color-gray-50);}
+
+/* نبضة واحدة على الشارة لحظة تغيّر حالتها: الانتقال يُرى لا يُستنتج.
+   نبضة دائمة تتحول إلى وسوسة بصرية, فتكفي واحدة عند الوصول. */
+@keyframes badgePop{0%{transform:scale(1);}45%{transform:scale(1.16);}100%{transform:scale(1);}}
+.step-num.just-changed{animation:badgePop .4s cubic-bezier(.34,1.56,.64,1);}
+@keyframes ringOnce{
+  0%{box-shadow:0 0 0 0 rgba(10,28,109,.22);}
+  100%{box-shadow:0 0 0 10px rgba(10,28,109,0);}
+}
+.step.is-current .step-num.just-changed{animation:badgePop .4s cubic-bezier(.34,1.56,.64,1), ringOnce .7s ease-out;}
+
+/* شريط التقدّم أسفل الخطوات: يبدأ من اليمين وينمو يسارًا, وهو الشيء
+   الوحيد الذي يقول "أين أنت" بمقدار لا باسم. */
+.step-track,.step-fill{
+  position:absolute;inset-block-end:0;height:3px;pointer-events:none;
+}
+.step-track{inset-inline:0;background:var(--color-gray-100);}
+.step-fill{
+  inset-inline-start:0;inline-size:10%;
+  background:linear-gradient(to left,var(--color-brand-500),var(--color-logo-blue-500));
+  border-start-end-radius:3px;border-end-end-radius:3px;
+  transition:inline-size .5s cubic-bezier(.22,.61,.36,1);
+}
+
+/* دخول القسم: التقدّم في العربية يمشي يسارًا, فالقادم يدخل من اليسار
+   والعائد من اليمين. التحويلات فيزيائية والصفحة RTL وحدها. */
+@keyframes viewInFwd{from{opacity:0;transform:translateX(-20px);}to{opacity:1;transform:none;}}
+@keyframes viewInBack{from{opacity:0;transform:translateX(20px);}to{opacity:1;transform:none;}}
+.view-in-fwd{animation:viewInFwd .34s cubic-bezier(.22,.61,.36,1) both;}
+.view-in-back{animation:viewInBack .34s cubic-bezier(.22,.61,.36,1) both;}
 
 /* ---------------------------- لافتات المعلومات ---------------------------- */
 .banners{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:var(--space-lg);margin-block-end:var(--space-xl);}
@@ -631,6 +672,10 @@ table.grid tbody tr.rowin{animation:rowIn .26s ease both;}
 @media (prefers-reduced-motion:reduce){
   table.grid tbody tr.rowin{animation:none;}
   .spin{animation:none;}
+  .step-num.just-changed{animation:none;}
+  .view-in-fwd,.view-in-back{animation:none;}
+  .step-fill{transition:none;}
+  .sn-num,.sn-tick{transition:none;}
 }
 
 /* ------------------------------ الطبقة والحوار ------------------------------ */
@@ -1301,20 +1346,47 @@ function resetData(){
   clockMin = 9 * 60 + 12;
 }
 
-/* ------------------------------ شريط الخطوات ------------------------------ */
+/* ------------------------------ شريط الخطوات ------------------------------
+   يُبنى مرة واحدة ثم تُحدَّث أصنافه. إعادة بناء innerHTML في كل رسم تقتل كل
+   انتقال: العنصر الجديد لا يعرف من أين جاء, فلا شيء يتحرك ولا شيء يتلاشى. */
 function stepIndex(){ return STEPS.findIndex(s => s.key === state); }
+
+let stepperBuilt = false;
+
+function pulse(el, cls){
+  if(!el) return;
+  el.classList.remove(cls);
+  void el.offsetWidth;          // إعادة تشغيل الحركة تحتاج إعادة تدفّق
+  el.classList.add(cls);
+}
+
 function renderStepper(){
+  const host = $('#stepper');
   const cur = stepIndex();
-  $('#stepper').innerHTML = STEPS.map((s,i) => {
-    const cls = i < cur ? 'is-done' : (i === cur ? 'is-current' : '');
-    const inner = i < cur
-      ? '<svg class="icon-sm"><use href="#i-tick-circle"/></svg>'
-      : (i + 1);
-    return `<div class="step ${cls}" data-step="${s.key}">
-      <span class="step-num">${inner}</span>
-      <span class="step-label">${esc(s.label)}</span>
-    </div>`;
-  }).join('');
+  if(!stepperBuilt){
+    host.innerHTML = STEPS.map((s,i) => `
+      <div class="step" data-step="${esc(s.key)}">
+        <span class="step-num">
+          <span class="sn-num">${i + 1}</span>
+          <svg class="icon-sm sn-tick"><use href="#i-tick-circle"/></svg>
+        </span>
+        <span class="step-label">${esc(s.label)}</span>
+      </div>`).join('')
+      + '<span class="step-track"></span><span class="step-fill" id="stepFill"></span>';
+    stepperBuilt = true;
+  }
+  $$('#stepper .step').forEach((el,i) => {
+    const wasDone = el.classList.contains('is-done');
+    const wasCur  = el.classList.contains('is-current');
+    const isDone = i < cur, isCur = i === cur;
+    el.classList.toggle('is-done', isDone);
+    el.classList.toggle('is-current', isCur);
+    /* تنبض الشارة عند تغيّر حالتها فقط, لا في كل رسم */
+    if((isDone && !wasDone) || (isCur && !wasCur)) pulse(el.querySelector('.step-num'), 'just-changed');
+  });
+  /* حافة الشريط تقف عند منتصف الخطوة الحالية: "أنت هنا" لا "أنجزت هذا" */
+  const fill = $('#stepFill');
+  if(fill) fill.style.inlineSize = (((cur + 0.5) / STEPS.length) * 100).toFixed(2) + '%';
 }
 
 /* ------------------------------ تقدّم الجلب ------------------------------
@@ -1358,12 +1430,12 @@ function stopFetch(){
 function runFetchStep(){
   const step = FETCH_STEPS[fetchAt];
   if(!step){
+    /* وقفة قصيرة على الشريط وكله منجز: الانتقال إلى الجدول يحتاج أن يُرى
+       أن الجلب انتهى, لا أن تُبتلع النهاية في قفزة. */
+    fetchAt = FETCH_STEPS.length;
+    renderProgress();
     stopFetch();
-    addAudit(tick(0), PEOPLE.staff.name,
-      `جلب <b>العدد ${esc(ISSUE.no)}</b>. ${rows.length} تشريعًا, `
-      + `منها ${esc(arCount(warnRows(),'واحد يحتاج تحققًا','اثنان يحتاجان تحققًا','تحتاج تحققًا'))} `
-      + `و ${esc(arCount(dupeRows(),'واحد موجود في المكتبة','اثنان موجودان في المكتبة','موجودة في المكتبة'))}.`,'');
-    go('review');
+    fetchTimer = setTimeout(finishFetch, 680);
     return;
   }
   renderProgress();
@@ -1382,6 +1454,15 @@ function runFetchStep(){
     fetchAt++;
     runFetchStep();
   }, step.ms);
+}
+
+function finishFetch(){
+  stopFetch();
+  addAudit(tick(0), PEOPLE.staff.name,
+    `جلب <b>العدد ${esc(ISSUE.no)}</b>. ${rows.length} تشريعًا, `
+    + `منها ${esc(arCount(warnRows(),'واحد يحتاج تحققًا','اثنان يحتاجان تحققًا','تحتاج تحققًا'))} `
+    + `و ${esc(arCount(dupeRows(),'واحد موجود في المكتبة','اثنان موجودان في المكتبة','موجودة في المكتبة'))}.`,'');
+  go('review');
 }
 
 function startFetch(){
@@ -1461,8 +1542,11 @@ function renderBody(){
         <svg class="icon-xs"><use href="${ic}"/></svg> ${esc(txt)}</span></td>`);
     }
     cells.push(`<td class="c-act">${rowActsHtml(row,i)}</td>`);
-    /* التأخير المتتابع يجعل الجدول يصل صفًّا صفًّا لا يظهر جملة واحدة */
-    return `<tr class="rowin${off?' is-off':''}" style="animation-delay:${Math.min(i,10)*28}ms">${cells.join('')}</tr>`;
+    /* التأخير المتتابع يجعل الجدول يصل صفًّا صفًّا لا يظهر جملة واحدة,
+       لكن عند وصوله فقط: لا في كل مرة يُعاد رسمه بعد اعتماد صف. */
+    const cls = (animateRows ? 'rowin' : '') + (off ? ' is-off' : '');
+    const delay = animateRows ? ` style="animation-delay:${Math.min(i,10) * 32}ms"` : '';
+    return `<tr${cls.trim() ? ` class="${cls.trim()}"` : ''}${delay}>${cells.join('')}</tr>`;
   }).join('');
   const all = $('#chkAll');
   if(all) all.checked = rows.length > 0 && rows.every(r => r.on);
@@ -1852,13 +1936,40 @@ function renderHeadActions(){
     </button>`;
 }
 
+/* الحركة تُشغَّل عند تغيّر الخطوة فقط. لو شُغِّلت في كل رسم لأعاد كل اعتماد
+   صفٍّ حركة الجدول كله, فتصير الحركة ضجيجًا يخفي ما تغيّر فعلًا. */
+let lastState = null;
+let animateRows = false;
+
+function enterView(el, dir){
+  if(!el) return;
+  el.classList.remove('view-in-fwd','view-in-back');
+  void el.offsetWidth;
+  el.classList.add(dir === 'back' ? 'view-in-back' : 'view-in-fwd');
+}
+
 function render(){
+  const changed = state !== lastState;
+  const dir = (changed && lastState !== null
+    && stepIndex() < STEPS.findIndex(s => s.key === lastState)) ? 'back' : 'fwd';
+  if(changed) animateRows = true;
+
   renderStepper();
   renderHeadActions();
   $('#secPick').classList.toggle('hidden', state !== 'pick');
   $('#secFetch').classList.toggle('hidden', state !== 'fetch');
   $('#secTable').classList.toggle('hidden', state === 'pick' || state === 'fetch');
-  if(state === 'pick' || state === 'fetch'){ renderAudit(); renderDrawer(); return; }
+  if(changed){
+    enterView(state === 'pick' ? $('#secPick')
+      : state === 'fetch' ? $('#secFetch') : $('#secTable'), dir);
+  }
+  lastState = state;
+
+  if(state === 'pick' || state === 'fetch'){
+    animateRows = false;
+    renderAudit(); renderDrawer();
+    return;
+  }
   renderBanners();
   renderSummary();
   renderSub();
@@ -1868,6 +1979,7 @@ function render(){
   renderBar();
   renderAudit();
   renderDrawer();
+  animateRows = false;   // استُهلكت هذه المرة, ولا تتكرر في الرسم التالي
   $('#resultHeadEnd').innerHTML = inLegal()
     ? `<button class="btn btn-secondary btn-sm"><svg class="icon-sm"><use href="#i-eye"/></svg> فتح المجلد</button>`
     : `<button class="btn btn-tertiary btn-sm" id="btnBackPick"><svg class="icon-sm mirror"><use href="#i-arrow-left"/></svg> عدد آخر</button>`;
