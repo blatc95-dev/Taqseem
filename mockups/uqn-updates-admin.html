@@ -1,0 +1,1641 @@
+<!doctype html>
+<!--
+  ============================================================================
+  محاكاة: "تحديثات أم القرى" داخل أدمن قانونية
+  ============================================================================
+  ملف واحد قائم بذاته، لا يتصل بشبكة ولا بقاعدة بيانات. البيانات المعروضة
+  تجريبية بالكامل وتمثل شكل الشاشة لا محتوى عدد حقيقي.
+
+  المصادر:
+    - قانونية كيت: ~/qanoniah-design-kit
+        tokens/tokens.css  ......  الألوان والمسافات والخطوط (منسوخة أدناه)
+        fonts/             ......  Ping AR + LT (تُحمَّل من ../fonts في هذا المستودع)
+        icons/iconsax/linear/  ..  الأيقونات (سبرايت مضمّن أدناه، currentColor)
+        playbooks/rtl-html-scaffold.html  ..  قواعد RTL: خصائص منطقية فقط،
+                                             تدوير الأسهم، عزل الأرقام بـ bdi
+    - صور صفحة الأدمن: الشريط العلوي، القائمة الجانبية، أشكال البطاقات،
+      شريط الخطوات ذو الشكل السهمي، لافتات المعلومات، أزرار الحفظ والإلغاء.
+    - آلية الجلب: تبويب "تشريعات أم القرى" في ../index.html
+
+  قواعد الكتابة المطبَّقة (ux-writing):
+    - أرقام لاتينية 0-9 فقط.
+    - لا شرطة طويلة في أي نص يظهر للمستخدم.
+
+  ملاحظة على الوحدات: مجموعة توكنز الكيت المصدَّرة لا تحتوي مقاسات خط أصغر
+  من 16px ولا نصف قطر 8px، وهي مقاسات تحتاجها جداول الأدمن الكثيفة. ما ينقص
+  مُشتق في كتلة معنونة أدناه ومحصور فيها، وليس توكنًا معتمدًا من الكيت.
+  ============================================================================
+-->
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>تحديثات أم القرى · أدمن قانونية</title>
+<link rel="icon" type="image/svg+xml" href="../logos/logo-color-mark.svg">
+<style>
+/* ---------------- الخط: Ping AR + LT من هذا المستودع ---------------- */
+@font-face{font-family:"Ping AR + LT";src:url("../fonts/PingAR+LT-Regular.otf") format("opentype");font-weight:400;font-style:normal;font-display:swap;}
+@font-face{font-family:"Ping AR + LT";src:url("../fonts/PingAR+LT-Medium.otf") format("opentype");font-weight:500;font-style:normal;font-display:swap;}
+@font-face{font-family:"Ping AR + LT";src:url("../fonts/PingAR+LT-Bold.otf") format("opentype");font-weight:700;font-style:normal;font-display:swap;}
+
+/* ================= توكنز قانونية كيت (tokens/tokens.css) ================= */
+:root{
+  --color-base-white:#ffffff;
+  --color-text-primary:#1f2937;
+  --color-text-secondary:#4b5563;
+  --color-bg-primary:#ffffff;
+  --color-bg-secondary:#f9fafb;
+  --color-border-secondary:#e5e7eb;
+
+  --color-brand-25:#f2f5ff;
+  --color-brand-50:#ced2e2;
+  --color-brand-100:#b5bbd3;
+  --color-brand-200:#9da4c5;
+  --color-brand-400:#3b498a;
+  --color-brand-500:#0a1c6d;
+  --color-brand-600:#000354;
+
+  --color-logo-blue-25:#f5f8fd;
+  --color-logo-blue-50:#e0e7f5;
+  --color-logo-blue-500:#1f50ab;
+
+  --color-tag-laws-regulations:#14a950;
+  --color-tag-judicial-precedents:#f97315;
+  --color-tag-orders-circulars:#ef4444;
+  --color-tag-books-secondary-sources:#3c82f6;
+
+  --color-gray-50:#f9fafb;
+  --color-gray-100:#f3f4f6;
+  --color-gray-200:#e5e7eb;
+  --color-gray-300:#d1d5db;
+  --color-gray-400:#9ca3af;
+  --color-gray-500:#6b7280;
+  --color-gray-600:#4b5563;
+  --color-gray-700:#374151;
+  --color-gray-900:#111827;
+
+  --color-red-50:#fef2f2;
+  --color-red-200:#fecaca;
+  --color-red-600:#dc2626;
+  --color-red-700:#b91c1c;
+
+  --color-amber-50:#fffbeb;
+  --color-amber-200:#fde68a;
+  --color-amber-400:#fbbf24;
+  --color-amber-700:#b45309;
+  --color-amber-800:#92400e;
+
+  --color-success-50:#f0fdf4;
+  --color-success-100:#dcfce7;
+  --color-success-600:#16a34a;
+  --color-success-700:#15803d;
+  --color-success-800:#166534;
+
+  --font-family-primary:"Ping AR + LT",system-ui,-apple-system,sans-serif;
+  --font-weight-regular:400;
+  --font-weight-medium:500;
+  --font-size-text-md:16px;
+  --font-size-text-lg:18px;
+  --font-size-text-xl:20px;
+  --font-size-display-xs:24px;
+
+  --space-xxs:2px; --space-xs:4px; --space-md:8px; --space-lg:12px;
+  --space-xl:16px; --space-2xl:20px; --space-4xl:32px; --space-6xl:48px;
+
+  --radius-xl:12px;
+  --radius-3xl:20px;
+}
+
+/* ===== مُشتق محليًّا لهذه المحاكاة، ليس توكنًا من الكيت =====
+   جداول الأدمن أكثف من مقاسات الكيت المصدَّرة، وهذه أصغر درجاتها الناقصة. */
+:root{
+  --local-size-sm:14px;    /* نص الجداول والحقول */
+  --local-size-xs:12.5px;  /* التسميات والشرائح */
+  --local-size-2xs:11px;   /* الحواشي */
+  --local-radius-md:8px;   /* الأزرار والحقول */
+  --local-radius-sm:6px;
+  --local-space-sm:6px;
+  --local-space-xxl:24px;
+  --local-topbar-h:60px;
+  --local-nav-w:242px;
+  /* ظل بلون البرند نيفي لا أسود، على قاعدة patterns/glass-card.md */
+  --local-shadow-sm:0 1px 2px rgba(10,28,109,.05);
+  --local-shadow-md:0 4px 16px rgba(10,28,109,.08);
+}
+
+*,*::before,*::after{box-sizing:border-box;}
+*{margin:0;padding:0;}
+html{background:var(--color-bg-secondary);}
+body{
+  font-family:var(--font-family-primary);
+  font-weight:var(--font-weight-regular);
+  color:var(--color-text-primary);
+  background:var(--color-bg-secondary);
+  font-size:var(--local-size-sm);
+  line-height:1.7;
+  text-align:start;
+  -webkit-font-smoothing:antialiased;
+}
+bdi{unicode-bidi:isolate;}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer;}
+input,select{font:inherit;color:inherit;}
+a{color:inherit;text-decoration:none;}
+
+.icon{width:20px;height:20px;flex:none;}
+.icon-sm{width:16px;height:16px;flex:none;}
+.icon-xs{width:14px;height:14px;flex:none;}
+/* الأسهم اتجاهية فتُدوَّر مع الاتجاه. أيقونات البحث والحالة تبقى كما هي. */
+.mirror{transform:scaleX(-1);}
+
+/* =========================== الشريط العلوي =========================== */
+.topbar{
+  position:fixed;inset-block-start:0;inset-inline:0;height:var(--local-topbar-h);
+  background:var(--color-bg-primary);
+  border-block-end:1px solid var(--color-border-secondary);
+  display:flex;align-items:center;gap:var(--space-xl);
+  padding-inline:var(--space-xl);z-index:40;
+}
+.tb-brand{display:flex;align-items:center;gap:var(--space-lg);order:-1;}
+.tb-logo{height:26px;display:block;}
+.tb-collapse{
+  width:28px;height:28px;border-radius:var(--local-radius-sm);
+  display:grid;place-items:center;color:var(--color-gray-500);
+}
+.tb-collapse:hover{background:var(--color-gray-100);color:var(--color-text-primary);}
+.tb-spacer{flex:1;}
+.tb-search{
+  display:flex;align-items:center;gap:var(--space-md);
+  width:200px;height:36px;padding-inline:var(--space-lg);
+  border:1px solid var(--color-border-secondary);border-radius:var(--local-radius-md);
+  background:var(--color-bg-primary);color:var(--color-gray-400);
+}
+.tb-search input{border:none;outline:none;background:none;width:100%;font-size:var(--local-size-sm);}
+.tb-search .icon-sm{color:var(--color-gray-400);}
+.tb-icon-btn{
+  width:34px;height:34px;border-radius:var(--local-radius-md);
+  display:grid;place-items:center;color:var(--color-gray-600);position:relative;
+}
+.tb-icon-btn:hover{background:var(--color-gray-100);}
+.tb-dot{
+  position:absolute;inset-block-start:7px;inset-inline-end:8px;
+  width:6px;height:6px;border-radius:50%;background:var(--color-red-600);
+  border:1.5px solid var(--color-bg-primary);
+}
+.tb-lang{
+  min-width:34px;height:34px;padding-inline:var(--space-md);
+  border-radius:var(--local-radius-md);display:grid;place-items:center;
+  font-weight:var(--font-weight-medium);color:var(--color-gray-600);
+}
+.tb-lang:hover{background:var(--color-gray-100);}
+
+/* ========================== القائمة الجانبية ========================== */
+.sidenav{
+  position:fixed;inset-block:var(--local-topbar-h) 0;inset-inline-end:0;
+  width:var(--local-nav-w);background:var(--color-bg-primary);
+  border-inline-start:1px solid var(--color-border-secondary);
+  overflow-y:auto;padding:var(--space-lg) var(--space-lg) var(--space-6xl);
+  z-index:30;
+}
+.nav-item{
+  width:100%;display:flex;align-items:center;gap:var(--space-lg);
+  padding:var(--local-space-sm) var(--space-md);border-radius:var(--local-radius-md);
+  color:var(--color-text-secondary);font-size:var(--local-size-sm);
+  text-align:start;
+}
+.nav-item:hover{background:var(--color-gray-50);color:var(--color-text-primary);}
+.nav-item.is-active{background:var(--color-gray-100);color:var(--color-text-primary);font-weight:var(--font-weight-medium);}
+.nav-item .icon{color:var(--color-gray-500);}
+.nav-item.is-active .icon{color:var(--color-brand-500);}
+.nav-item .nav-label{flex:1;}
+.nav-item .nav-caret{color:var(--color-gray-400);transition:transform .18s ease;}
+.nav-group.is-open .nav-caret{transform:rotate(180deg);}
+.nav-item.is-ai .icon{color:var(--color-logo-blue-500);}
+
+.subnav{display:none;padding-block:var(--space-xxs);}
+.nav-group.is-open .subnav{display:block;}
+.sub-item{
+  width:100%;display:flex;align-items:center;gap:var(--space-lg);
+  padding:5px var(--space-md);border-radius:var(--local-radius-md);
+  color:var(--color-text-secondary);font-size:var(--local-size-xs);text-align:start;
+}
+.sub-item::before{
+  content:"";width:20px;flex:none;display:block;
+  background:radial-gradient(circle at center,var(--color-gray-300) 2.5px,transparent 2.6px);
+  height:20px;
+}
+.sub-item:hover{background:var(--color-gray-50);color:var(--color-text-primary);}
+.sub-item.is-active{color:var(--color-brand-500);font-weight:var(--font-weight-medium);background:var(--color-brand-25);}
+.sub-item.is-active::before{background:radial-gradient(circle at center,var(--color-brand-500) 3px,transparent 3.1px);}
+.sub-item .nav-label{flex:1;}
+.nav-new{
+  font-size:var(--local-size-2xs);font-weight:var(--font-weight-medium);
+  color:var(--color-success-700);background:var(--color-success-50);
+  border:1px solid var(--color-success-100);
+  padding:0 var(--local-space-sm);border-radius:999px;line-height:18px;
+}
+
+/* ============================== المحتوى ============================== */
+.main{
+  margin-inline-end:var(--local-nav-w);
+  padding:var(--local-space-xxl) var(--local-space-xxl) 120px;
+  padding-block-start:calc(var(--local-topbar-h) + var(--local-space-xxl));
+  max-width:1320px;
+}
+
+.crumbs{
+  display:flex;align-items:center;gap:var(--space-md);flex-wrap:wrap;
+  font-size:var(--local-size-xs);color:var(--color-gray-500);
+  margin-block-end:var(--space-xl);
+}
+.crumbs .sep{color:var(--color-gray-300);}
+.crumbs .now{color:var(--color-text-primary);font-weight:var(--font-weight-medium);}
+
+.page-head{
+  display:flex;align-items:flex-start;justify-content:space-between;
+  gap:var(--space-xl);flex-wrap:wrap;margin-block-end:var(--local-space-xxl);
+}
+.page-head h1{
+  font-size:var(--font-size-display-xs);font-weight:700;line-height:1.4;
+  margin-block-end:var(--space-xs);
+}
+.page-head .lead{
+  color:var(--color-text-secondary);font-size:var(--local-size-sm);
+  max-width:600px;line-height:1.8;
+}
+.head-actions{display:flex;align-items:center;gap:var(--space-md);flex-wrap:wrap;}
+.demo-tag{
+  display:inline-flex;align-items:center;gap:var(--local-space-sm);
+  font-size:var(--local-size-2xs);font-weight:var(--font-weight-medium);
+  color:var(--color-amber-800);background:var(--color-amber-50);
+  border:1px solid var(--color-amber-200);
+  padding:var(--space-xxs) var(--space-md);border-radius:999px;
+  margin-block-end:var(--space-md);
+}
+
+/* ------------------------------ الأزرار ------------------------------ */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:var(--space-md);
+  height:38px;padding-inline:var(--space-xl);border-radius:var(--local-radius-md);
+  font-size:var(--local-size-sm);font-weight:var(--font-weight-medium);
+  border:1px solid transparent;transition:background .15s ease,border-color .15s ease;
+  white-space:nowrap;
+}
+.btn-primary{background:var(--color-brand-500);color:var(--color-base-white);}
+.btn-primary:hover{background:var(--color-brand-600);}
+.btn-secondary{background:var(--color-bg-primary);color:var(--color-text-primary);border-color:var(--color-gray-300);}
+.btn-secondary:hover{background:var(--color-gray-50);}
+.btn-tertiary{background:none;color:var(--color-text-secondary);}
+.btn-tertiary:hover{background:var(--color-gray-100);color:var(--color-text-primary);}
+.btn-danger{background:var(--color-bg-primary);color:var(--color-red-700);border-color:var(--color-red-200);}
+.btn-danger:hover{background:var(--color-red-50);}
+.btn-sm{height:32px;padding-inline:var(--space-lg);font-size:var(--local-size-xs);}
+.btn[disabled]{opacity:.5;pointer-events:none;}
+.btn-success{background:var(--color-success-600);color:var(--color-base-white);}
+.btn-success:hover{background:var(--color-success-700);}
+
+/* ------------------------------ البطاقات ------------------------------ */
+.card{
+  background:var(--color-bg-primary);border:1px solid var(--color-border-secondary);
+  border-radius:var(--radius-xl);box-shadow:var(--local-shadow-sm);
+  margin-block-end:var(--space-xl);
+}
+.card-head{
+  display:flex;align-items:center;gap:var(--space-lg);
+  padding:var(--space-xl) var(--space-2xl);
+  border-block-end:1px solid var(--color-border-secondary);
+}
+.card-head .icon{color:var(--color-brand-500);}
+.card-title{font-size:var(--font-size-text-md);font-weight:var(--font-weight-medium);}
+.card-sub{font-size:var(--local-size-xs);color:var(--color-gray-500);}
+.card-head-end{margin-inline-start:auto;display:flex;align-items:center;gap:var(--space-md);}
+.card-body{padding:var(--space-2xl);}
+
+/* ---------------------------- شريط الخطوات ---------------------------- */
+.stepper{
+  display:flex;background:var(--color-bg-primary);
+  border:1px solid var(--color-border-secondary);border-radius:var(--radius-xl);
+  overflow:hidden;margin-block-end:var(--space-xl);box-shadow:var(--local-shadow-sm);
+}
+.step{
+  flex:1;display:flex;align-items:center;gap:var(--space-lg);
+  padding:var(--space-xl) var(--space-2xl);position:relative;
+  color:var(--color-gray-500);font-size:var(--local-size-sm);text-align:start;
+  min-width:0;
+}
+/* الفاصل شكل سهمي يشير إلى جهة التقدم، وهي اليسار في العربية.
+   تدوير المربع عملية هندسية فيزيائية لا منطقية: في RTL يقع
+   border-inline-start على الحد الأيمن, فمنصّف الزاوية يتجه إلى أعلى اليمين,
+   ويحتاج -135deg ليستقر مشيرًا إلى اليسار. */
+.step+.step::before{
+  content:"";position:absolute;inset-inline-end:-15px;inset-block-start:50%;
+  width:30px;height:30px;margin-block-start:-15px;
+  border-block-start:1px solid var(--color-border-secondary);
+  border-inline-start:1px solid var(--color-border-secondary);
+  transform:rotate(-135deg);background:var(--color-bg-primary);
+}
+.step-num{
+  width:30px;height:30px;border-radius:50%;flex:none;
+  display:grid;place-items:center;font-size:var(--local-size-xs);
+  font-weight:var(--font-weight-medium);
+  background:var(--color-gray-100);color:var(--color-gray-500);
+}
+.step-label{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.step.is-done{color:var(--color-text-secondary);}
+.step.is-done .step-num{background:var(--color-success-50);color:var(--color-success-700);}
+.step.is-current{color:var(--color-brand-500);font-weight:var(--font-weight-medium);}
+.step.is-current .step-num{background:var(--color-brand-25);color:var(--color-brand-500);}
+.step:not(.is-done):not(.is-current){cursor:default;}
+.step.is-done,.step.is-current{cursor:pointer;}
+
+/* ---------------------------- لافتات المعلومات ---------------------------- */
+.banners{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:var(--space-lg);margin-block-end:var(--space-xl);}
+.banner{
+  display:flex;align-items:flex-start;gap:var(--space-lg);
+  padding:var(--space-lg) var(--space-xl);border-radius:var(--radius-xl);
+  font-size:var(--local-size-xs);line-height:1.75;
+  border:1px solid var(--color-border-secondary);background:var(--color-bg-primary);
+  color:var(--color-text-secondary);
+}
+.banner .icon-sm{margin-block-start:3px;}
+.banner b{color:var(--color-text-primary);font-weight:var(--font-weight-medium);}
+.banner-info{background:var(--color-brand-25);border-color:var(--color-brand-50);}
+.banner-info .icon-sm{color:var(--color-brand-500);}
+.banner-warn{background:var(--color-amber-50);border-color:var(--color-amber-200);color:var(--color-amber-800);}
+.banner-warn .icon-sm{color:var(--color-amber-700);}
+.banner-warn b{color:var(--color-amber-800);}
+.banner-ok{background:var(--color-success-50);border-color:var(--color-success-100);color:var(--color-success-800);}
+.banner-ok .icon-sm{color:var(--color-success-600);}
+.banner-ok b{color:var(--color-success-800);}
+
+/* ------------------------------- الحقول ------------------------------- */
+.fields{display:flex;align-items:flex-end;gap:var(--space-xl);flex-wrap:wrap;}
+.field{display:flex;flex-direction:column;gap:var(--local-space-sm);}
+.field label{font-size:var(--local-size-xs);font-weight:var(--font-weight-medium);color:var(--color-text-secondary);}
+.field label .req{color:var(--color-red-600);}
+.control{
+  height:38px;padding-inline:var(--space-lg);
+  border:1px solid var(--color-gray-300);border-radius:var(--local-radius-md);
+  background:var(--color-bg-primary);font-size:var(--local-size-sm);outline:none;
+}
+.control:focus{border-color:var(--color-brand-400);box-shadow:0 0 0 3px var(--color-brand-25);}
+.control[readonly]{background:var(--color-gray-50);color:var(--color-gray-500);}
+.hijri-group{display:flex;gap:var(--space-md);}
+.hijri-group .control{width:92px;}
+.hijri-group select.control{width:132px;}
+.field-hint{font-size:var(--local-size-2xs);color:var(--color-gray-500);}
+.field-hint b{color:var(--color-text-primary);font-weight:var(--font-weight-medium);}
+
+/* -------------------------- شرح آلية الجلب -------------------------- */
+.how{
+  margin-block-start:var(--space-2xl);padding-block-start:var(--space-2xl);
+  border-block-start:1px dashed var(--color-border-secondary);
+}
+.how-title{
+  font-size:var(--local-size-xs);font-weight:var(--font-weight-medium);
+  color:var(--color-text-secondary);margin-block-end:var(--space-lg);
+  display:flex;align-items:center;gap:var(--space-md);
+}
+.how-title .icon-sm{color:var(--color-gray-400);}
+.how-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:var(--space-lg);}
+.how-item{
+  display:flex;gap:var(--space-lg);padding:var(--space-lg);
+  background:var(--color-gray-50);border-radius:var(--local-radius-md);
+  font-size:var(--local-size-xs);color:var(--color-text-secondary);line-height:1.7;
+}
+.how-item b{display:block;color:var(--color-text-primary);font-weight:var(--font-weight-medium);}
+.how-item .n{
+  width:22px;height:22px;flex:none;border-radius:var(--local-radius-sm);
+  display:grid;place-items:center;background:var(--color-brand-25);
+  color:var(--color-brand-500);font-size:var(--local-size-2xs);
+  font-weight:var(--font-weight-medium);
+}
+
+/* ---------------------------- تقدّم الجلب ---------------------------- */
+.progress-list{display:flex;flex-direction:column;gap:var(--space-md);}
+.pstep{
+  display:flex;align-items:center;gap:var(--space-lg);
+  padding:var(--space-lg) var(--space-xl);border-radius:var(--local-radius-md);
+  background:var(--color-gray-50);font-size:var(--local-size-sm);
+  color:var(--color-gray-500);
+}
+.pstep.is-done{background:var(--color-success-50);color:var(--color-success-800);}
+.pstep.is-run{background:var(--color-brand-25);color:var(--color-brand-500);font-weight:var(--font-weight-medium);}
+.pstep .pstep-text{flex:1;}
+.pstep .pstep-out{font-size:var(--local-size-xs);color:inherit;opacity:.85;}
+.pstep .icon-sm{color:currentColor;}
+.spin{animation:spin 1s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.dotbox{width:16px;height:16px;flex:none;display:grid;place-items:center;}
+.dotbox::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--color-gray-300);}
+
+/* ------------------------------- الجدول ------------------------------- */
+.table-tools{
+  display:flex;align-items:center;gap:var(--space-md);flex-wrap:wrap;
+  padding:var(--space-lg) var(--space-2xl);
+  border-block-end:1px solid var(--color-border-secondary);
+  background:var(--color-gray-50);
+  font-size:var(--local-size-xs);color:var(--color-text-secondary);
+}
+.table-tools .sel-count{font-weight:var(--font-weight-medium);color:var(--color-text-primary);}
+.table-tools .spacer{flex:1;}
+.table-wrap{overflow-x:auto;}
+table.grid{width:100%;border-collapse:collapse;font-size:var(--local-size-sm);}
+table.grid th{
+  background:var(--color-gray-50);text-align:start;font-weight:var(--font-weight-medium);
+  font-size:var(--local-size-xs);color:var(--color-gray-600);
+  padding:var(--space-lg) var(--space-lg);white-space:nowrap;
+  border-block-end:1px solid var(--color-border-secondary);position:sticky;inset-block-start:0;
+}
+table.grid td{
+  padding:var(--space-lg);border-block-end:1px solid var(--color-gray-100);
+  vertical-align:top;line-height:1.65;
+}
+table.grid tbody tr:hover{background:var(--color-brand-25);}
+table.grid tbody tr.is-off{background:var(--color-gray-50);color:var(--color-gray-500);}
+table.grid tbody tr.is-off:hover{background:var(--color-gray-100);}
+.c-check{width:44px;}
+.c-idx{width:38px;color:var(--color-gray-400);font-size:var(--local-size-xs);}
+.c-name{min-width:280px;}
+.c-type{width:150px;}
+.c-no{width:112px;}
+.c-date{width:126px;}
+.c-topic{width:158px;}
+.c-auth{width:200px;}
+.c-status{width:158px;}
+.c-act{width:88px;}
+.name-main{font-weight:var(--font-weight-medium);color:var(--color-text-primary);}
+tr.is-off .name-main{font-weight:var(--font-weight-regular);color:var(--color-gray-500);}
+.row-note{
+  display:flex;align-items:flex-start;gap:var(--local-space-sm);
+  margin-block-start:var(--space-xs);font-size:var(--local-size-2xs);line-height:1.6;
+}
+.row-note.n-warn{color:var(--color-amber-700);}
+.row-note.n-info{color:var(--color-gray-500);}
+.row-note.n-dupe{color:var(--color-brand-500);}
+.row-note .icon-xs{margin-block-start:2px;}
+/* قيمة مستنبطة من نص التشريع لا منقولة من حقل صريح */
+.inferred{
+  border-block-end:1px dotted var(--color-amber-400);cursor:help;
+}
+.mono{font-variant-numeric:tabular-nums;}
+.none{color:var(--color-gray-400);}
+input[type="checkbox"]{width:16px;height:16px;accent-color:var(--color-brand-500);cursor:pointer;}
+.cell-in{
+  width:100%;height:34px;padding-inline:var(--space-md);
+  border:1px solid var(--color-gray-300);border-radius:var(--local-radius-sm);
+  background:var(--color-bg-primary);font-size:var(--local-size-xs);outline:none;
+}
+.cell-in:focus{border-color:var(--color-brand-400);box-shadow:0 0 0 3px var(--color-brand-25);}
+.row-acts{display:flex;align-items:center;gap:var(--space-xs);}
+.icon-act{
+  width:28px;height:28px;border-radius:var(--local-radius-sm);
+  display:grid;place-items:center;color:var(--color-gray-500);
+}
+.icon-act:hover{background:var(--color-gray-200);color:var(--color-text-primary);}
+.icon-act.danger:hover{background:var(--color-red-50);color:var(--color-red-600);}
+
+/* ------------------------------- الشرائح ------------------------------- */
+.chip{
+  display:inline-flex;align-items:center;gap:var(--space-xs);
+  font-size:var(--local-size-2xs);font-weight:var(--font-weight-medium);
+  padding:2px var(--space-md);border-radius:999px;border:1px solid transparent;
+  white-space:nowrap;
+}
+.chip-wait{background:var(--color-gray-100);color:var(--color-gray-600);border-color:var(--color-gray-200);}
+.chip-run{background:var(--color-brand-25);color:var(--color-brand-500);border-color:var(--color-brand-50);}
+.chip-ok{background:var(--color-success-50);color:var(--color-success-700);border-color:var(--color-success-100);}
+.chip-fix{background:var(--color-amber-50);color:var(--color-amber-800);border-color:var(--color-amber-200);}
+.chip-pub{background:var(--color-brand-500);color:var(--color-base-white);}
+.type-chip{
+  display:inline-block;font-size:var(--local-size-2xs);font-weight:var(--font-weight-medium);
+  padding:2px var(--space-md);border-radius:var(--local-radius-sm);
+  background:var(--color-gray-100);color:var(--color-gray-700);white-space:nowrap;
+}
+
+/* ---------------------------- شريط الإجراءات ---------------------------- */
+.actionbar{
+  display:flex;align-items:center;gap:var(--space-lg);flex-wrap:wrap;
+  padding:var(--space-xl) var(--space-2xl);
+  border-block-start:1px solid var(--color-border-secondary);
+  background:var(--color-gray-50);
+  border-end-start-radius:var(--radius-xl);border-end-end-radius:var(--radius-xl);
+}
+.actionbar .spacer{flex:1;}
+.actionbar .ab-note{font-size:var(--local-size-xs);color:var(--color-gray-500);}
+
+/* ------------------------------ الملخّصات ------------------------------ */
+.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:var(--space-lg);margin-block-end:var(--space-xl);}
+.stat{
+  background:var(--color-bg-primary);border:1px solid var(--color-border-secondary);
+  border-radius:var(--radius-xl);padding:var(--space-xl);box-shadow:var(--local-shadow-sm);
+}
+.stat-k{font-size:var(--local-size-xs);color:var(--color-gray-500);margin-block-end:var(--space-xs);}
+.stat-v{font-size:var(--font-size-text-xl);font-weight:700;font-variant-numeric:tabular-nums;}
+.stat.t-ok .stat-v{color:var(--color-success-700);}
+.stat.t-fix .stat-v{color:var(--color-amber-800);}
+.stat.t-wait .stat-v{color:var(--color-gray-600);}
+.stat.t-pub .stat-v{color:var(--color-brand-500);}
+
+/* ------------------------------ سجل التوثيق ------------------------------ */
+.audit{display:flex;flex-direction:column;}
+.audit-row{
+  display:flex;gap:var(--space-xl);padding:var(--space-lg) var(--space-2xl);
+  border-block-end:1px solid var(--color-gray-100);font-size:var(--local-size-xs);
+}
+.audit-row:last-child{border-block-end:none;}
+.audit-when{
+  width:132px;flex:none;color:var(--color-gray-500);
+  font-variant-numeric:tabular-nums;
+}
+.audit-who{width:126px;flex:none;font-weight:var(--font-weight-medium);}
+.audit-what{flex:1;color:var(--color-text-secondary);line-height:1.75;}
+.audit-what b{color:var(--color-text-primary);font-weight:var(--font-weight-medium);}
+.audit-mark{
+  width:22px;height:22px;flex:none;border-radius:50%;display:grid;place-items:center;
+  background:var(--color-gray-100);color:var(--color-gray-500);
+}
+.audit-mark.m-ok{background:var(--color-success-50);color:var(--color-success-700);}
+.audit-mark.m-pub{background:var(--color-brand-25);color:var(--color-brand-500);}
+
+/* ------------------------------ سجل الأعداد ------------------------------ */
+.issue-row{
+  display:flex;align-items:center;gap:var(--space-xl);
+  padding:var(--space-lg) var(--space-2xl);
+  border-block-end:1px solid var(--color-gray-100);font-size:var(--local-size-sm);
+}
+.issue-row:last-child{border-block-end:none;}
+.issue-row .ir-main{flex:1;min-width:0;}
+.issue-row .ir-title{font-weight:var(--font-weight-medium);}
+.issue-row .ir-meta{font-size:var(--local-size-2xs);color:var(--color-gray-500);}
+
+.empty{
+  padding:var(--space-6xl) var(--space-2xl);text-align:center;
+  color:var(--color-gray-500);font-size:var(--local-size-sm);
+}
+.hidden{display:none !important;}
+
+@media (max-width:1100px){
+  .sidenav{display:none;}
+  .main{margin-inline-end:0;}
+}
+</style>
+</head>
+<body>
+
+<!-- ===================== سبرايت الأيقونات: iconsax linear ===================== -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<symbol id="i-home-2" viewBox="0 0 24 24" fill="none">
+<path d="M9.02 2.84004L3.63 7.04004C2.73 7.74004 2 9.23004 2 10.36V17.77C2 20.09 3.89 21.99 6.21 21.99H17.79C20.11 21.99 22 20.09 22 17.78V10.5C22 9.29004 21.19 7.74004 20.2 7.05004L14.02 2.72004C12.62 1.74004 10.37 1.79004 9.02 2.84004Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M12 17.99V14.99" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</symbol>
+<symbol id="i-search-normal" viewBox="0 0 24 24" fill="none">
+<path d="M11 20C15.9706 20 20 15.9706 20 11C20 6.02944 15.9706 2 11 2C6.02944 2 2 6.02944 2 11C2 15.9706 6.02944 20 11 20Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M18.9299 20.6898C19.4599 22.2898 20.6699 22.4498 21.5999 21.0498C22.4499 19.7698 21.8899 18.7198 20.3499 18.7198C19.2099 18.7098 18.5699 19.5998 18.9299 20.6898Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</symbol>
+<symbol id="i-notification" viewBox="0 0 24 24" fill="none">
+<path d="M12.02 2.90991C8.70997 2.90991 6.01997 5.59991 6.01997 8.90991V11.7999C6.01997 12.4099 5.75997 13.3399 5.44997 13.8599L4.29997 15.7699C3.58997 16.9499 4.07997 18.2599 5.37997 18.6999C9.68997 20.1399 14.34 20.1399 18.65 18.6999C19.86 18.2999 20.39 16.8699 19.73 15.7699L18.58 13.8599C18.28 13.3399 18.02 12.4099 18.02 11.7999V8.90991C18.02 5.60991 15.32 2.90991 12.02 2.90991Z" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round"/>
+<path d="M13.87 3.19994C13.56 3.10994 13.24 3.03994 12.91 2.99994C11.95 2.87994 11.03 2.94994 10.17 3.19994C10.46 2.45994 11.18 1.93994 12.02 1.93994C12.86 1.93994 13.58 2.45994 13.87 3.19994Z" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M15.02 19.0601C15.02 20.7101 13.67 22.0601 12.02 22.0601C11.2 22.0601 10.44 21.7201 9.90002 21.1801C9.36002 20.6401 9.02002 19.8801 9.02002 19.0601" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10"/>
+</symbol>
+<symbol id="i-profile-2user" viewBox="0 0 24 24" fill="none">
+<path d="M9.16006 10.87C9.06006 10.86 8.94006 10.86 8.83006 10.87C6.45006 10.79 4.56006 8.84 4.56006 6.44C4.56006 3.99 6.54006 2 9.00006 2C11.4501 2 13.4401 3.99 13.4401 6.44C13.4301 8.84 11.5401 10.79 9.16006 10.87Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M16.41 4C18.35 4 19.91 5.57 19.91 7.5C19.91 9.39 18.41 10.93 16.54 11C16.46 10.99 16.37 10.99 16.28 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M4.15997 14.56C1.73997 16.18 1.73997 18.82 4.15997 20.43C6.90997 22.27 11.42 22.27 14.17 20.43C16.59 18.81 16.59 16.17 14.17 14.56C11.43 12.73 6.91997 12.73 4.15997 14.56Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M18.3401 20C19.0601 19.85 19.7401 19.56 20.3001 19.13C21.8601 17.96 21.8601 16.03 20.3001 14.86C19.7501 14.44 19.0801 14.16 18.3701 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</symbol>
+<symbol id="i-magic-star" viewBox="0 0 24 24" fill="none">
+<path d="M17.29 4.13999L17.22 7.92997C17.21 8.44997 17.54 9.13999 17.96 9.44999L20.44 11.33C22.03 12.53 21.77 14 19.87 14.6L16.64 15.61C16.1 15.78 15.53 16.37 15.39 16.92L14.62 19.86C14.01 22.18 12.49 22.41 11.23 20.37L9.46999 17.52C9.14999 17 8.39 16.61 7.79 16.64L4.45003 16.81C2.06003 16.93 1.38002 15.55 2.94002 13.73L4.92 11.43C5.29 11 5.46 10.2 5.29 9.65998L4.28005 6.42997C3.69005 4.52997 4.75004 3.47999 6.64004 4.09999L9.59005 5.06999C10.09 5.22999 10.84 5.11998 11.26 4.80998L14.34 2.58998C16 1.38998 17.33 2.08999 17.29 4.13999Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M21.91 22L18.88 18.97" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</symbol>
+<symbol id="i-judge" viewBox="0 0 24 24" fill="none">
+<path d="M20.0101 18.5101L15.0601 13.5601" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M15.06 13.56L11.52 17.1C10.74 17.88 9.47 17.88 8.69 17.1L4.44999 12.86C3.66999 12.08 3.66999 10.81 4.44999 10.03L11.52 2.96C12.3 2.18 13.57 2.18 14.35 2.96L18.59 7.20002C19.37 7.98002 19.37 9.25001 18.59 10.03L15.06 13.56Z" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M2 21H8" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M6.56006 7.92004L13.6301 14.99" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+</symbol>
+<symbol id="i-clipboard-text" viewBox="0 0 24 24" fill="none">
+<path d="M8 12.2H15" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M8 16.2H12.38" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M10 6H14C16 6 16 5 16 4C16 2 15 2 14 2H10C9 2 8 2 8 4C8 6 9 6 10 6Z" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M16 4.02002C19.33 4.20002 21 5.43002 21 10V16C21 20 20 22 15 22H9C4 22 3 20 3 16V10C3 5.44002 4.67 4.20002 8 4.02002" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+</symbol>
+<symbol id="i-calendar" viewBox="0 0 24 24" fill="none">
+<path d="M8 2V5" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M16 2V5" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M3.5 9.08997H20.5" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M21 8.5V17C21 20 19.5 22 16 22H8C4.5 22 3 20 3 17V8.5C3 5.5 4.5 3.5 8 3.5H16C19.5 3.5 21 5.5 21 8.5Z" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M15.6947 13.7H15.7037" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M11.9955 13.7H12.0045" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M8.29431 13.7H8.30329" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</symbol>
+<symbol id="i-document-text" viewBox="0 0 24 24" fill="none">
+<path d="M21 7V17C21 20 19.5 22 16 22H8C4.5 22 3 20 3 17V7C3 4 4.5 2 8 2H16C19.5 2 21 4 21 7Z" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M14.5 4.5V6.5C14.5 7.6 15.4 8.5 16.5 8.5H18.5" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M8 13H12" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M8 17H16" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+</symbol>
+<symbol id="i-edit-2" viewBox="0 0 24 24" fill="none">
+<path d="M13.26 3.59997L5.04997 12.29C4.73997 12.62 4.43997 13.27 4.37997 13.72L4.00997 16.96C3.87997 18.13 4.71997 18.93 5.87997 18.73L9.09997 18.18C9.54997 18.1 10.18 17.77 10.49 17.43L18.7 8.73997C20.12 7.23997 20.76 5.52997 18.55 3.43997C16.35 1.36997 14.68 2.09997 13.26 3.59997Z" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M11.89 5.05005C12.32 7.81005 14.56 9.92005 17.34 10.2" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M3 22H21" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+</symbol>
+<symbol id="i-trash" viewBox="0 0 24 24" fill="none">
+<path d="M21 5.97998C17.67 5.64998 14.32 5.47998 10.98 5.47998C9 5.47998 7.02 5.57998 5.04 5.77998L3 5.97998" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M8.5 4.97L8.72 3.66C8.88 2.71 9 2 10.69 2H13.31C15 2 15.13 2.75 15.28 3.67L15.5 4.97" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M18.85 9.14001L18.2 19.21C18.09 20.78 18 22 15.21 22H8.79002C6.00002 22 5.91002 20.78 5.80002 19.21L5.15002 9.14001" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M10.33 16.5H13.66" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M9.5 12.5H14.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</symbol>
+<symbol id="i-info-circle" viewBox="0 0 24 24" fill="none">
+<path d="M12 22C17.5 22 22 17.5 22 12C22 6.5 17.5 2 12 2C6.5 2 2 6.5 2 12C2 17.5 6.5 22 12 22Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M12 8V13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M11.9945 16H12.0035" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</symbol>
+<symbol id="i-warning-2" viewBox="0 0 24 24" fill="none">
+<path d="M12 7.75V13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M21.08 8.58003V15.42C21.08 16.54 20.48 17.58 19.51 18.15L13.57 21.58C12.6 22.14 11.4 22.14 10.42 21.58L4.47998 18.15C3.50998 17.59 2.90997 16.55 2.90997 15.42V8.58003C2.90997 7.46003 3.50998 6.41999 4.47998 5.84999L10.42 2.42C11.39 1.86 12.59 1.86 13.57 2.42L19.51 5.84999C20.48 6.41999 21.08 7.45003 21.08 8.58003Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M12 16.2V16.2999" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</symbol>
+<symbol id="i-tick-circle" viewBox="0 0 24 24" fill="none">
+<path d="M12 22C17.5 22 22 17.5 22 12C22 6.5 17.5 2 12 2C6.5 2 2 6.5 2 12C2 17.5 6.5 22 12 22Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M7.75 12L10.58 14.83L16.25 9.17004" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</symbol>
+<symbol id="i-arrow-left" viewBox="0 0 24 24" fill="none">
+<path d="M9.57 5.92993L3.5 11.9999L9.57 18.0699" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M20.5 12H3.67004" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+</symbol>
+<symbol id="i-refresh" viewBox="0 0 24 24" fill="none">
+<path d="M14.55 21.67C18.84 20.54 22 16.64 22 12C22 6.48 17.56 2 12 2C5.33 2 2 7.56 2 7.56M2 7.56V3M2 7.56H4.01H6.44" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M2 12C2 17.52 6.48 22 12 22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="3 3"/>
+</symbol>
+<symbol id="i-eye" viewBox="0 0 24 24" fill="none">
+<path d="M15.58 12C15.58 13.98 13.98 15.58 12 15.58C10.02 15.58 8.42004 13.98 8.42004 12C8.42004 10.02 10.02 8.42004 12 8.42004C13.98 8.42004 15.58 10.02 15.58 12Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M12 20.27C15.53 20.27 18.82 18.19 21.11 14.59C22.01 13.18 22.01 10.81 21.11 9.39997C18.82 5.79997 15.53 3.71997 12 3.71997C8.46997 3.71997 5.17997 5.79997 2.88997 9.39997C1.98997 10.81 1.98997 13.18 2.88997 14.59C5.17997 18.19 8.46997 20.27 12 20.27Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</symbol>
+<symbol id="i-add" viewBox="0 0 24 24" fill="none">
+<path d="M6 12H18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M12 18V6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</symbol>
+<symbol id="i-close-circle" viewBox="0 0 24 24" fill="none">
+<path d="M12 22C17.5 22 22 17.5 22 12C22 6.5 17.5 2 12 2C6.5 2 2 6.5 2 12C2 17.5 6.5 22 12 22Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M9.16998 14.83L14.83 9.17004" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M14.83 14.83L9.16998 9.17004" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</symbol>
+<symbol id="i-link" viewBox="0 0 24 24" fill="none">
+<path d="M3.27 12C2.48 11.05 2 9.83 2 8.5C2 5.48 4.47 3 7.5 3H12.5C15.52 3 18 5.48 18 8.5C18 11.52 15.53 14 12.5 14H10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M20.73 12C21.52 12.95 22 14.17 22 15.5C22 18.52 19.53 21 16.5 21H11.5C8.48 21 6 18.52 6 15.5C6 12.48 8.47 10 11.5 10H14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</symbol>
+<symbol id="i-clock" viewBox="0 0 24 24" fill="none">
+<path d="M12 9.66003V12.45L13.4 13.85" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M5.5 12C5.5 8.41 8.41 5.5 12 5.5C15.59 5.5 18.5 8.41 18.5 12C18.5 14.08 17.52 15.94 16 17.13H15.99C14.89 17.99 13.51 18.5 12 18.5C10.51 18.5 9.14 18 8.04 17.15H8.03C6.49 15.96 5.5 14.1 5.5 12Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M8.03003 17.15H8.04003C9.14003 18 10.51 18.5 12 18.5C13.51 18.5 14.89 17.99 15.99 17.13H16L15.49 19.6C15 21.5 13.9 22 12.55 22H11.46C10.11 22 9.00003 21.5 8.52003 19.59L8.03003 17.15Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M8.03003 6.85H8.04003C9.14003 6 10.51 5.5 12 5.5C13.51 5.5 14.89 6.01 15.99 6.87H16L15.49 4.4C15 2.5 13.9 2 12.55 2H11.46C10.11 2 9.00003 2.5 8.52003 4.41L8.03003 6.85Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</symbol>
+<symbol id="i-folder-add" viewBox="0 0 24 24" fill="none">
+<path d="M12.0601 16.5V11.5" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M14.5 14H9.5" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M22 11V17C22 21 21 22 17 22H7C3 22 2 21 2 17V7C2 3 3 2 7 2H8.5C10 2 10.33 2.44 10.9 3.2L12.4 5.2C12.78 5.7 13 6 14 6H17C21 6 22 7 22 11Z" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10"/>
+</symbol>
+<symbol id="i-send" viewBox="0 0 24 24" fill="none">
+<path d="M3.5 22H20.5" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M5 3.5L19 17.5" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M5 13.77V3.5H15.27" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+</symbol>
+<symbol id="i-verify" viewBox="0 0 24 24" fill="none">
+<path d="M8.38 12L10.79 14.42L15.62 9.57996" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M10.75 2.44995C11.44 1.85995 12.57 1.85995 13.27 2.44995L14.85 3.80995C15.15 4.06995 15.71 4.27995 16.11 4.27995H17.81C18.87 4.27995 19.74 5.14995 19.74 6.20995V7.90995C19.74 8.29995 19.95 8.86995 20.21 9.16995L21.57 10.7499C22.16 11.4399 22.16 12.5699 21.57 13.2699L20.21 14.8499C19.95 15.1499 19.74 15.7099 19.74 16.1099V17.8099C19.74 18.8699 18.87 19.7399 17.81 19.7399H16.11C15.72 19.7399 15.15 19.9499 14.85 20.2099L13.27 21.5699C12.58 22.1599 11.45 22.1599 10.75 21.5699L9.17 20.2099C8.87 19.9499 8.31 19.7399 7.91 19.7399H6.18C5.12 19.7399 4.25 18.8699 4.25 17.8099V16.0999C4.25 15.7099 4.04 15.1499 3.79 14.8499L2.44 13.2599C1.86 12.5699 1.86 11.4499 2.44 10.7599L3.79 9.16995C4.04 8.86995 4.25 8.30995 4.25 7.91995V6.19995C4.25 5.13995 5.12 4.26995 6.18 4.26995H7.91C8.3 4.26995 8.87 4.05995 9.17 3.79995L10.75 2.44995Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</symbol>
+<symbol id="i-export" viewBox="0 0 24 24" fill="none">
+<path d="M16.44 8.8999C20.04 9.2099 21.51 11.0599 21.51 15.1099V15.2399C21.51 19.7099 19.72 21.4999 15.25 21.4999H8.73998C4.26998 21.4999 2.47998 19.7099 2.47998 15.2399V15.1099C2.47998 11.0899 3.92998 9.2399 7.46998 8.9099" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M12 15.0001V3.62012" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M15.35 5.85L12 2.5L8.65002 5.85" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</symbol>
+<symbol id="i-danger" viewBox="0 0 24 24" fill="none">
+<path d="M12 9V14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M12.0001 21.41H5.94005C2.47005 21.41 1.02005 18.93 2.70005 15.9L5.82006 10.28L8.76006 5.00003C10.5401 1.79003 13.4601 1.79003 15.2401 5.00003L18.1801 10.29L21.3001 15.91C22.9801 18.94 21.5201 21.42 18.0601 21.42H12.0001V21.41Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M11.9945 17H12.0035" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</symbol>
+<symbol id="i-task-square" viewBox="0 0 24 24" fill="none">
+<path d="M12.37 8.87988H17.62" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M6.38 8.87988L7.13 9.62988L9.38 7.37988" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M12.37 15.8799H17.62" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M6.38 15.8799L7.13 16.6299L9.38 14.3799" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M9 22H15C20 22 22 20 22 15V9C22 4 20 2 15 2H9C4 2 2 4 2 9V15C2 20 4 22 9 22Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</symbol>
+<symbol id="i-document-download" viewBox="0 0 24 24" fill="none">
+<path d="M9 11V17L11 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M9 17L7 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M22 10V15C22 20 20 22 15 22H9C4 22 2 20 2 15V9C2 4 4 2 9 2H14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M22 10H18C15 10 14 9 14 6V2L22 10Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</symbol>
+<!-- newspaper: يشحن أصلًا في icons/newspaper.svg بهذا المستودع، بنفس نمط iconsax -->
+<symbol id="i-newspaper" viewBox="0 0 24 24" fill="none">
+<path d="M18 6.5V19C18 20.66 16.66 22 15 22H5C3.34 22 2 20.66 2 19V6.5C2 4.84 3.34 3.5 5 3.5H15C16.66 3.5 18 4.84 18 6.5Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M18 8H20.5C21.33 8 22 8.67 22 9.5V17.5C22 18.88 20.88 20 19.5 20C18.12 20 17 18.88 17 17.5V9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M5.5 7.5H10.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M5.5 11H14.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M5.5 14.5H14.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M5.5 18H11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</symbol>
+<symbol id="i-caret" viewBox="0 0 24 24" fill="none">
+<path d="M19.92 8.95001L13.4 15.47C12.63 16.24 11.37 16.24 10.6 15.47L4.08002 8.95001" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+</symbol>
+<symbol id="i-chev" viewBox="0 0 24 24" fill="none">
+<path d="M8.91003 19.92L15.43 13.4C16.2 12.63 16.2 11.37 15.43 10.6L8.91003 4.08" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+</symbol>
+</svg>
+
+<!-- ============================= الشريط العلوي ============================= -->
+<header class="topbar">
+  <div class="tb-brand">
+    <button class="tb-collapse" title="طيّ القائمة" aria-label="طيّ القائمة">
+      <svg class="icon-sm"><use href="#i-chev"/></svg>
+    </button>
+    <img class="tb-logo" src="../logos/logo-color-horizontal.svg" alt="قانونية">
+  </div>
+  <div class="tb-spacer"></div>
+  <div class="tb-search">
+    <svg class="icon-sm"><use href="#i-search-normal"/></svg>
+    <input type="search" placeholder="بحث" aria-label="بحث">
+  </div>
+  <button class="tb-icon-btn" title="التنبيهات" aria-label="التنبيهات">
+    <svg class="icon"><use href="#i-notification"/></svg>
+    <span class="tb-dot"></span>
+  </button>
+  <button class="tb-lang" title="English">ع</button>
+</header>
+
+<!-- ============================ القائمة الجانبية ============================ -->
+<nav class="sidenav" aria-label="أقسام الأدمن">
+  <button class="nav-item"><svg class="icon"><use href="#i-home-2"/></svg><span class="nav-label">لوحة التحكم</span></button>
+  <button class="nav-item"><svg class="icon"><use href="#i-search-normal"/></svg><span class="nav-label">إعدادات البحث</span></button>
+  <button class="nav-item"><svg class="icon"><use href="#i-notification"/></svg><span class="nav-label">مركز التنبيهات</span></button>
+  <button class="nav-item"><svg class="icon"><use href="#i-profile-2user"/></svg><span class="nav-label">المستخدمين</span></button>
+
+  <div class="nav-group" data-group>
+    <button class="nav-item is-ai" data-group-toggle>
+      <svg class="icon"><use href="#i-magic-star"/></svg>
+      <span class="nav-label">الذكاء الاصطناعي</span>
+      <svg class="icon-sm nav-caret"><use href="#i-caret"/></svg>
+    </button>
+    <div class="subnav">
+      <button class="sub-item"><span class="nav-label">أدوات الذكاء الاصطناعي</span></button>
+      <button class="sub-item"><span class="nav-label">أوامر الذكاء الاصطناعي</span></button>
+      <button class="sub-item"><span class="nav-label">التقييمات</span></button>
+    </div>
+  </div>
+
+  <div class="nav-group is-open" data-group>
+    <button class="nav-item is-active" data-group-toggle>
+      <svg class="icon"><use href="#i-judge"/></svg>
+      <span class="nav-label">المحتوى القانوني</span>
+      <svg class="icon-sm nav-caret"><use href="#i-caret"/></svg>
+    </button>
+    <div class="subnav">
+      <button class="sub-item"><span class="nav-label">الوسوم</span></button>
+      <button class="sub-item"><span class="nav-label">تصنيفات الإشعارات</span></button>
+      <button class="sub-item"><span class="nav-label">تحديثات قانونية</span></button>
+      <button class="sub-item is-active"><span class="nav-label">تحديثات أم القرى</span><span class="nav-new">جديد</span></button>
+      <button class="sub-item"><span class="nav-label">أعداد جريدة أم القرى</span></button>
+      <button class="sub-item"><span class="nav-label">التصنيفات</span></button>
+      <button class="sub-item"><span class="nav-label">المجلدات</span></button>
+      <button class="sub-item"><span class="nav-label">مصادر الترجمات</span></button>
+    </div>
+  </div>
+
+  <div class="nav-group" data-group>
+    <button class="nav-item" data-group-toggle>
+      <svg class="icon"><use href="#i-clipboard-text"/></svg>
+      <span class="nav-label">كتابة المحتوى</span>
+      <svg class="icon-sm nav-caret"><use href="#i-caret"/></svg>
+    </button>
+    <div class="subnav">
+      <button class="sub-item"><span class="nav-label">مركز المساعدة</span></button>
+    </div>
+  </div>
+</nav>
+
+<!-- ================================ المحتوى ================================ -->
+<main class="main">
+
+  <div class="crumbs">
+    <span>المحتوى القانوني</span>
+    <svg class="icon-xs sep mirror"><use href="#i-chev"/></svg>
+    <span class="now">تحديثات أم القرى</span>
+  </div>
+
+  <div class="page-head">
+    <div>
+      <span class="demo-tag">
+        <svg class="icon-xs"><use href="#i-warning-2"/></svg>
+        محاكاة تصميمية. البيانات المعروضة تجريبية ولا تعبّر عن عدد حقيقي
+      </span>
+      <h1>تحديثات أم القرى</h1>
+      <p class="lead">
+        أدخل تاريخ العدد، فتُجلَب تشريعاته من الجريدة في جدول واحد، ثم تُنشأ منها ملفات
+        المكتبة بضغطة واحدة. كل خطوة تُسجَّل باسم من نفّذها ووقتها، فلا حاجة إلى ملف
+        إكسل خارجي لتتبّع العمل.
+      </p>
+    </div>
+    <div class="head-actions">
+      <button class="btn btn-secondary btn-sm" id="btnReset">
+        <svg class="icon-sm"><use href="#i-refresh"/></svg>
+        إعادة المحاكاة
+      </button>
+      <button class="btn btn-secondary btn-sm">
+        <svg class="icon-sm"><use href="#i-export"/></svg>
+        تصدير السجل
+      </button>
+    </div>
+  </div>
+
+  <!-- شريط الخطوات -->
+  <div class="stepper" id="stepper"></div>
+
+  <!-- ---------------------- 1. تحديد العدد ---------------------- -->
+  <section id="secPick">
+    <div class="banners">
+      <div class="banner banner-info">
+        <svg class="icon-sm"><use href="#i-info-circle"/></svg>
+        <div>الجريدة تصدر كل جمعة. آخر عدد متاح هو <b>العدد 5137</b> بتاريخ <bdi>17 صفر 1448هـ</bdi>.</div>
+      </div>
+      <div class="banner">
+        <svg class="icon-sm"><use href="#i-task-square"/></svg>
+        <div>يُقارَن كل تشريع بالمكتبة قبل الإنشاء، فلا يتكرر ملف موجود.</div>
+      </div>
+      <div class="banner">
+        <svg class="icon-sm"><use href="#i-verify"/></svg>
+        <div>الملفات المنشأة تذهب إلى <b>المراجعة القانونية</b> ولا تُنشر قبل اعتمادها.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <svg class="icon"><use href="#i-newspaper"/></svg>
+        <div>
+          <div class="card-title">بيانات العدد</div>
+          <div class="card-sub">حدّد تاريخ العدد الهجري، ويُستنتج رقمه تلقائيًا</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="fields">
+          <div class="field">
+            <label>تاريخ العدد (هجري) <span class="req">*</span></label>
+            <div class="hijri-group">
+              <input class="control mono" type="text" value="17" aria-label="اليوم">
+              <select class="control" aria-label="الشهر">
+                <option>محرم</option><option selected>صفر</option><option>ربيع الأول</option>
+                <option>ربيع الآخر</option><option>جمادى الأولى</option><option>جمادى الآخرة</option>
+                <option>رجب</option><option>شعبان</option><option>رمضان</option>
+                <option>شوال</option><option>ذو القعدة</option><option>ذو الحجة</option>
+              </select>
+              <input class="control mono" type="text" value="1448" aria-label="السنة">
+            </div>
+            <div class="field-hint">يوافق <b><bdi>2026-07-31</bdi></b>، وهو يوم جمعة</div>
+          </div>
+          <div class="field">
+            <label>رقم العدد</label>
+            <input class="control mono" type="text" value="5137" readonly>
+            <div class="field-hint">مستنتج من أرشيف الجريدة</div>
+          </div>
+          <div class="field">
+            <label>مجلد الحفظ</label>
+            <select class="control" style="width:260px">
+              <option>تحديثات أم القرى / العدد 5137</option>
+              <option>المحتوى القانوني / الأنظمة واللوائح</option>
+            </select>
+            <div class="field-hint">يُنشأ المجلد إن لم يكن موجودًا</div>
+          </div>
+          <button class="btn btn-primary" id="btnFetch">
+            <svg class="icon-sm"><use href="#i-document-download"/></svg>
+            جلب التشريعات
+          </button>
+        </div>
+
+        <div class="how">
+          <div class="how-title">
+            <svg class="icon-sm"><use href="#i-info-circle"/></svg>
+            كيف يُجلَب العدد
+          </div>
+          <div class="how-grid">
+            <div class="how-item"><span class="n">1</span><div><b>حصر تشريعات التاريخ</b>تُقرأ قائمة القرارات والأنظمة حتى يُستوفى تاريخ العدد بالكامل.</div></div>
+            <div class="how-item"><span class="n">2</span><div><b>قراءة كل تشريع من صفحته</b>لا من القائمة، لأن الرقم وتاريخ الأداة لا يظهران في القائمة.</div></div>
+            <div class="how-item"><span class="n">3</span><div><b>استخراج الحقول من نص الأداة</b>الرقم والتاريخ والجهة تُقرأ من مطلع النص لا من عنوانه.</div></div>
+            <div class="how-item"><span class="n">4</span><div><b>مطابقة اللوائح بقرارات اعتمادها</b>اللائحة لا تحمل رقمًا، فتأخذ رقم القرار المنشور معها في العدد نفسه.</div></div>
+            <div class="how-item"><span class="n">5</span><div><b>تحديد الموضوع الرئيسي</b>يُقترَح من تصنيفات المكتبة، ويظل قابلًا للتعديل قبل الإنشاء.</div></div>
+            <div class="how-item"><span class="n">6</span><div><b>المقارنة بالمكتبة</b>ما له ملف منشور يُستثنى من الإنشاء ويُشار إليه في الجدول.</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <svg class="icon"><use href="#i-clock"/></svg>
+        <div>
+          <div class="card-title">الأعداد السابقة</div>
+          <div class="card-sub">آخر ما عُمل عليه في هذا القسم</div>
+        </div>
+      </div>
+      <div>
+        <div class="issue-row">
+          <svg class="icon"><use href="#i-newspaper"/></svg>
+          <div class="ir-main">
+            <div class="ir-title">العدد 5136 · <bdi>10 صفر 1448هـ</bdi></div>
+            <div class="ir-meta">عمر بازمول · <bdi>2026-07-26</bdi> · 14 تشريعًا · 14 ملفًا منشورًا</div>
+          </div>
+          <span class="chip chip-pub"><svg class="icon-xs"><use href="#i-tick-circle"/></svg> منشور</span>
+          <button class="btn btn-tertiary btn-sm"><svg class="icon-sm"><use href="#i-eye"/></svg> عرض</button>
+        </div>
+        <div class="issue-row">
+          <svg class="icon"><use href="#i-newspaper"/></svg>
+          <div class="ir-main">
+            <div class="ir-title">العدد 5135 · <bdi>3 صفر 1448هـ</bdi></div>
+            <div class="ir-meta">نورة الشهري · <bdi>2026-07-19</bdi> · 9 تشريعات · ملف واحد يحتاج تعديلًا</div>
+          </div>
+          <span class="chip chip-fix"><svg class="icon-xs"><use href="#i-warning-2"/></svg> بانتظار تعديل</span>
+          <button class="btn btn-tertiary btn-sm"><svg class="icon-sm"><use href="#i-eye"/></svg> عرض</button>
+        </div>
+        <div class="issue-row">
+          <svg class="icon"><use href="#i-newspaper"/></svg>
+          <div class="ir-main">
+            <div class="ir-title">العدد 5134 · <bdi>25 محرم 1448هـ</bdi></div>
+            <div class="ir-meta">عمر بازمول · <bdi>2026-07-12</bdi> · 11 تشريعًا · 11 ملفًا منشورًا</div>
+          </div>
+          <span class="chip chip-pub"><svg class="icon-xs"><use href="#i-tick-circle"/></svg> منشور</span>
+          <button class="btn btn-tertiary btn-sm"><svg class="icon-sm"><use href="#i-eye"/></svg> عرض</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ---------------------- 2. جاري الجلب ---------------------- -->
+  <section id="secFetch" class="hidden">
+    <div class="card">
+      <div class="card-head">
+        <svg class="icon"><use href="#i-document-download"/></svg>
+        <div>
+          <div class="card-title">جلب العدد 5137</div>
+          <div class="card-sub"><bdi>17 صفر 1448هـ</bdi> · <bdi>2026-07-31</bdi></div>
+        </div>
+        <div class="card-head-end">
+          <button class="btn btn-secondary btn-sm" id="btnCancelFetch">
+            <svg class="icon-sm"><use href="#i-close-circle"/></svg> إيقاف
+          </button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="progress-list" id="progressList"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ------------- 3 و 4 و 5: الجدول والمراجعة والنشر ------------- -->
+  <section id="secTable" class="hidden">
+    <div class="banners" id="tableBanners"></div>
+    <div class="summary hidden" id="summary"></div>
+
+    <div class="card">
+      <div class="card-head">
+        <svg class="icon"><use href="#i-newspaper"/></svg>
+        <div>
+          <div class="card-title" id="resultTitle">العدد 5137</div>
+          <div class="card-sub" id="resultSub"></div>
+        </div>
+        <div class="card-head-end" id="resultHeadEnd"></div>
+      </div>
+
+      <div class="table-tools" id="tableTools"></div>
+
+      <div class="table-wrap">
+        <table class="grid">
+          <thead id="gridHead"></thead>
+          <tbody id="gridBody"></tbody>
+        </table>
+      </div>
+
+      <div class="actionbar" id="actionBar"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <svg class="icon"><use href="#i-task-square"/></svg>
+        <div>
+          <div class="card-title">سجل التوثيق</div>
+          <div class="card-sub">كل إجراء على هذا العدد، بمن نفّذه ووقته</div>
+        </div>
+      </div>
+      <div class="audit" id="auditList"></div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+/* ==========================================================================
+   المحاكاة: آلة حالات من خمس خطوات، والجدول عرض لمصفوفة الصفوف.
+   pick .... تحديد العدد
+   fetch ... جلب التشريعات
+   review .. مراجعة الجدول قبل إنشاء الملفات
+   legal ... المراجعة القانونية بعد إنشاء الملفات
+   pub ..... النشر
+   ========================================================================== */
+const $  = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const esc = s => String(s == null ? '' : s)
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+/* العربية تفرّق المفرد والمثنى والجمع, و"1 صف" و"2 صفوف" خطأ نحوي.
+   الأرقام لاتينية كما تنص قواعد الكتابة, لكن 1 و 2 يُنطقان لا يُرقَّمان. */
+function arCount(n, one, two, many, few){
+  if(n === 1) return one;
+  if(n === 2) return two;
+  if(n >= 3 && n <= 10) return `${n} ${many}`;
+  return `${n} ${few || many}`;
+}
+
+const STEPS = [
+  { key:'pick',   label:'تحديد العدد' },
+  { key:'fetch',  label:'جلب التشريعات' },
+  { key:'review', label:'مراجعة الجدول' },
+  { key:'legal',  label:'المراجعة القانونية' },
+  { key:'pub',    label:'النشر' }
+];
+
+const ISSUE = { no:'5137', hijri:'17 صفر 1448هـ', iso:'2026-07-31', folder:'تحديثات أم القرى / العدد 5137' };
+
+/* الحقول الستة المتفق عليها: اسم الملف، نوع الأداة، الرقم، التاريخ،
+   الموضوع الرئيسي، الجهة. inferred يحدد ما استُنبط من النص لا ما نُقل من حقل. */
+const SEED = [
+  { name:'نظام المنافسات والمشتريات الحكومية', type:'نظام', no:'م/128', date:'13/11/1447هـ',
+    topic:'المشتريات الحكومية', auth:'الديوان الملكي', on:true, inferred:['topic'] },
+
+  { name:'اللائحة التنفيذية لنظام المنافسات والمشتريات الحكومية', type:'لائحة تنفيذية', no:'1117',
+    date:'22/12/1447هـ', topic:'المشتريات الحكومية', auth:'وزارة المالية', on:true,
+    inferred:['no','date','auth'],
+    note:{ kind:'warn', text:'الرقم والتاريخ مأخوذان من قرار الاعتماد المنشور في العدد نفسه. يُنصح بالتحقق.' } },
+
+  { name:'الموافقة على تعديل بعض مواد نظام العمل', type:'قرار مجلس الوزراء', no:'133',
+    date:'29/01/1448هـ', topic:'العمل والعمال', auth:'مجلس الوزراء', on:true, inferred:['topic'] },
+
+  { name:'قواعد تنظيم أعمال شركات التمويل', type:'قرار مجالس وهيئات', no:'34/ت/2026',
+    date:'05/02/1448هـ', topic:'التمويل والبنوك', auth:'البنك المركزي السعودي', on:true,
+    inferred:['auth','topic'] },
+
+  { name:'تعميم بشأن آلية احتساب غرامات التأخير في العقود الحكومية', type:'تعميم', no:'1/م/4412',
+    date:'03/02/1448هـ', topic:'المنافسات والعقود', auth:'وزارة المالية', on:true, inferred:['topic'] },
+
+  { name:'الموافقة على اتفاقية النقل الجوي بين حكومة المملكة وحكومة جمهورية سنغافورة',
+    type:'اتفاقية', no:'', date:'28/01/1448هـ', topic:'النقل والطيران', auth:'وزارة الخارجية',
+    on:true, inferred:['topic'],
+    note:{ kind:'info', text:'الاتفاقيات لا تحمل رقم أداة في الجريدة.' } },
+
+  { name:'أمر ملكي بتعيين أعضاء في هيئة كبار العلماء', type:'أمر ملكي', no:'أ/355',
+    date:'24/11/1447هـ', topic:'التنظيم الإداري', auth:'الديوان الملكي', on:true, inferred:['topic'] },
+
+  { name:'لائحة حماية حقوق المؤلف', type:'لائحة', no:'4/1448', date:'08/02/1448هـ',
+    topic:'الملكية الفكرية', auth:'الهيئة السعودية للملكية الفكرية', on:true, inferred:['auth'] },
+
+  { name:'قرار بتحديد اشتراطات تراخيص الأنشطة التجارية', type:'قرار وزاري', no:'8129',
+    date:'01/02/1448هـ', topic:'التراخيص البلدية', auth:'وزارة الشؤون البلدية والقروية والإسكان',
+    on:true, inferred:['auth','topic'] },
+
+  { name:'تعديل الجدول الزمني لتطبيق الفاتورة الإلكترونية', type:'قرار مجالس وهيئات', no:'2-14-1448',
+    date:'06/02/1448هـ', topic:'الضرائب والزكاة', auth:'هيئة الزكاة والضريبة والجمارك',
+    on:true, inferred:['auth'] },
+
+  { name:'الموافقة على تنظيم المركز الوطني لتنمية القطاع غير الربحي', type:'قرار مجلس الوزراء',
+    no:'141', date:'29/01/1448هـ', topic:'القطاع غير الربحي', auth:'مجلس الوزراء',
+    on:true, inferred:['topic'] },
+
+  { name:'قواعد الترخيص لمزاولة مهنة المحاسبة', type:'قرار مجالس وهيئات', no:'9/1448',
+    date:'04/02/1448هـ', topic:'المهن الحرة', auth:'الهيئة السعودية للمراجعين والمحاسبين',
+    on:false, inferred:[],
+    note:{ kind:'dupe', text:'له ملف منشور في المكتبة بتاريخ 2026-06-12. مستثنى من الإنشاء.' } }
+];
+
+const TYPES = ['نظام','لائحة','لائحة تنفيذية','مرسوم ملكي','أمر ملكي','قرار مجلس الوزراء',
+               'قرار وزاري','قرار مجالس وهيئات','تعميم','اتفاقية'];
+
+/* حالات المراجعة القانونية، تُسنَد عند الوصول إلى خطوة legal */
+const LEGAL_PRESET = { 0:'ok', 2:'ok', 6:'ok', 7:'ok', 1:'fix' };
+
+let state = 'pick';
+let editing = false;
+let rows = [];
+let audit = [];
+let createdCount = 0;
+
+function resetData(){
+  rows = SEED.map(r => Object.assign({}, r, { inferred:r.inferred.slice(), review:null }));
+  audit = [];
+  createdCount = 0;
+  clockMin = 9 * 60 + 12;
+}
+
+/* ------------------------------ شريط الخطوات ------------------------------ */
+function stepIndex(){ return STEPS.findIndex(s => s.key === state); }
+function renderStepper(){
+  const cur = stepIndex();
+  $('#stepper').innerHTML = STEPS.map((s,i) => {
+    const cls = i < cur ? 'is-done' : (i === cur ? 'is-current' : '');
+    const inner = i < cur
+      ? '<svg class="icon-sm"><use href="#i-tick-circle"/></svg>'
+      : (i + 1);
+    return `<div class="step ${cls}" data-step="${s.key}">
+      <span class="step-num">${inner}</span>
+      <span class="step-label">${esc(s.label)}</span>
+    </div>`;
+  }).join('');
+}
+
+/* ------------------------------ تقدّم الجلب ------------------------------ */
+const FETCH_STEPS = [
+  { text:'تحديد رقم العدد من أرشيف الجريدة',        out:'العدد 5137' },
+  { text:'حصر تشريعات التاريخ',                     out:'12 تشريعًا' },
+  { text:'قراءة كل تشريع من صفحته',                 out:'12 من 12' },
+  { text:'استخراج الرقم والتاريخ والجهة',           out:'10 صريحة, 2 مستنبطة' },
+  { text:'مطابقة اللوائح بقرارات اعتمادها',         out:'زوج واحد' },
+  { text:'اقتراح الموضوع الرئيسي من تصنيفات المكتبة', out:'12 اقتراحًا' },
+  { text:'المقارنة بالمكتبة لاستثناء المتكرر',       out:'ملف واحد موجود' }
+];
+let fetchAt = 0, fetchTimer = null;
+
+function renderProgress(){
+  $('#progressList').innerHTML = FETCH_STEPS.map((s,i) => {
+    const done = i < fetchAt, run = i === fetchAt;
+    const mark = done ? '<svg class="icon-sm"><use href="#i-tick-circle"/></svg>'
+      : run ? '<svg class="icon-sm spin"><use href="#i-refresh"/></svg>'
+      : '<span class="dotbox"></span>';
+    return `<div class="pstep ${done?'is-done':run?'is-run':''}">
+      ${mark}
+      <span class="pstep-text">${esc(s.text)}</span>
+      ${done ? `<span class="pstep-out"><bdi>${esc(s.out)}</bdi></span>` : ''}
+    </div>`;
+  }).join('');
+}
+function startFetch(){
+  fetchAt = 0;
+  renderProgress();
+  clearInterval(fetchTimer);
+  fetchTimer = setInterval(() => {
+    fetchAt++;
+    if(fetchAt > FETCH_STEPS.length){
+      clearInterval(fetchTimer);
+      addAudit(tick(0),'عمر بازمول',
+        `جلب <b>العدد ${esc(ISSUE.no)}</b>. ${rows.length} تشريعًا, `
+        + `منها ${esc(arCount(warnRows(),'واحد يحتاج تحققًا','اثنان يحتاجان تحققًا','تحتاج تحققًا'))} `
+        + `و ${esc(arCount(dupeRows(),'واحد موجود في المكتبة','اثنان موجودان في المكتبة','موجودة في المكتبة'))}.`,'');
+      go('review');
+      return;
+    }
+    renderProgress();
+  }, 620);
+}
+
+/* -------------------------------- الجدول -------------------------------- */
+const COLS = [
+  { key:'name',  label:'اسم الملف',        cls:'c-name'  },
+  { key:'type',  label:'نوع الأداة',       cls:'c-type'  },
+  { key:'no',    label:'الرقم',            cls:'c-no'    },
+  { key:'date',  label:'التاريخ',          cls:'c-date'  },
+  { key:'topic', label:'الموضوع الرئيسي',  cls:'c-topic' },
+  { key:'auth',  label:'الجهة',            cls:'c-auth'  }
+];
+const NOTE_ICON = { warn:'#i-warning-2', info:'#i-info-circle', dupe:'#i-task-square' };
+const REVIEW_CHIP = {
+  null:  ['chip-wait','#i-clock','بانتظار المراجعة'],
+  ok:    ['chip-ok','#i-tick-circle','معتمد'],
+  fix:   ['chip-fix','#i-warning-2','يحتاج تعديلًا'],
+  pub:   ['chip-pub','#i-tick-circle','منشور'],
+  /* لم يُنشأ له ملف, ويبقى في الجدول لأن سبب استثنائه جزء من التوثيق */
+  skip:  ['chip-wait','#i-close-circle','مستثنى']
+};
+const inLegal = () => state === 'legal' || state === 'pub';
+
+function renderHead(){
+  const cells = [];
+  if(!inLegal()) cells.push(`<th class="c-check"><input type="checkbox" id="chkAll" aria-label="تحديد الكل"></th>`);
+  cells.push('<th class="c-idx">#</th>');
+  COLS.forEach(c => cells.push(`<th class="${c.cls}">${esc(c.label)}</th>`));
+  if(inLegal()) cells.push('<th class="c-status">حالة الملف</th>');
+  cells.push('<th class="c-act"></th>');
+  $('#gridHead').innerHTML = `<tr>${cells.join('')}</tr>`;
+}
+
+function cellHtml(col, row, i){
+  const v = row[col.key];
+  if(editing && !inLegal()){
+    if(col.key === 'type'){
+      return `<select class="cell-in" data-i="${i}" data-k="type">${
+        TYPES.map(t => `<option${t===v?' selected':''}>${esc(t)}</option>`).join('')}</select>`;
+    }
+    return `<input class="cell-in" data-i="${i}" data-k="${col.key}" value="${esc(v)}">`;
+  }
+  if(!v) return '<span class="none">لا يوجد</span>';
+  const inf = row.inferred.includes(col.key);
+  const num = col.key === 'no' || col.key === 'date';
+  let body = num ? `<bdi class="mono">${esc(v)}</bdi>` : esc(v);
+  if(col.key === 'type') body = `<span class="type-chip">${esc(v)}</span>`;
+  if(inf) body = `<span class="inferred" title="قيمة مستنبطة من نص التشريع. راجعها قبل الاعتماد.">${body}</span>`;
+  if(col.key === 'name'){
+    const note = row.note
+      ? `<div class="row-note n-${row.note.kind}">
+           <svg class="icon-xs"><use href="${NOTE_ICON[row.note.kind]}"/></svg>
+           <span>${esc(row.note.text)}</span>
+         </div>` : '';
+    return `<div class="name-main">${esc(v)}</div>${note}`;
+  }
+  return body;
+}
+
+function renderBody(){
+  $('#gridBody').innerHTML = rows.map((row,i) => {
+    const off = !row.on;
+    const cells = [];
+    if(!inLegal()){
+      cells.push(`<td class="c-check"><input type="checkbox" data-pick="${i}"${row.on?' checked':''} aria-label="تحديد الصف ${i+1}"></td>`);
+    }
+    cells.push(`<td class="c-idx mono">${i+1}</td>`);
+    COLS.forEach(c => cells.push(`<td class="${c.cls}">${cellHtml(c,row,i)}</td>`));
+    if(inLegal()){
+      const [cls,ic,txt] = REVIEW_CHIP[row.review];
+      cells.push(`<td class="c-status"><span class="chip ${cls}">
+        <svg class="icon-xs"><use href="${ic}"/></svg> ${esc(txt)}</span></td>`);
+    }
+    cells.push(`<td class="c-act"><div class="row-acts">${
+      inLegal()
+        ? `<button class="icon-act" title="فتح الملف"><svg class="icon-sm"><use href="#i-eye"/></svg></button>
+           <button class="icon-act" title="رابط المصدر"><svg class="icon-sm"><use href="#i-link"/></svg></button>`
+        : `<button class="icon-act" title="رابط المصدر"><svg class="icon-sm"><use href="#i-link"/></svg></button>
+           <button class="icon-act danger" data-del="${i}" title="حذف الصف"><svg class="icon-sm"><use href="#i-trash"/></svg></button>`
+    }</div></td>`);
+    return `<tr${off?' class="is-off"':''}>${cells.join('')}</tr>`;
+  }).join('');
+  const all = $('#chkAll');
+  if(all) all.checked = rows.length > 0 && rows.every(r => r.on);
+}
+
+/* ------------------------- ما حول الجدول ------------------------- */
+const picked   = () => rows.filter(r => r.on).length;
+const warnRows = () => rows.filter(r => r.note && r.note.kind === 'warn').length;
+const dupeRows = () => rows.filter(r => r.note && r.note.kind === 'dupe').length;
+const inferredCells = () => rows.reduce((n,r) => n + r.inferred.length, 0);
+const counts = () => ({
+  ok:   rows.filter(r => r.review === 'ok').length,
+  fix:  rows.filter(r => r.review === 'fix').length,
+  wait: rows.filter(r => r.review === null && r.on).length,
+  pub:  rows.filter(r => r.review === 'pub').length,
+  skip: rows.filter(r => r.review === 'skip').length
+});
+
+function renderSub(){
+  $('#resultSub').innerHTML = `<bdi>${ISSUE.hijri}</bdi> · <bdi>${ISSUE.iso}</bdi> · ${rows.length} تشريعًا`
+    + (inLegal() ? ` · المجلد: ${esc(ISSUE.folder)}` : '');
+}
+
+function renderTools(){
+  const t = $('#tableTools');
+  if(inLegal()){
+    t.innerHTML = `
+      <svg class="icon-sm" style="color:var(--color-gray-400)"><use href="#i-verify"/></svg>
+      <span>الملفات أُنشئت وأُرسلت إلى المراجعة القانونية. المراجع وحده يعتمد أو يطلب تعديلًا.</span>
+      <span class="spacer"></span>
+      <button class="btn btn-tertiary btn-sm"><svg class="icon-sm"><use href="#i-export"/></svg> تصدير الجدول</button>`;
+    return;
+  }
+  t.innerHTML = `
+    <span class="sel-count"><bdi>${picked()}</bdi> من <bdi>${rows.length}</bdi> محدد للإنشاء</span>
+    <span class="spacer"></span>
+    <button class="btn ${editing?'btn-primary':'btn-secondary'} btn-sm" id="btnEdit">
+      <svg class="icon-sm"><use href="#i-edit-2"/></svg> ${editing?'إنهاء التعديل':'تعديل الجدول'}
+    </button>
+    <button class="btn btn-secondary btn-sm" id="btnAddRow">
+      <svg class="icon-sm"><use href="#i-add"/></svg> إضافة صف
+    </button>
+    <button class="btn btn-tertiary btn-sm"><svg class="icon-sm"><use href="#i-export"/></svg> تصدير</button>`;
+}
+
+function renderBar(){
+  const bar = $('#actionBar');
+  if(state === 'review'){
+    const w = warnRows();
+    bar.innerHTML = `
+      <span class="ab-note">${w ? esc(arCount(w,'صف واحد يحتاج تحققًا','صفان يحتاجان تحققًا','صفوف تحتاج تحققًا')) + ' قبل الإنشاء. ' : ''}لم يُنشأ أي ملف بعد.</span>
+      <span class="spacer"></span>
+      <button class="btn btn-secondary" id="btnDraft">حفظ كمسودة</button>
+      <button class="btn btn-primary" id="btnCreate">
+        <svg class="icon-sm"><use href="#i-folder-add"/></svg>
+        إنشاء ملفات (<bdi>${picked()}</bdi>)
+      </button>`;
+    return;
+  }
+  if(state === 'legal'){
+    const c = counts();
+    bar.innerHTML = `
+      <span class="ab-note">النشر متاح للملفات المعتمدة فقط.</span>
+      <span class="spacer"></span>
+      <button class="btn btn-secondary" id="btnRemind">
+        <svg class="icon-sm"><use href="#i-send"/></svg> تذكير المراجعين (<bdi>${c.wait}</bdi>)
+      </button>
+      <button class="btn btn-primary" id="btnPublish"${c.ok?'':' disabled'}>
+        <svg class="icon-sm"><use href="#i-verify"/></svg>
+        نشر المعتمدة (<bdi>${c.ok}</bdi>)
+      </button>`;
+    return;
+  }
+  const c = counts();
+  bar.innerHTML = `
+    <span class="ab-note">اكتمل العدد. ${c.fix
+      ? esc(arCount(c.fix,'ملف واحد باقٍ','ملفان باقيان','ملفات باقية')) + ' عند المراجع.' : ''}</span>
+    <span class="spacer"></span>
+    <button class="btn btn-secondary"><svg class="icon-sm"><use href="#i-eye"/></svg> فتح المجلد</button>
+    <button class="btn btn-secondary" id="btnReset2"><svg class="icon-sm"><use href="#i-refresh"/></svg> عدد جديد</button>`;
+}
+
+function renderBanners(){
+  const b = $('#tableBanners');
+  if(state === 'review'){
+    const w = warnRows(), d = dupeRows();
+    b.innerHTML = `
+      <div class="banner banner-warn">
+        <svg class="icon-sm"><use href="#i-warning-2"/></svg>
+        <div><b>${esc(arCount(w,'صف واحد يحتاج تحققًا','صفان يحتاجان تحققًا','صفوف تحتاج تحققًا'))}.</b>
+        وفي الجدول ${esc(arCount(inferredCells(),'قيمة واحدة','قيمتان','قيم','قيمة'))} محددة بخط منقط,
+        مستنبطة من نص التشريع لا منقولة من حقل صريح.</div>
+      </div>
+      <div class="banner banner-info">
+        <svg class="icon-sm"><use href="#i-task-square"/></svg>
+        <div><b>${esc(arCount(d,'تشريع واحد مستثنى','تشريعان مستثنيان','تشريعات مستثناة'))}.</b>
+        له ملف منشور في المكتبة, ولن يُنشأ له ملف ثانٍ.</div>
+      </div>
+      <div class="banner">
+        <svg class="icon-sm"><use href="#i-info-circle"/></svg>
+        <div>لا شيء يُحفظ قبل الضغط على <b>إنشاء ملفات</b>. الجدول حتى الآن مسودة.</div>
+      </div>`;
+    return;
+  }
+  if(state === 'legal'){
+    b.innerHTML = `
+      <div class="banner banner-ok">
+        <svg class="icon-sm"><use href="#i-tick-circle"/></svg>
+        <div><b>أُنشئ ${esc(arCount(createdCount,'ملف واحد','ملفان','ملفات','ملفًا'))}</b>
+        في مجلد <b>${esc(ISSUE.folder)}</b> وأُرسلت إلى المراجعة القانونية.</div>
+      </div>
+      <div class="banner banner-info">
+        <svg class="icon-sm"><use href="#i-verify"/></svg>
+        <div>المراجعون: <b>نورة الشهري</b> و <b>سارة القحطاني</b>. لكل ملف مراجع واحد على الأقل.</div>
+      </div>
+      <div class="banner">
+        <svg class="icon-sm"><use href="#i-info-circle"/></svg>
+        <div>الملف الذي يحتاج تعديلًا يعود إلى الموظف مع سبب الرد, ولا يُنشر قبل اعتماده.</div>
+      </div>`;
+    return;
+  }
+  const c = counts();
+  b.innerHTML = `
+    <div class="banner banner-ok">
+      <svg class="icon-sm"><use href="#i-tick-circle"/></svg>
+      <div><b>نُشر ${esc(arCount(c.pub,'ملف واحد','ملفان','ملفات','ملفًا'))}</b>
+      من العدد ${esc(ISSUE.no)}. صارت ظاهرة في المكتبة للمستخدمين.</div>
+    </div>
+    <div class="banner banner-warn">
+      <svg class="icon-sm"><use href="#i-warning-2"/></svg>
+      <div><b>${esc(arCount(c.fix,'ملف واحد يحتاج تعديلًا','ملفان يحتاجان تعديلًا','ملفات تحتاج تعديلًا'))}</b>
+      ولم يُنشر. عاد إلى الموظف مع ملاحظة المراجع.</div>
+    </div>
+    <div class="banner">
+      <svg class="icon-sm"><use href="#i-task-square"/></svg>
+      <div>دورة العدد كاملة موثّقة أدناه, من الجلب إلى النشر.</div>
+    </div>`;
+}
+
+function renderSummary(){
+  const box = $('#summary');
+  if(!inLegal()){ box.classList.add('hidden'); return; }
+  box.classList.remove('hidden');
+  const c = counts();
+  const cells = [
+    ['ملفات منشأة', createdCount, ''],
+    ['معتمد', c.ok, 't-ok'],
+    ['يحتاج تعديلًا', c.fix, 't-fix'],
+    ['بانتظار المراجعة', c.wait, 't-wait'],
+    ['منشور', c.pub, 't-pub'],
+    ['مستثنى', c.skip, 't-wait']
+  ];
+  box.innerHTML = cells.map(([k,v,t]) =>
+    `<div class="stat ${t}"><div class="stat-k">${esc(k)}</div><div class="stat-v"><bdi>${v}</bdi></div></div>`).join('');
+}
+
+/* ----------------------------- سجل التوثيق -----------------------------
+   ساعة المحاكاة تتقدّم مع الأحداث, فيبقى السجل مرتبًا زمنيًا كم عدّل المستخدم. */
+let clockMin = 9 * 60 + 12;
+function tick(add){
+  clockMin += (add || 0);
+  const h = Math.floor(clockMin / 60), m = clockMin % 60;
+  return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
+}
+function addAudit(time, who, what, mark){
+  audit.push({ time, who, what, mark:mark||'' });
+}
+function renderAudit(){
+  $('#auditList').innerHTML = audit.length
+    ? audit.map(a => `<div class="audit-row">
+        <span class="audit-mark ${a.mark}"><svg class="icon-xs"><use href="${
+          a.mark === 'm-ok' ? '#i-tick-circle' : a.mark === 'm-pub' ? '#i-verify' : '#i-clock'}"/></svg></span>
+        <span class="audit-when"><bdi>2026-08-06 ${esc(a.time)}</bdi></span>
+        <span class="audit-who">${esc(a.who)}</span>
+        <span class="audit-what">${a.what}</span>
+      </div>`).join('')
+    : '<div class="empty">لا يوجد إجراء بعد</div>';
+}
+
+/* ------------------------------ آلة الحالات ------------------------------ */
+function go(next){
+  state = next;
+  if(state === 'legal'){
+    createdCount = picked();
+    rows.forEach((r,i) => { r.review = r.on ? (LEGAL_PRESET[i] || null) : 'skip'; });
+    /* ما يفعله المراجعون يُقيَّد باسمهم, مشتقًا من حالة الصفوف لا مكتوبًا بالتخمين */
+    const ok = counts().ok;
+    if(ok) addAudit(tick(38),'نورة الشهري',
+      `اعتماد <b>${esc(arCount(ok,'ملف واحد','ملفين','ملفات','ملفًا'))}</b> بعد مطابقتها بنص العدد.`,'m-ok');
+    rows.filter(r => r.review === 'fix').forEach(r => {
+      addAudit(tick(11),'سارة القحطاني',
+        `رد ملف <b>${esc(r.name)}</b> بطلب تعديل: رقم الأداة يحتاج تثبيتًا من نص العدد.`,'');
+    });
+  }
+  if(state === 'pub'){
+    /* المراجعون أنهوا ما بقي, فما لم يُطلب تعديله صار معتمدًا ثم منشورًا */
+    rows.forEach(r => { if(r.on && r.review === null) r.review = 'ok'; });
+    rows.forEach(r => { if(r.review === 'ok') r.review = 'pub'; });
+  }
+  render();
+  window.scrollTo({ top:0, behavior:'smooth' });
+}
+
+function render(){
+  renderStepper();
+  $('#secPick').classList.toggle('hidden', state !== 'pick');
+  $('#secFetch').classList.toggle('hidden', state !== 'fetch');
+  $('#secTable').classList.toggle('hidden', state === 'pick' || state === 'fetch');
+  if(state === 'pick' || state === 'fetch'){ renderAudit(); return; }
+  renderBanners();
+  renderSummary();
+  renderSub();
+  renderTools();
+  renderHead();
+  renderBody();
+  renderBar();
+  renderAudit();
+  $('#resultHeadEnd').innerHTML = inLegal()
+    ? `<button class="btn btn-secondary btn-sm"><svg class="icon-sm"><use href="#i-eye"/></svg> فتح المجلد</button>`
+    : `<button class="btn btn-tertiary btn-sm" id="btnBackPick"><svg class="icon-sm mirror"><use href="#i-arrow-left"/></svg> عدد آخر</button>`;
+}
+
+function restart(){
+  clearInterval(fetchTimer);
+  editing = false;
+  resetData();
+  state = 'pick';
+  render();
+}
+
+/* -------------------------------- الأحداث -------------------------------- */
+document.addEventListener('click', e => {
+  const t = e.target;
+
+  const groupBtn = t.closest('[data-group-toggle]');
+  if(groupBtn){ groupBtn.closest('[data-group]').classList.toggle('is-open'); return; }
+
+  if(t.closest('#btnFetch')){ go('fetch'); startFetch(); return; }
+  if(t.closest('#btnCancelFetch')){ clearInterval(fetchTimer); go('pick'); return; }
+  if(t.closest('#btnReset') || t.closest('#btnReset2')){ restart(); return; }
+  if(t.closest('#btnBackPick')){ go('pick'); return; }
+
+  if(t.closest('#btnEdit')){ editing = !editing; render(); return; }
+  if(t.closest('#btnAddRow')){
+    editing = true;
+    rows.push({ name:'', type:'نظام', no:'', date:'', topic:'', auth:'',
+                on:true, inferred:[], review:null, manual:true });
+    render();
+    const last = $$('#gridBody tr').pop();
+    if(last) last.querySelector('.cell-in').focus();
+    return;
+  }
+  const del = t.closest('[data-del]');
+  if(del){
+    const gone = rows.splice(+del.dataset.del, 1)[0];
+    addAudit(tick(1),'عمر بازمول',`حذف صف <b>${esc(gone.name || 'بلا اسم')}</b> من الجدول.`,'');
+    render();
+    return;
+  }
+
+  if(t.closest('#btnDraft')){
+    addAudit(tick(1),'عمر بازمول','حفظ الجدول <b>كمسودة</b> دون إنشاء ملفات.','');
+    renderAudit();
+    return;
+  }
+
+  if(t.closest('#btnCreate')){
+    const n = picked();
+    addAudit(tick(3),'عمر بازمول',
+      `إنشاء <b>${esc(arCount(n,'ملف واحد','ملفين','ملفات','ملفًا'))}</b> في مجلد `
+      + `<b>${esc(ISSUE.folder)}</b> وإرسالها إلى المراجعة القانونية.`,'m-ok');
+    go('legal');
+    return;
+  }
+
+  if(t.closest('#btnRemind')){
+    const w = counts().wait;
+    addAudit('11:05','عمر بازمول',
+      `تذكير المراجعين بـ <b>${esc(arCount(w,'ملف واحد','ملفين','ملفات','ملفًا'))}</b> بانتظار المراجعة.`,'');
+    renderAudit();
+    return;
+  }
+
+  if(t.closest('#btnPublish')){
+    const c = counts();
+    const willPublish = c.ok + c.wait;   // المعتمد الآن, وما سيعتمده المراجع قبل النشر
+    if(c.wait) addAudit('11:40','نورة الشهري',
+      `اعتماد <b>${esc(arCount(c.wait,'ملف واحد','ملفين','ملفات','ملفًا'))}</b> بعد مطابقتها بنص العدد.`,'m-ok');
+    addAudit('11:52','عمر بازمول',
+      `نشر <b>${esc(arCount(willPublish,'ملف واحد','ملفين','ملفات','ملفًا'))}</b> من العدد ${esc(ISSUE.no)} في المكتبة.`,'m-pub');
+    go('pub');
+    return;
+  }
+
+  const step = t.closest('.step');
+  if(step && (step.classList.contains('is-done') || step.classList.contains('is-current'))){
+    const key = step.dataset.step;
+    if(key === 'fetch') return;
+    if(key === 'pick'){ go('pick'); return; }
+    go(key);
+    return;
+  }
+});
+
+const COL_LABEL = COLS.reduce((m,c) => (m[c.key] = c.label, m), {});
+
+/* الكتابة تصل النموذج مع كل حرف, فإضافة صف أو حذفه (وكلاهما يعيد الرسم)
+   لا يفقد ما كُتب. أما السجل فيُقيَّد مرة واحدة عند مغادرة الخانة.
+   ولأن الكتابة سبقت المغادرة, لا تصلح القيمة القديمة من النموذج أساسًا
+   للمقارنة: هي نفسها الجديدة. فتُلتقط القيمة عند دخول الخانة. */
+let editBaseline = null;
+
+function writeCell(cell){
+  const row = rows[+cell.dataset.i];
+  if(!row) return null;
+  const key = cell.dataset.k;
+  row[key] = cell.value;
+  /* قيمة صحّحها إنسان لم تبقَ مستنبطة */
+  row.inferred = row.inferred.filter(k => k !== key);
+  return { row, key };
+}
+
+document.addEventListener('focusin', e => {
+  const cell = e.target.closest('.cell-in');
+  if(cell) editBaseline = { i:cell.dataset.i, k:cell.dataset.k, value:cell.value };
+});
+
+document.addEventListener('input', e => {
+  const cell = e.target.closest('.cell-in');
+  if(cell) writeCell(cell);
+});
+
+document.addEventListener('change', e => {
+  const all = e.target.closest('#chkAll');
+  if(all){
+    rows.forEach(r => { r.on = all.checked; });
+    render();
+    return;
+  }
+  const pick = e.target.closest('[data-pick]');
+  if(pick){
+    const row = rows[+pick.dataset.pick];
+    row.on = pick.checked;
+    addAudit(tick(1),'عمر بازمول',
+      `${pick.checked ? 'إعادة' : 'استثناء'} <b>${esc(row.name || 'صف بلا اسم')}</b> ${pick.checked ? 'إلى' : 'من'} قائمة الإنشاء.`,'');
+    renderTools(); renderBar(); renderBody(); renderAudit();
+    return;
+  }
+  const cell = e.target.closest('.cell-in');
+  if(cell){
+    const w = writeCell(cell);
+    if(!w) return;
+    const base = (editBaseline && editBaseline.i === cell.dataset.i
+      && editBaseline.k === cell.dataset.k) ? editBaseline.value : '';
+    editBaseline = null;
+    if(String(base) === String(cell.value)) return;   // مغادرة بلا تغيير
+    addAudit(tick(2),'عمر بازمول',
+      `تعديل <b>${esc(COL_LABEL[w.key] || w.key)}</b> في <b>${esc(w.row.name || 'صف بلا اسم')}</b>: `
+      + `من "${esc(base || 'فارغ')}" إلى "${esc(cell.value || 'فارغ')}".`,'');
+    renderAudit();
+  }
+});
+
+restart();
+</script>
+</body>
+</html>
