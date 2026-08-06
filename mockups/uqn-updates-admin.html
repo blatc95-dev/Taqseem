@@ -157,7 +157,10 @@ a{color:inherit;text-decoration:none;}
   padding-inline:var(--space-xl);z-index:40;
 }
 .tb-brand{display:flex;align-items:center;gap:var(--space-lg);order:-1;}
-.tb-logo{height:26px;display:block;}
+/* شعار الكيت مصدَّر من Figma بـ preserveAspectRatio="none" و width/height = 100%,
+   فلا مقاس ذاتي له: المتصفح يفترض 300x150 (نسبة 2:1) ويمدّ الشعار إليها, وهو
+   تمديد يمنعه الكيت صراحة. النسبة تُثبَّت هنا من viewBox الحقيقي 95.9184x36.348. */
+.tb-logo{height:26px;width:auto;aspect-ratio:95.9184 / 36.348;display:block;}
 .tb-collapse{
   width:28px;height:28px;border-radius:var(--local-radius-sm);
   display:grid;place-items:center;color:var(--color-gray-500);
@@ -190,10 +193,12 @@ a{color:inherit;text-decoration:none;}
 .tb-lang:hover{background:var(--color-gray-100);}
 
 /* ========================== القائمة الجانبية ========================== */
+/* القائمة على اليمين, وهي جهة البداية في العربية: inline-start لا inline-end.
+   وفاصلها على حدها الأيسر, أي inline-end. */
 .sidenav{
-  position:fixed;inset-block:var(--local-topbar-h) 0;inset-inline-end:0;
+  position:fixed;inset-block:var(--local-topbar-h) 0;inset-inline-start:0;
   width:var(--local-nav-w);background:var(--color-bg-primary);
-  border-inline-start:1px solid var(--color-border-secondary);
+  border-inline-end:1px solid var(--color-border-secondary);
   overflow-y:auto;padding:var(--space-lg) var(--space-lg) var(--space-6xl);
   z-index:30;
 }
@@ -237,7 +242,7 @@ a{color:inherit;text-decoration:none;}
 
 /* ============================== المحتوى ============================== */
 .main{
-  margin-inline-end:var(--local-nav-w);
+  margin-inline-start:var(--local-nav-w);
   padding:var(--local-space-xxl) var(--local-space-xxl) 120px;
   padding-block-start:calc(var(--local-topbar-h) + var(--local-space-xxl));
   max-width:1320px;
@@ -328,7 +333,7 @@ a{color:inherit;text-decoration:none;}
    border-inline-start على الحد الأيمن, فمنصّف الزاوية يتجه إلى أعلى اليمين,
    ويحتاج -135deg ليستقر مشيرًا إلى اليسار. */
 .step+.step::before{
-  content:"";position:absolute;inset-inline-end:-15px;inset-block-start:50%;
+  content:"";position:absolute;inset-inline-start:-15px;inset-block-start:50%;
   width:30px;height:30px;margin-block-start:-15px;
   border-block-start:1px solid var(--color-border-secondary);
   border-inline-start:1px solid var(--color-border-secondary);
@@ -577,7 +582,11 @@ input[type="checkbox"]{width:16px;height:16px;accent-color:var(--color-brand-500
 
 @media (max-width:1100px){
   .sidenav{display:none;}
-  .main{margin-inline-end:0;}
+  .main{margin-inline-start:0;}
+  /* الخطوات الخمس لا تتسع في عرض ضيق, فتُمرَّر أفقيًا. قصّ التسمية إلى حرف
+     واحد يجعل الشريط عديم الفائدة, والتمرير يبقيها مقروءة. */
+  .stepper{overflow-x:auto;}
+  .step{flex:0 0 auto;min-width:186px;}
 }
 </style>
 </head>
