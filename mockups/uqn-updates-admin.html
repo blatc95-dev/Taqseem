@@ -58,7 +58,9 @@
 
   --color-logo-blue-25:#f5f8fd;
   --color-logo-blue-50:#e0e7f5;
+  --color-logo-blue-100:#cad6ed;
   --color-logo-blue-500:#1f50ab;
+  --color-logo-blue-700:#133067;
 
   --color-tag-laws-regulations:#14a950;
   --color-tag-judicial-precedents:#f97315;
@@ -486,7 +488,11 @@ a{color:inherit;text-decoration:none;}
 .table-tools .sel-count{font-weight:var(--font-weight-medium);color:var(--color-text-primary);}
 .table-tools .spacer{flex:1;}
 .table-wrap{overflow-x:auto;}
-table.grid{width:100%;border-collapse:collapse;font-size:var(--local-size-sm);}
+/* تسعة أعمدة بيانات لا تدخل في عرض شاشة, والحدّ الأدنى هو مجموع الأعمدة
+   الحقيقي: أقل منه تنضغط الأعمدة فتنكسر "وزارة الشؤون البلدية والقروية
+   والإسكان" على خمسة أسطر ويصير الصف بارتفاع بطاقة. التمرير الأفقي أصدق
+   من عصر الأعمدة. */
+table.grid{width:100%;min-width:1540px;border-collapse:collapse;font-size:var(--local-size-sm);}
 table.grid th{
   background:var(--color-gray-50);text-align:start;font-weight:var(--font-weight-medium);
   font-size:var(--local-size-xs);color:var(--color-gray-600);
@@ -502,14 +508,18 @@ table.grid tbody tr.is-off{background:var(--color-gray-50);color:var(--color-gra
 table.grid tbody tr.is-off:hover{background:var(--color-gray-100);}
 .c-check{width:44px;}
 .c-idx{width:38px;color:var(--color-gray-400);font-size:var(--local-size-xs);}
-.c-name{min-width:280px;}
-.c-type{width:150px;}
-.c-no{width:112px;}
-.c-date{width:126px;}
-.c-topic{width:158px;}
-.c-auth{width:200px;}
-.c-status{width:158px;}
-.c-act{width:88px;}
+.c-name{min-width:250px;}
+.c-type{width:134px;}
+/* الرقم والتاريخ لا يُكسران: "34/ت/2026" على سطرين يُقرأ كقيمتين لا كواحدة */
+.c-no{width:112px;white-space:nowrap;}
+.c-date{width:126px;white-space:nowrap;}
+.c-topic{width:146px;}
+.c-auth{width:205px;}
+.c-event{width:100px;}
+.c-slot{width:72px;}
+.c-status{width:142px;}
+/* يتسع لأزرار المراجع الثلاثة في سطر واحد: اعتماد, تعديل, وفتح */
+.c-act{width:164px;}
 .name-main{font-weight:var(--font-weight-medium);color:var(--color-text-primary);}
 tr.is-off .name-main{font-weight:var(--font-weight-regular);color:var(--color-gray-500);}
 .row-note{
@@ -558,6 +568,60 @@ input[type="checkbox"]{width:16px;height:16px;accent-color:var(--color-brand-500
   padding:2px var(--space-md);border-radius:var(--local-radius-sm);
   background:var(--color-gray-100);color:var(--color-gray-700);white-space:nowrap;
 }
+.chip-ready{background:var(--color-logo-blue-50);color:var(--color-logo-blue-700);border-color:var(--color-logo-blue-100);}
+.stat.t-ready .stat-v{color:var(--color-logo-blue-500);}
+
+/* نوع الحدث: جديد أو تعديل. اللون يفرّق بينهما في مسح واحد للعمود. */
+.ev-chip{
+  display:inline-block;font-size:var(--local-size-2xs);font-weight:var(--font-weight-medium);
+  padding:2px var(--space-md);border-radius:999px;white-space:nowrap;border:1px solid transparent;
+}
+.ev-new{background:var(--color-success-50);color:var(--color-success-700);border-color:var(--color-success-100);}
+.ev-edit{background:var(--color-amber-50);color:var(--color-amber-800);border-color:var(--color-amber-200);}
+
+/* ------------------------- خانتا الربط في الجدول -------------------------
+   لا تحملان قيمة تُقرأ بل حالة تُرى: رمادي وهي فارغة, أخضر أول ما يُربط بها
+   شيء. فيُجاب "أي الملفات رُبطت" بمسح العمود لا بقراءة كل صف. */
+.slot{
+  position:relative;width:34px;height:30px;border-radius:var(--local-radius-md);
+  display:grid;place-items:center;
+  border:1px solid var(--color-gray-200);background:var(--color-bg-primary);
+  color:var(--color-gray-400);
+  transition:color .2s ease, background .2s ease, border-color .2s ease;
+}
+.slot:hover{border-color:var(--color-gray-300);background:var(--color-gray-50);color:var(--color-gray-600);}
+.slot.is-on{
+  border-color:var(--color-success-100);background:var(--color-success-50);
+  color:var(--color-success-600);
+}
+.slot.is-on:hover{background:var(--color-success-100);}
+.slot-n{
+  position:absolute;inset-block-start:-5px;inset-inline-end:-5px;
+  min-width:16px;height:16px;padding-inline:3px;border-radius:999px;
+  display:grid;place-items:center;
+  background:var(--color-success-600);color:var(--color-base-white);
+  font-size:9.5px;font-weight:var(--font-weight-medium);
+  border:1.5px solid var(--color-bg-primary);
+}
+
+/* قائمة المرتبط به, في النافذة وفي اللوحة */
+.link-list{display:flex;flex-direction:column;gap:var(--space-md);}
+.link-item{
+  display:flex;align-items:center;gap:var(--space-lg);
+  padding:var(--local-space-sm) var(--space-lg);
+  background:var(--color-gray-50);border:1px solid var(--color-border-secondary);
+  border-radius:var(--local-radius-md);font-size:var(--local-size-xs);
+}
+.link-item span{flex:1;min-width:0;}
+.link-item .icon-sm{color:var(--color-success-600);flex:none;}
+.link-empty{font-size:var(--local-size-xs);color:var(--color-gray-500);}
+.link-add{margin-block-start:var(--space-2xl);}
+.link-add label{
+  display:block;font-size:var(--local-size-xs);font-weight:var(--font-weight-medium);
+  color:var(--color-text-secondary);margin-block-end:var(--local-space-sm);
+}
+.link-add-row{display:flex;gap:var(--space-md);}
+.link-add-row .control{flex:1;min-width:0;}
 
 /* ---------------------------- شريط الإجراءات ---------------------------- */
 .actionbar{
@@ -961,6 +1025,15 @@ table.grid tbody tr.rowin{animation:rowIn .26s ease both;}
 <path d="M5.5 14.5H14.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
 <path d="M5.5 18H11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
 </symbol>
+<symbol id="i-paperclip" viewBox="0 0 24 24" fill="none">
+<path d="M11.97 12V15.5C11.97 17.43 13.54 19 15.47 19C17.4 19 18.97 17.43 18.97 15.5V10C18.97 6.13 15.84 3 11.97 3C8.09997 3 4.96997 6.13 4.96997 10V16C4.96997 19.31 7.65997 22 10.97 22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</symbol>
+<symbol id="i-document-previous" viewBox="0 0 24 24" fill="none">
+<path d="M13 15H7L9 17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M7 15L9 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M22 10V15C22 20 20 22 15 22H9C4 22 2 20 2 15V9C2 4 4 2 9 2H14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M22 10H18C15 10 14 9 14 6V2L18 6L22 10Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</symbol>
 <symbol id="i-caret" viewBox="0 0 24 24" fill="none">
 <path d="M19.92 8.95001L13.4 15.47C12.63 16.24 11.37 16.24 10.6 15.47L4.08002 8.95001" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
 </symbol>
@@ -1093,14 +1166,6 @@ table.grid tbody tr.rowin{animation:rowIn .26s ease both;}
             <input class="control mono" type="text" value="5137" readonly>
             <div class="field-hint">مستنتج من أرشيف الجريدة</div>
           </div>
-          <div class="field">
-            <label>مجلد الحفظ</label>
-            <select class="control" style="width:260px">
-              <option>تحديثات أم القرى / العدد 5137</option>
-              <option>المحتوى القانوني / الأنظمة واللوائح</option>
-            </select>
-            <div class="field-hint">يُنشأ المجلد إن لم يكن موجودًا</div>
-          </div>
           <button class="btn btn-primary" id="btnFetch">
             <svg class="icon-sm"><use href="#i-document-download"/></svg>
             جلب التشريعات
@@ -1131,9 +1196,9 @@ table.grid tbody tr.rowin{animation:rowIn .26s ease both;}
           <svg class="icon"><use href="#i-newspaper"/></svg>
           <div class="ir-main">
             <div class="ir-title">العدد 5135 · <bdi>3 صفر 1448هـ</bdi></div>
-            <div class="ir-meta">نورة الشهري · <bdi>2026-07-19</bdi> · 9 تشريعات · ملف واحد يحتاج تعديلًا</div>
+            <div class="ir-meta">نورة الشهري · <bdi>2026-07-19</bdi> · 9 تشريعات · 9 ملفات منشورة</div>
           </div>
-          <span class="chip chip-fix"><svg class="icon-xs"><use href="#i-warning-2"/></svg> بانتظار تعديل</span>
+          <span class="chip chip-pub"><svg class="icon-xs"><use href="#i-tick-circle"/></svg> منشور</span>
           <button class="btn btn-tertiary btn-sm"><svg class="icon-sm"><use href="#i-eye"/></svg> عرض</button>
         </div>
         <div class="issue-row">
@@ -1218,12 +1283,16 @@ table.grid tbody tr.rowin{animation:rowIn .26s ease both;}
 
 <script>
 /* ==========================================================================
-   المحاكاة: آلة حالات من خمس خطوات، والجدول عرض لمصفوفة الصفوف.
+   المحاكاة: آلة حالات من ست خطوات، والجدول عرض لمصفوفة الصفوف.
    pick .... تحديد العدد
    fetch ... جلب التشريعات
    review .. مراجعة الجدول قبل إنشاء الملفات
-   legal ... المراجعة القانونية بعد إنشاء الملفات
+   entry ... إعداد البيانات: مدخل البيانات يكمل الحقول ويعلّم كل ملف "جاهز للمراجعة"
+   legal ... المراجعة القانونية: المراجع يعتمد أو يطلب تعديلًا
    pub ..... النشر
+
+   إعداد البيانات والمراجعة القانونية خطوتان لا صفتان في خطوة واحدة: الخطوة
+   هي التي تحدد من يعمل, فلا يحتاج أحد إلى تبديل صفة ليعرف ماذا يفعل.
    ========================================================================== */
 const $  = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
@@ -1240,67 +1309,100 @@ function arCount(n, one, two, many, few){
 }
 
 const STEPS = [
-  { key:'pick',   label:'تحديد العدد' },
-  { key:'fetch',  label:'جلب التشريعات' },
-  { key:'review', label:'مراجعة الجدول' },
-  { key:'legal',  label:'المراجعة القانونية' },
-  { key:'pub',    label:'النشر' }
+  { key:'pick',   label:'تحديد العدد',        by:'staff' },
+  { key:'fetch',  label:'جلب التشريعات',      by:'staff' },
+  { key:'review', label:'مراجعة الجدول',      by:'staff' },
+  { key:'entry',  label:'إعداد البيانات',     by:'staff' },
+  { key:'legal',  label:'المراجعة القانونية', by:'legal' },
+  { key:'pub',    label:'النشر',              by:'staff' }
 ];
 
 const ISSUE = { no:'5137', hijri:'17 صفر 1448هـ', iso:'2026-07-31', folder:'تحديثات أم القرى / العدد 5137' };
 
-/* الحقول الستة المتفق عليها: اسم الملف، نوع الأداة، الرقم، التاريخ،
-   الموضوع الرئيسي، الجهة. inferred يحدد ما استُنبط من النص لا ما نُقل من حقل. */
+/* الأعمدة: اسم الملف، نوع الأداة، الرقم، التاريخ، الموضوع الرئيسي، الجهة،
+   نوع الحدث، ملفات ذات صلة، أصل الوثيقة.
+   inferred يحدد ما استُنبط من النص لا ما نُقل من حقل صريح.
+   event: "جديد" لأداة تصدر أول مرة, و"تعديل" لما يعدّل أداة قائمة.
+   links: التشريعات المرتبطة, origin: أصل الوثيقة. كلاهما يبدأ فارغًا
+   ويُملأ في خطوة إعداد البيانات. */
 const SEED = [
   { name:'نظام المنافسات والمشتريات الحكومية', type:'نظام', no:'م/128', date:'13/11/1447هـ',
-    topic:'المشتريات الحكومية', auth:'الديوان الملكي', on:true, inferred:['topic'] },
+    topic:'المشتريات الحكومية', auth:'الديوان الملكي', event:'جديد', on:true, inferred:['topic'] },
 
   { name:'اللائحة التنفيذية لنظام المنافسات والمشتريات الحكومية', type:'لائحة تنفيذية', no:'1117',
-    date:'22/12/1447هـ', topic:'المشتريات الحكومية', auth:'وزارة المالية', on:true,
-    inferred:['no','date','auth'],
-    note:{ kind:'warn', text:'الرقم والتاريخ مأخوذان من قرار الاعتماد المنشور في العدد نفسه. يُنصح بالتحقق.' } },
+    date:'22/12/1447هـ', topic:'المشتريات الحكومية', auth:'وزارة المالية', event:'جديد', on:true,
+    inferred:['no','date','auth'] },
 
   { name:'الموافقة على تعديل بعض مواد نظام العمل', type:'قرار مجلس الوزراء', no:'133',
-    date:'29/01/1448هـ', topic:'العمل والعمال', auth:'مجلس الوزراء', on:true, inferred:['topic'] },
+    date:'29/01/1448هـ', topic:'العمل والعمال', auth:'مجلس الوزراء', event:'تعديل', on:true,
+    inferred:['topic'] },
 
   { name:'قواعد تنظيم أعمال شركات التمويل', type:'قرار مجالس وهيئات', no:'34/ت/2026',
-    date:'05/02/1448هـ', topic:'التمويل والبنوك', auth:'البنك المركزي السعودي', on:true,
-    inferred:['auth','topic'] },
+    date:'05/02/1448هـ', topic:'التمويل والبنوك', auth:'البنك المركزي السعودي', event:'جديد',
+    on:true, inferred:['auth','topic'] },
 
   { name:'تعميم بشأن آلية احتساب غرامات التأخير في العقود الحكومية', type:'تعميم', no:'1/م/4412',
-    date:'03/02/1448هـ', topic:'المنافسات والعقود', auth:'وزارة المالية', on:true, inferred:['topic'] },
+    date:'03/02/1448هـ', topic:'المنافسات والعقود', auth:'وزارة المالية', event:'جديد',
+    on:true, inferred:['topic'] },
 
   { name:'الموافقة على اتفاقية النقل الجوي بين حكومة المملكة وحكومة جمهورية سنغافورة',
     type:'اتفاقية', no:'', date:'28/01/1448هـ', topic:'النقل والطيران', auth:'وزارة الخارجية',
-    on:true, inferred:['topic'],
+    event:'جديد', on:true, inferred:['topic'],
     note:{ kind:'info', text:'الاتفاقيات لا تحمل رقم أداة في الجريدة.' } },
 
   { name:'أمر ملكي بتعيين أعضاء في هيئة كبار العلماء', type:'أمر ملكي', no:'أ/355',
-    date:'24/11/1447هـ', topic:'التنظيم الإداري', auth:'الديوان الملكي', on:true, inferred:['topic'] },
+    date:'24/11/1447هـ', topic:'التنظيم الإداري', auth:'الديوان الملكي', event:'جديد',
+    on:true, inferred:['topic'] },
 
   { name:'لائحة حماية حقوق المؤلف', type:'لائحة', no:'4/1448', date:'08/02/1448هـ',
-    topic:'الملكية الفكرية', auth:'الهيئة السعودية للملكية الفكرية', on:true, inferred:['auth'] },
+    topic:'الملكية الفكرية', auth:'الهيئة السعودية للملكية الفكرية', event:'جديد',
+    on:true, inferred:['auth'] },
 
   { name:'قرار بتحديد اشتراطات تراخيص الأنشطة التجارية', type:'قرار وزاري', no:'8129',
     date:'01/02/1448هـ', topic:'التراخيص البلدية', auth:'وزارة الشؤون البلدية والقروية والإسكان',
-    on:true, inferred:['auth','topic'] },
+    event:'جديد', on:true, inferred:['auth','topic'] },
 
   { name:'تعديل الجدول الزمني لتطبيق الفاتورة الإلكترونية', type:'قرار مجالس وهيئات', no:'2-14-1448',
     date:'06/02/1448هـ', topic:'الضرائب والزكاة', auth:'هيئة الزكاة والضريبة والجمارك',
-    on:true, inferred:['auth'] },
+    event:'تعديل', on:true, inferred:['auth'] },
 
   { name:'الموافقة على تنظيم المركز الوطني لتنمية القطاع غير الربحي', type:'قرار مجلس الوزراء',
     no:'141', date:'29/01/1448هـ', topic:'القطاع غير الربحي', auth:'مجلس الوزراء',
-    on:true, inferred:['topic'] },
+    event:'جديد', on:true, inferred:['topic'] },
 
   { name:'قواعد الترخيص لمزاولة مهنة المحاسبة', type:'قرار مجالس وهيئات', no:'9/1448',
     date:'04/02/1448هـ', topic:'المهن الحرة', auth:'الهيئة السعودية للمراجعين والمحاسبين',
-    on:false, inferred:[],
+    event:'جديد', on:false, inferred:[],
     note:{ kind:'dupe', text:'له ملف منشور في المكتبة بتاريخ 2026-06-12. مستثنى من الإنشاء.' } }
 ];
 
 const TYPES = ['نظام','لائحة','لائحة تنفيذية','مرسوم ملكي','أمر ملكي','قرار مجلس الوزراء',
                'قرار وزاري','قرار مجالس وهيئات','تعميم','اتفاقية'];
+const EVENTS = ['جديد','تعديل'];
+
+/* ما يمكن الربط به: تشريعات المكتبة القائمة, وتشريعات هذا العدد نفسه.
+   تشريعات العدد تُضاف عند العرض, وهذه القائمة هي ما في المكتبة قبله. */
+const LIBRARY = [
+  'نظام العمل',
+  'اللائحة التنفيذية لنظام العمل',
+  'نظام ضريبة القيمة المضافة',
+  'اللائحة التنفيذية لنظام ضريبة القيمة المضافة',
+  'نظام المنافسات والمشتريات الحكومية (الإصدار السابق)',
+  'نظام مراقبة شركات التمويل',
+  'نظام حماية حقوق المؤلف',
+  'تنظيم الهيئة السعودية للملكية الفكرية',
+  'نظام رسوم الأراضي البيضاء',
+  'تنظيم المركز الوطني لتنمية القطاع غير الربحي (الإصدار السابق)'
+];
+
+/* أصل الوثيقة: من أين جاء النص المعتمد في الملف */
+const ORIGINS = [
+  'عدد جريدة أم القرى 5137 (PDF)',
+  'صفحة التشريع في موقع أم القرى',
+  'نسخة من الأمانة العامة لمجلس الوزراء',
+  'نسخة من الجهة المصدرة',
+  'المركز الوطني للوثائق والمحفوظات'
+];
 
 /* مطلع نص كل أداة, لأن المراجع لا يعتمد صفًّا في جدول بل نصًّا قرأه.
    مقتطفات تجريبية بصياغة الجريدة, لا منقولة من عدد حقيقي. */
@@ -1319,30 +1421,38 @@ const TEXTS = [
   'إن مجلس إدارة الهيئة السعودية للمراجعين والمحاسبين, بناءً على تنظيم الهيئة, يقرر إصدار قواعد الترخيص لمزاولة مهنة المحاسبة والمراجعة على النحو المبين في القواعد المرافقة.'
 ];
 
-/* الاعتماد ليس عمل من أنشأ الملف, فللشاشة صفتان تُجرَّب بهما كاملة */
+/* الاعتماد ليس عمل من أدخل البيانات, فلكل خطوة صاحبها */
 const PEOPLE = {
-  staff: { name:'عمر بازمول',   title:'موظف المحتوى',  short:'عب', cls:'' },
+  staff: { name:'عمر بازمول',   title:'مدخل البيانات',  short:'عب', cls:'' },
   legal: { name:'نورة الشهري', title:'مراجع قانوني', short:'نش', cls:'a-legal' }
 };
 
 let state = 'pick';
-let role = 'staff';
 let editing = false;
 let rows = [];
 let audit = [];
 let createdCount = 0;
 let drawerAt = null;
+let linkAt = null;      // الصف المفتوح في نافذة الربط
+let linkKind = null;    // 'links' أو 'origin'
 
-const me = () => PEOPLE[role];
+/* من يعمل الآن مشتق من الخطوة, لا مختار من مبدّل */
+const actor = () => (STEPS.find(s => s.key === state) || {}).by || 'staff';
+const me = () => PEOPLE[actor()];
+
+/* حالات الملف بعد إنشائه */
+const created  = () => state === 'entry' || state === 'legal' || state === 'pub';
+const canEdit  = () => state === 'review' || state === 'entry';
 
 function resetData(){
   rows = SEED.map((r,i) => Object.assign({}, r, {
-    inferred:r.inferred.slice(), review:null, text:TEXTS[i] || '', reason:''
+    inferred:r.inferred.slice(), review:null, text:TEXTS[i] || '', reason:'',
+    links:[], origin:''
   }));
   audit = [];
   createdCount = 0;
   drawerAt = null;
-  role = 'staff';
+  linkAt = null; linkKind = null;
   clockMin = 9 * 60 + 12;
 }
 
@@ -1398,8 +1508,8 @@ const FETCH_STEPS = [
   { text:'حصر تشريعات التاريخ',                       out:() => `${rows.length} تشريعًا`, ms:1500 },
   { text:'قراءة كل تشريع من صفحته',                   out:() => `${rows.length} من ${rows.length}`,
     ms:2600, counter:true },
-  { text:'استخراج الرقم والتاريخ والجهة',             out:() => `${rows.length - warnRows()} صريحة, ${warnRows()} مستنبطة`, ms:900 },
-  { text:'مطابقة اللوائح بقرارات اعتمادها',           out:() => arCount(warnRows(),'زوج واحد','زوجان','أزواج'), ms:800 },
+  { text:'استخراج الرقم والتاريخ والجهة',             out:() => `${rows.length - inferredRows()} صريحة, ${inferredRows()} مستنبطة`, ms:900 },
+  { text:'مطابقة اللوائح بقرارات اعتمادها',           out:() => arCount(inheritedNo(),'زوج واحد','زوجان','أزواج'), ms:800 },
   { text:'اقتراح الموضوع الرئيسي من تصنيفات المكتبة', out:() => `${rows.length} اقتراحًا`, ms:900 },
   { text:'المقارنة بالمكتبة لاستثناء المتكرر',         out:() => arCount(dupeRows(),'ملف واحد موجود','ملفان موجودان','ملفات موجودة'), ms:1000 }
 ];
@@ -1460,7 +1570,7 @@ function finishFetch(){
   stopFetch();
   addAudit(tick(0), PEOPLE.staff.name,
     `جلب <b>العدد ${esc(ISSUE.no)}</b>. ${rows.length} تشريعًا, `
-    + `منها ${esc(arCount(warnRows(),'واحد يحتاج تحققًا','اثنان يحتاجان تحققًا','تحتاج تحققًا'))} `
+    + `فيها ${esc(arCount(inferredCells(),'قيمة واحدة مستنبطة','قيمتان مستنبطتان','قيم مستنبطة','قيمة مستنبطة'))} `
     + `و ${esc(arCount(dupeRows(),'واحد موجود في المكتبة','اثنان موجودان في المكتبة','موجودة في المكتبة'))}.`,'');
   go('review');
 }
@@ -1473,44 +1583,75 @@ function startFetch(){
 
 /* -------------------------------- الجدول -------------------------------- */
 const COLS = [
-  { key:'name',  label:'اسم الملف',        cls:'c-name'  },
-  { key:'type',  label:'نوع الأداة',       cls:'c-type'  },
-  { key:'no',    label:'الرقم',            cls:'c-no'    },
-  { key:'date',  label:'التاريخ',          cls:'c-date'  },
-  { key:'topic', label:'الموضوع الرئيسي',  cls:'c-topic' },
-  { key:'auth',  label:'الجهة',            cls:'c-auth'  }
+  { key:'name',   label:'اسم الملف',        cls:'c-name'  },
+  { key:'type',   label:'نوع الأداة',       cls:'c-type'  },
+  { key:'no',     label:'الرقم',            cls:'c-no'    },
+  { key:'date',   label:'التاريخ',          cls:'c-date'  },
+  { key:'topic',  label:'الموضوع الرئيسي',  cls:'c-topic' },
+  { key:'auth',   label:'الجهة',            cls:'c-auth'  },
+  { key:'event',  label:'نوع الحدث',        cls:'c-event' },
+  { key:'links',  label:'ملفات ذات صلة',    cls:'c-slot', slot:'links'  },
+  { key:'origin', label:'أصل الوثيقة',      cls:'c-slot', slot:'origin' }
 ];
 const NOTE_ICON = { warn:'#i-warning-2', info:'#i-info-circle', dupe:'#i-task-square' };
 const REVIEW_CHIP = {
-  null:  ['chip-wait','#i-clock','بانتظار المراجعة'],
+  draft: ['chip-wait','#i-edit-2','قيد الإعداد'],
+  ready: ['chip-run','#i-send','جاهز للمراجعة'],
   ok:    ['chip-ok','#i-tick-circle','معتمد'],
   fix:   ['chip-fix','#i-warning-2','يحتاج تعديلًا'],
   pub:   ['chip-pub','#i-tick-circle','منشور'],
   /* لم يُنشأ له ملف, ويبقى في الجدول لأن سبب استثنائه جزء من التوثيق */
   skip:  ['chip-wait','#i-close-circle','مستثنى']
 };
-const inLegal = () => state === 'legal' || state === 'pub';
+const SLOT_META = {
+  links:  { icon:'#i-paperclip',         label:'ملفات ذات صلة', empty:'لا توجد ملفات مرتبطة حتى الآن.' },
+  origin: { icon:'#i-document-previous', label:'أصل الوثيقة',   empty:'لم يُعيَّن أصل الوثيقة بعد.' }
+};
+const slotFilled = (row, kind) => kind === 'links' ? row.links.length > 0 : !!row.origin;
 
 function renderHead(){
   const cells = [];
-  if(!inLegal()) cells.push(`<th class="c-check"><input type="checkbox" id="chkAll" aria-label="تحديد الكل"></th>`);
+  if(state === 'review') cells.push('<th class="c-check"><input type="checkbox" id="chkAll" aria-label="تحديد الكل"></th>');
   cells.push('<th class="c-idx">#</th>');
   COLS.forEach(c => cells.push(`<th class="${c.cls}">${esc(c.label)}</th>`));
-  if(inLegal()) cells.push('<th class="c-status">حالة الملف</th>');
+  if(created()) cells.push('<th class="c-status">حالة الملف</th>');
   cells.push('<th class="c-act"></th>');
   $('#gridHead').innerHTML = `<tr>${cells.join('')}</tr>`;
 }
 
+/* الخانتان الأخيرتان لا تحملان قيمة تُقرأ بل مشبكًا يُضغط: رمادي وهو فارغ,
+   أخضر أول ما يُربط به شيء. اللون وحده يجيب "هل رُبط هذا الملف" في مسح واحد
+   للعمود, بلا قراءة سطر في كل صف. */
+function slotHtml(col, row, i){
+  const kind = col.slot;
+  const on = slotFilled(row, kind);
+  const m = SLOT_META[kind];
+  const n = kind === 'links' ? row.links.length : (row.origin ? 1 : 0);
+  const title = on
+    ? (kind === 'links' ? row.links.join(' · ') : row.origin)
+    : `${m.label}: لا يوجد`;
+  return `<button class="slot ${on ? 'is-on' : ''}" data-slot="${kind}" data-row="${i}"
+    title="${esc(title)}" aria-label="${esc(m.label)}: ${on ? esc(title) : 'لا يوجد'}">
+    <svg class="icon-sm"><use href="${m.icon}"/></svg>
+    ${kind === 'links' && n > 1 ? `<span class="slot-n"><bdi>${n}</bdi></span>` : ''}
+  </button>`;
+}
+
 function cellHtml(col, row, i){
+  if(col.slot) return slotHtml(col, row, i);
   const v = row[col.key];
-  if(editing && !inLegal()){
-    if(col.key === 'type'){
-      return `<select class="cell-in" data-i="${i}" data-k="type">${
-        TYPES.map(t => `<option${t===v?' selected':''}>${esc(t)}</option>`).join('')}</select>`;
+  if(editing && canEdit()){
+    if(col.key === 'type' || col.key === 'event'){
+      const opts = col.key === 'type' ? TYPES : EVENTS;
+      return `<select class="cell-in" data-i="${i}" data-k="${col.key}">${
+        opts.map(t => `<option${t===v?' selected':''}>${esc(t)}</option>`).join('')}</select>`;
     }
     return `<input class="cell-in" data-i="${i}" data-k="${col.key}" value="${esc(v)}">`;
   }
   if(!v) return '<span class="none">لا يوجد</span>';
+  if(col.key === 'event'){
+    return `<span class="ev-chip ${v === 'تعديل' ? 'ev-edit' : 'ev-new'}">${esc(v)}</span>`;
+  }
   const inf = row.inferred.includes(col.key);
   const num = col.key === 'no' || col.key === 'date';
   let body = num ? `<bdi class="mono">${esc(v)}</bdi>` : esc(v);
@@ -1531,13 +1672,13 @@ function renderBody(){
   $('#gridBody').innerHTML = rows.map((row,i) => {
     const off = !row.on;
     const cells = [];
-    if(!inLegal()){
+    if(state === 'review'){
       cells.push(`<td class="c-check"><input type="checkbox" data-pick="${i}"${row.on?' checked':''} aria-label="تحديد الصف ${i+1}"></td>`);
     }
     cells.push(`<td class="c-idx mono">${i+1}</td>`);
     COLS.forEach(c => cells.push(`<td class="${c.cls}">${cellHtml(c,row,i)}</td>`));
-    if(inLegal()){
-      const [cls,ic,txt] = REVIEW_CHIP[row.review];
+    if(created()){
+      const [cls,ic,txt] = REVIEW_CHIP[row.review] || REVIEW_CHIP.draft;
       cells.push(`<td class="c-status"><span class="chip ${cls}">
         <svg class="icon-xs"><use href="${ic}"/></svg> ${esc(txt)}</span></td>`);
     }
@@ -1552,18 +1693,31 @@ function renderBody(){
   if(all) all.checked = rows.length > 0 && rows.every(r => r.on);
 }
 
-/* أزرار الصف: المراجع يعتمد أو يطلب تعديلًا, والموظف يقرأ ولا يعتمد ما أنشأه */
+/* أزرار الصف تتبع الخطوة: مدخل البيانات يعلّم الجاهز, والمراجع يعتمد أو يردّ */
 function rowActsHtml(row, i){
-  const open = `<button class="icon-act" data-open="${i}" title="فتح للمراجعة"><svg class="icon-sm"><use href="#i-eye"/></svg></button>`;
+  const open = `<button class="icon-act" data-open="${i}" title="فتح الملف"><svg class="icon-sm"><use href="#i-eye"/></svg></button>`;
   const src  = `<button class="icon-act" title="رابط المصدر"><svg class="icon-sm"><use href="#i-link"/></svg></button>`;
-  if(state === 'legal' && role === 'legal' && row.on && row.review !== 'pub'){
+
+  if(state === 'entry' && row.on && (row.review === 'draft' || row.review === 'fix')){
+    return `<div class="rv-acts">
+      <button class="rv-btn rv-ok" data-ready="${i}"><svg class="icon-xs"><use href="#i-send"/></svg> جاهز</button>
+      ${open}
+    </div>`;
+  }
+  if(state === 'entry' && row.review === 'ready'){
+    return `<div class="rv-acts">
+      <button class="rv-btn" data-unready="${i}"><svg class="icon-xs"><use href="#i-edit-2"/></svg> إرجاع للإعداد</button>
+      ${open}
+    </div>`;
+  }
+  if(state === 'legal' && row.on && row.review !== 'pub' && row.review !== 'draft'){
     return `<div class="rv-acts">
       <button class="rv-btn rv-ok" data-approve="${i}"><svg class="icon-xs"><use href="#i-tick-circle"/></svg> اعتماد</button>
       <button class="rv-btn rv-fix" data-fix="${i}"><svg class="icon-xs"><use href="#i-warning-2"/></svg> تعديل</button>
       ${open}
     </div>`;
   }
-  if(inLegal()) return `<div class="row-acts">${open}${src}</div>`;
+  if(created()) return `<div class="row-acts">${open}${src}</div>`;
   return `<div class="row-acts">${open}${src}
     <button class="icon-act danger" data-del="${i}" title="حذف الصف"><svg class="icon-sm"><use href="#i-trash"/></svg></button>
   </div>`;
@@ -1571,42 +1725,74 @@ function rowActsHtml(row, i){
 
 /* ------------------------- ما حول الجدول ------------------------- */
 const picked   = () => rows.filter(r => r.on).length;
-const warnRows = () => rows.filter(r => r.note && r.note.kind === 'warn').length;
 const dupeRows = () => rows.filter(r => r.note && r.note.kind === 'dupe').length;
 const inferredCells = () => rows.reduce((n,r) => n + r.inferred.length, 0);
+const inferredRows  = () => rows.filter(r => r.inferred.length).length;
+/* اللائحة لا تحمل رقمًا, فترثه من قرار اعتمادها: هذه هي الأزواج المطابَقة */
+const inheritedNo = () => rows.filter(r => r.inferred.includes('no')).length;
+const st = k => rows.filter(r => r.review === k).length;
 const counts = () => ({
-  ok:   rows.filter(r => r.review === 'ok').length,
-  fix:  rows.filter(r => r.review === 'fix').length,
-  wait: rows.filter(r => r.review === null && r.on).length,
-  pub:  rows.filter(r => r.review === 'pub').length,
-  skip: rows.filter(r => r.review === 'skip').length
+  draft: st('draft'),
+  ready: st('ready'),
+  ok:    st('ok'),
+  fix:   st('fix'),
+  pub:   st('pub'),
+  skip:  st('skip'),
+  /* ما ينتظر قرار المراجع: الجاهز وما رُدّ ثم أُعيد */
+  wait:  rows.filter(r => r.on && (r.review === 'ready')).length
 });
 
 function renderSub(){
   $('#resultSub').innerHTML = `<bdi>${ISSUE.hijri}</bdi> · <bdi>${ISSUE.iso}</bdi> · ${rows.length} تشريعًا`
-    + (inLegal() ? ` · المجلد: ${esc(ISSUE.folder)}` : '');
+    + (created() ? ` · المجلد: ${esc(ISSUE.folder)}` : '');
 }
+
+const EXPORT_BTN = '<button class="btn btn-tertiary btn-sm"><svg class="icon-sm"><use href="#i-export"/></svg> تصدير الجدول</button>';
 
 function renderTools(){
   const t = $('#tableTools');
-  if(inLegal()){
-    const c = counts();
-    const asLegal = role === 'legal';
+  const c = counts();
+
+  if(state === 'entry'){
     t.innerHTML = `
-      <span class="sel-count">${esc(arCount(c.wait,'ملف واحد بانتظار المراجعة','ملفان بانتظار المراجعة','ملفات بانتظار المراجعة','ملفًا بانتظار المراجعة'))}</span>
+      <span class="sel-count">${
+        c.draft ? esc(arCount(c.draft,'ملف واحد قيد الإعداد','ملفان قيد الإعداد','ملفات قيد الإعداد','ملفًا قيد الإعداد')) : ''
+      }${c.draft && c.ready ? ' · ' : ''}${
+        c.ready ? esc(arCount(c.ready,'واحد جاهز','اثنان جاهزان','جاهزة','جاهزًا')) : ''
+      }</span>
       <span class="spacer"></span>
-      ${state === 'legal' && asLegal && c.wait
-        ? `<button class="btn btn-secondary btn-sm" id="btnApproveAll">
+      <button class="btn ${editing?'btn-primary':'btn-secondary'} btn-sm" id="btnEdit">
+        <svg class="icon-sm"><use href="#i-edit-2"/></svg> ${editing?'إنهاء التعديل':'تعديل البيانات'}
+      </button>
+      ${c.draft ? `<button class="btn btn-secondary btn-sm" id="btnReadyAll">
+        <svg class="icon-sm"><use href="#i-send"/></svg> تعليم الكل جاهزًا (<bdi>${c.draft}</bdi>)
+      </button>` : ''}
+      ${EXPORT_BTN}`;
+    return;
+  }
+
+  if(state === 'legal'){
+    t.innerHTML = `
+      <span class="sel-count">${esc(arCount(c.wait,'ملف واحد بانتظار قرارك','ملفان بانتظار قرارك','ملفات بانتظار قرارك','ملفًا بانتظار قرارك'))}</span>
+      <span class="spacer"></span>
+      ${c.wait ? `<button class="btn btn-secondary btn-sm" id="btnApproveAll">
              <svg class="icon-sm"><use href="#i-tick-circle"/></svg>
              اعتماد المتبقي (<bdi>${c.wait}</bdi>)
            </button>` : ''}
-      ${state === 'legal' && !asLegal
-        ? `<button class="btn btn-secondary btn-sm" data-role-to="legal">
-             <svg class="icon-sm"><use href="#i-verify"/></svg> ابدأ المراجعة بصفة المراجع
-           </button>` : ''}
-      <button class="btn btn-tertiary btn-sm"><svg class="icon-sm"><use href="#i-export"/></svg> تصدير الجدول</button>`;
+      ${EXPORT_BTN}`;
     return;
   }
+
+  if(state === 'pub'){
+    t.innerHTML = `
+      <span class="sel-count">${c.pub
+        ? esc(arCount(c.pub,'ملف واحد منشور','ملفان منشوران','ملفات منشورة','ملفًا منشورًا'))
+        : esc(arCount(c.ok,'ملف واحد جاهز للنشر','ملفان جاهزان للنشر','ملفات جاهزة للنشر','ملفًا جاهزًا للنشر'))}</span>
+      <span class="spacer"></span>
+      ${EXPORT_BTN}`;
+    return;
+  }
+
   t.innerHTML = `
     <span class="sel-count"><bdi>${picked()}</bdi> من <bdi>${rows.length}</bdi> محدد للإنشاء</span>
     <span class="spacer"></span>
@@ -1616,15 +1802,14 @@ function renderTools(){
     <button class="btn btn-secondary btn-sm" id="btnAddRow">
       <svg class="icon-sm"><use href="#i-add"/></svg> إضافة صف
     </button>
-    <button class="btn btn-tertiary btn-sm"><svg class="icon-sm"><use href="#i-export"/></svg> تصدير</button>`;
+    ${EXPORT_BTN}`;
 }
 
 function renderBar(){
   const bar = $('#actionBar');
   if(state === 'review'){
-    const w = warnRows();
     bar.innerHTML = `
-      <span class="ab-note">${w ? esc(arCount(w,'صف واحد يحتاج تحققًا','صفان يحتاجان تحققًا','صفوف تحتاج تحققًا')) + ' قبل الإنشاء. ' : ''}لم يُنشأ أي ملف بعد.</span>
+      <span class="ab-note">لم يُنشأ أي ملف بعد.</span>
       <span class="spacer"></span>
       <button class="btn btn-secondary" id="btnDraft">حفظ كمسودة</button>
       <button class="btn btn-primary" id="btnCreate">
@@ -1633,38 +1818,52 @@ function renderBar(){
       </button>`;
     return;
   }
+
+  /* نهاية عمل مدخل البيانات: لا يُرسَل إلى المراجعة إلا ما عُلّم جاهزًا */
+  if(state === 'entry'){
+    const c = counts();
+    bar.innerHTML = `
+      <span class="ab-note">${c.draft
+        ? esc(arCount(c.draft,'ملف واحد لم يُعلّم جاهزًا ولن يُرسل','ملفان لم يُعلّما جاهزين ولن يُرسلا','ملفات لم تُعلّم جاهزة ولن تُرسل','ملفًا لم يُعلّم جاهزًا ولن يُرسل')) + '.'
+        : 'كل الملفات جاهزة للمراجعة.'}</span>
+      <span class="spacer"></span>
+      <button class="btn btn-primary" id="btnSendReview"${c.ready?'':' disabled'}>
+        <svg class="icon-sm"><use href="#i-send"/></svg>
+        إرسال إلى المراجعة القانونية (<bdi>${c.ready}</bdi>)
+      </button>`;
+    return;
+  }
+
+  /* الاعتماد بيد المراجع, ولا ينتقل العدد إلى النشر قبل أن يفصل في كل ملف */
   if(state === 'legal'){
     const c = counts();
-    /* النشر بيد الموظف, والاعتماد بيد المراجع. لا يجمعهما شخص واحد. */
-    if(role === 'legal'){
-      bar.innerHTML = `
-        <span class="ab-note">${c.wait
-          ? esc(arCount(c.wait,'ملف واحد ما زال بانتظار قرارك','ملفان ما زالا بانتظار قرارك','ملفات ما زالت بانتظار قرارك','ملفًا ما زال بانتظار قرارك'))
-          : 'أنهيتَ مراجعة كل الملفات.'}</span>
-        <span class="spacer"></span>
-        <button class="btn btn-secondary" data-role-to="staff">
-          <svg class="icon-sm mirror"><use href="#i-arrow-left"/></svg> عُد بصفة الموظف
-        </button>`;
-      return;
-    }
     bar.innerHTML = `
       <span class="ab-note">${c.wait
-        ? esc(arCount(c.wait,'ملف واحد لم يُراجع بعد ولن يُنشر','ملفان لم يُراجعا بعد ولن يُنشرا','ملفات لم تُراجع بعد ولن تُنشر','ملفًا لم يُراجع بعد ولن يُنشر')) + '.'
-        : ''}</span>
+        ? esc(arCount(c.wait,'ملف واحد ما زال بانتظار قرارك','ملفان ما زالا بانتظار قرارك','ملفات ما زالت بانتظار قرارك','ملفًا ما زال بانتظار قرارك'))
+        : 'انتهت المراجعة.'}</span>
       <span class="spacer"></span>
-      <button class="btn btn-secondary" id="btnRemind"${c.wait?'':' disabled'}>
-        <svg class="icon-sm"><use href="#i-send"/></svg> تذكير المراجعين (<bdi>${c.wait}</bdi>)
-      </button>
-      <button class="btn btn-primary" id="btnPublish"${c.ok?'':' disabled'}>
+      <button class="btn btn-primary" id="btnToPublish"${c.wait?' disabled':''}>
+        الانتقال إلى النشر
+        <svg class="icon-sm"><use href="#i-arrow-left"/></svg>
+      </button>`;
+    return;
+  }
+
+  const c = counts();
+  /* خطوة النشر: النشر فعل بتأكيد, وبعده تُعرض حصيلة العدد */
+  if(c.ok){
+    bar.innerHTML = `
+      <span class="ab-note">${esc(arCount(c.ok,'ملف واحد معتمد جاهز للنشر','ملفان معتمدان جاهزان للنشر','ملفات معتمدة جاهزة للنشر','ملفًا معتمدًا جاهزًا للنشر'))}.</span>
+      <span class="spacer"></span>
+      <button class="btn btn-primary" id="btnPublish">
         <svg class="icon-sm"><use href="#i-verify"/></svg>
         نشر المعتمدة (<bdi>${c.ok}</bdi>)
       </button>`;
     return;
   }
-  const c = counts();
   bar.innerHTML = `
     <span class="ab-note">اكتمل العدد. ${c.fix
-      ? esc(arCount(c.fix,'ملف واحد باقٍ','ملفان باقيان','ملفات باقية')) + ' عند المراجع.' : ''}</span>
+      ? esc(arCount(c.fix,'ملف واحد باقٍ','ملفان باقيان','ملفات باقية')) + ' عند مدخل البيانات.' : ''}</span>
     <span class="spacer"></span>
     <button class="btn btn-secondary"><svg class="icon-sm"><use href="#i-eye"/></svg> فتح المجلد</button>
     <button class="btn btn-secondary" id="btnReset2"><svg class="icon-sm"><use href="#i-refresh"/></svg> عدد جديد</button>`;
@@ -1675,25 +1874,37 @@ function renderBanners(){
   const b = $('#tableBanners');
   const out = [];
   if(state === 'review'){
-    const w = warnRows(), d = dupeRows(), inf = inferredCells();
-    if(w) out.push(`<div class="banner banner-warn">
+    const d = dupeRows(), inf = inferredCells(), ir = inferredRows();
+    if(inf) out.push(`<div class="banner banner-warn">
       <svg class="icon-sm"><use href="#i-warning-2"/></svg>
-      <div><b>${esc(arCount(w,'صف واحد يحتاج تحققًا','صفان يحتاجان تحققًا','صفوف تحتاج تحققًا'))}</b>,
-      و ${esc(arCount(inf,'قيمة واحدة مستنبطة','قيمتان مستنبطتان','قيم مستنبطة','قيمة مستنبطة'))}.</div>
+      <div><b>${esc(arCount(inf,'قيمة واحدة مستنبطة','قيمتان مستنبطتان','قيم مستنبطة','قيمة مستنبطة'))}</b>
+      في ${esc(arCount(ir,'صف واحد','صفين','صفوف','صفًا'))}, محددة بخط منقط.</div>
     </div>`);
     if(d) out.push(`<div class="banner banner-info">
       <svg class="icon-sm"><use href="#i-task-square"/></svg>
       <div><b>${esc(arCount(d,'تشريع واحد مستثنى','تشريعان مستثنيان','تشريعات مستثناة'))}</b>: له ملف منشور في المكتبة.</div>
     </div>`);
-  } else if(state === 'legal'){
+  } else if(state === 'entry'){
     const c = counts();
     out.push(`<div class="banner banner-ok">
       <svg class="icon-sm"><use href="#i-tick-circle"/></svg>
       <div><b>أُنشئ ${esc(arCount(createdCount,'ملف واحد','ملفان','ملفات','ملفًا'))}</b> في مجلد <b>${esc(ISSUE.folder)}</b>.</div>
     </div>`);
+    if(c.fix) out.push(`<div class="banner banner-warn">
+      <svg class="icon-sm"><use href="#i-warning-2"/></svg>
+      <div><b>${esc(arCount(c.fix,'ملف واحد عاد إليك','ملفان عادا إليك','ملفات عادت إليك','ملفًا عاد إليك'))}</b>
+      بطلب تعديل من المراجع.</div>
+    </div>`);
+  } else if(state === 'legal'){
+    const c = counts();
+    out.push(`<div class="banner banner-info">
+      <svg class="icon-sm"><use href="#i-send"/></svg>
+      <div>وصل <b>${esc(arCount(c.wait + c.ok + c.fix,'ملف واحد','ملفان','ملفات','ملفًا'))}</b>
+      من <b>${esc(PEOPLE.staff.name)}</b> للمراجعة.</div>
+    </div>`);
     if(c.ok) out.push(`<div class="banner banner-ok">
       <svg class="icon-sm"><use href="#i-verify"/></svg>
-      <div><b>${esc(arCount(c.ok,'ملف واحد معتمد','ملفان معتمدان','ملفات معتمدة','ملفًا معتمدًا'))}</b> من <b>${esc(PEOPLE.legal.name)}</b>.</div>
+      <div><b>${esc(arCount(c.ok,'ملف واحد معتمد','ملفان معتمدان','ملفات معتمدة','ملفًا معتمدًا'))}</b>.</div>
     </div>`);
     if(c.fix) out.push(`<div class="banner banner-warn">
       <svg class="icon-sm"><use href="#i-warning-2"/></svg>
@@ -1701,17 +1912,18 @@ function renderBanners(){
     </div>`);
   } else {
     const c = counts();
-    out.push(`<div class="banner banner-ok">
+    if(c.pub) out.push(`<div class="banner banner-ok">
       <svg class="icon-sm"><use href="#i-tick-circle"/></svg>
       <div><b>نُشر ${esc(arCount(c.pub,'ملف واحد','ملفان','ملفات','ملفًا'))}</b> من العدد ${esc(ISSUE.no)}.</div>
     </div>`);
+    if(c.ok) out.push(`<div class="banner banner-info">
+      <svg class="icon-sm"><use href="#i-verify"/></svg>
+      <div><b>${esc(arCount(c.ok,'ملف واحد معتمد','ملفان معتمدان','ملفات معتمدة','ملفًا معتمدًا'))}</b>
+      من <b>${esc(PEOPLE.legal.name)}</b>, بانتظار النشر.</div>
+    </div>`);
     if(c.fix) out.push(`<div class="banner banner-warn">
       <svg class="icon-sm"><use href="#i-warning-2"/></svg>
-      <div><b>${esc(arCount(c.fix,'ملف واحد مردود','ملفان مردودان','ملفات مردودة','ملفًا مردودًا'))}</b> لم يُنشر.</div>
-    </div>`);
-    if(c.wait) out.push(`<div class="banner">
-      <svg class="icon-sm"><use href="#i-clock"/></svg>
-      <div><b>${esc(arCount(c.wait,'ملف واحد','ملفان','ملفات','ملفًا'))}</b> ما زال بانتظار المراجعة.</div>
+      <div><b>${esc(arCount(c.fix,'ملف واحد مردود','ملفان مردودان','ملفات مردودة','ملفًا مردودًا'))}</b> لن يُنشر.</div>
     </div>`);
   }
   b.innerHTML = out.join('');
@@ -1720,16 +1932,17 @@ function renderBanners(){
 
 function renderSummary(){
   const box = $('#summary');
-  if(!inLegal()){ box.classList.add('hidden'); return; }
+  if(!created()){ box.classList.add('hidden'); return; }
   box.classList.remove('hidden');
   const c = counts();
   /* الأصفار لا تُعرض: خانة تقول "معتمد 0" بعد النشر ضجيج لا معلومة.
      أما عدد الملفات المنشأة فيبقى دائمًا, لأنه أصل ما تُقاس عليه البقية. */
   const cells = [
     ['ملفات منشأة', createdCount, '', true],
+    ['قيد الإعداد', c.draft, 't-wait'],
+    ['جاهز للمراجعة', c.ready, 't-ready'],
     ['معتمد', c.ok, 't-ok'],
     ['يحتاج تعديلًا', c.fix, 't-fix'],
-    ['بانتظار المراجعة', c.wait, 't-wait'],
     ['منشور', c.pub, 't-pub'],
     ['مستثنى', c.skip, 't-wait']
   ].filter(([,v,,always]) => always || v);
@@ -1810,7 +2023,7 @@ function renderDrawer(){
   if(drawerAt === null || !rows[drawerAt]){ host.innerHTML = ''; return; }
   const row = rows[drawerAt];
   const [cls,ic,txt] = REVIEW_CHIP[row.review];
-  const canReview = state === 'legal' && role === 'legal' && row.on && row.review !== 'pub';
+  const canReview = state === 'legal' && row.on && row.review !== 'pub' && row.review !== 'draft';
   const field = (label, key) => {
     const v = row[key];
     const inf = row.inferred.includes(key);
@@ -1849,6 +2062,26 @@ function renderDrawer(){
           <div class="excerpt" style="border-color:var(--color-amber-200);background:var(--color-amber-50)">${esc(row.reason)}</div>` : ''}
         <div class="sect-title"><svg class="icon-sm"><use href="#i-document-text"/></svg> مطلع نص الأداة</div>
         <div class="excerpt">${esc(row.text || 'لا يوجد نص محفوظ.')}</div>
+        <div class="sect-title"><svg class="icon-sm"><use href="#i-paperclip"/></svg> ملفات ذات صلة</div>
+        ${row.links.length
+          ? `<div class="link-list">${row.links.map(n => `<div class="link-item">
+               <svg class="icon-sm"><use href="#i-paperclip"/></svg><span>${esc(n)}</span></div>`).join('')}</div>`
+          : '<div class="link-empty">لا يوجد.</div>'}
+        ${canEdit() ? `<button class="btn btn-secondary btn-sm" style="margin-block-start:var(--space-lg)"
+          data-slot="links" data-row="${drawerAt}">
+          <svg class="icon-sm"><use href="#i-add"/></svg> ربط تشريع
+        </button>` : ''}
+
+        <div class="sect-title"><svg class="icon-sm"><use href="#i-document-previous"/></svg> أصل الوثيقة</div>
+        ${row.origin
+          ? `<div class="link-list"><div class="link-item">
+               <svg class="icon-sm"><use href="#i-document-previous"/></svg><span>${esc(row.origin)}</span></div></div>`
+          : '<div class="link-empty">لا يوجد.</div>'}
+        ${canEdit() ? `<button class="btn btn-secondary btn-sm" style="margin-block-start:var(--space-lg)"
+          data-slot="origin" data-row="${drawerAt}">
+          <svg class="icon-sm"><use href="#i-add"/></svg> تعيين أصل الوثيقة
+        </button>` : ''}
+
         <div class="sect-title"><svg class="icon-sm"><use href="#i-link"/></svg> المصدر</div>
         <div style="font-size:var(--local-size-xs);color:var(--color-gray-500)">
           جريدة أم القرى, العدد ${esc(ISSUE.no)}, <bdi>${esc(ISSUE.iso)}</bdi>
@@ -1871,13 +2104,122 @@ function renderDrawer(){
             <button class="btn btn-tertiary" data-drawer-close>إغلاق</button>
           </div>`
         : `<div style="display:flex;gap:var(--space-md);align-items:center">
-            <span class="ab-note">${state === 'legal' && role === 'staff'
-              ? 'الاعتماد من صلاحية المراجع القانوني.' : ''}</span>
+            ${state === 'entry' && row.on && row.review !== 'ready'
+              ? `<button class="btn btn-success" data-drawer-ready="${drawerAt}">
+                   <svg class="icon-sm"><use href="#i-send"/></svg> جاهز للمراجعة
+                 </button>` : ''}
             <span style="flex:1"></span>
             <button class="btn btn-secondary" data-drawer-close>إغلاق</button>
           </div>`}
       </div>
     </aside>`;
+}
+
+/* ---------------------------- نافذة الربط ----------------------------
+   الخانة في الجدول تقول "هل رُبط" فقط. أما بماذا رُبط, وإضافة رابط أو حذفه,
+   فمكانه نافذة: عمود الجدول أضيق من أن يحمل قائمة أسماء تشريعات. */
+function openLink(i, kind){ linkAt = i; linkKind = kind; renderLink(); }
+function closeLink(){ linkAt = null; linkKind = null; renderLink(); }
+
+/* ما يصلح للربط: مكتبة التشريعات القائمة, وتشريعات هذا العدد ما عدا الصف نفسه */
+function linkOptions(i){
+  const self = rows[i];
+  const inIssue = rows.filter((r,j) => j !== i && r.name).map(r => r.name);
+  return LIBRARY.concat(inIssue).filter(n => !self.links.includes(n));
+}
+
+function renderLink(){
+  const host = $('#modalHost');
+  if(linkAt === null || !rows[linkAt]){ if(!pendingConfirm) host.innerHTML = ''; return; }
+  const row = rows[linkAt], kind = linkKind, m = SLOT_META[kind];
+  const isLinks = kind === 'links';
+  const opts = isLinks ? linkOptions(linkAt) : ORIGINS.filter(o => o !== row.origin);
+  const chosen = isLinks ? row.links : (row.origin ? [row.origin] : []);
+  host.innerHTML = `<div class="scrim" data-link-scrim>
+    <div class="modal" role="dialog" aria-modal="true" aria-label="${esc(m.label)}">
+      <div class="modal-head">
+        <span class="m-icon"><svg class="icon"><use href="${m.icon}"/></svg></span>
+        <div>
+          <div class="modal-title">${esc(m.label)}</div>
+          <div class="modal-sub">${esc(row.name || 'صف بلا اسم')}</div>
+        </div>
+      </div>
+      <div class="modal-body">
+        ${chosen.length ? `<div class="link-list">${chosen.map(n => `
+          <div class="link-item">
+            <svg class="icon-sm"><use href="${m.icon}"/></svg>
+            <span>${esc(n)}</span>
+            <button class="icon-act danger" data-link-del="${esc(n)}" title="إزالة" aria-label="إزالة ${esc(n)}">
+              <svg class="icon-sm"><use href="#i-close-circle"/></svg>
+            </button>
+          </div>`).join('')}</div>`
+        : `<div class="link-empty">${esc(m.empty)}</div>`}
+        ${opts.length ? `
+          <div class="link-add">
+            <label for="linkPick">${isLinks ? 'اختر تشريعًا للربط' : 'اختر أصل الوثيقة'}</label>
+            <div class="link-add-row">
+              <select class="control" id="linkPick">
+                ${opts.map(o => `<option>${esc(o)}</option>`).join('')}
+              </select>
+              <button class="btn btn-primary" data-link-add>
+                <svg class="icon-sm"><use href="#i-add"/></svg> ${isLinks ? 'ربط' : 'تعيين'}
+              </button>
+            </div>
+          </div>` : '<div class="link-empty">لا توجد خيارات أخرى.</div>'}
+      </div>
+      <div class="modal-foot">
+        <span class="spacer"></span>
+        <button class="btn btn-secondary" data-link-close>تم</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function addLink(){
+  const sel = $('#linkPick');
+  if(!sel || linkAt === null) return;
+  const row = rows[linkAt], val = sel.value;
+  if(linkKind === 'links'){
+    if(row.links.includes(val)) return;
+    row.links.push(val);
+    addAudit(tick(1), me().name, `ربط <b>${esc(row.name)}</b> بـ <b>${esc(val)}</b>.`,'');
+    toast('تم الربط');
+  }else{
+    row.origin = val;
+    addAudit(tick(1), me().name, `تعيين أصل وثيقة <b>${esc(row.name)}</b>: ${esc(val)}.`,'');
+    toast('تم تعيين أصل الوثيقة');
+  }
+  renderLink();
+  renderBody(); renderTools(); renderBar(); renderAudit();
+}
+
+function removeLink(name){
+  if(linkAt === null) return;
+  const row = rows[linkAt];
+  if(linkKind === 'links') row.links = row.links.filter(n => n !== name);
+  else row.origin = '';
+  addAudit(tick(1), me().name, `إزالة <b>${esc(name)}</b> من ${esc(SLOT_META[linkKind].label)} في <b>${esc(row.name)}</b>.`,'');
+  renderLink();
+  renderBody(); renderTools(); renderBar(); renderAudit();
+}
+
+/* ------------------------ إجراءات مدخل البيانات ------------------------ */
+function markReady(i, silent){
+  const row = rows[i];
+  if(!row || !row.on || row.review === 'ready') return;
+  row.review = 'ready';
+  row.reason = '';
+  if(!silent){
+    addAudit(tick(2), PEOPLE.staff.name, `تعليم <b>${esc(row.name)}</b> جاهزًا للمراجعة.`,'');
+    toast('صار جاهزًا للمراجعة');
+  }
+}
+function markDraft(i){
+  const row = rows[i];
+  if(!row) return;
+  row.review = 'draft';
+  addAudit(tick(1), PEOPLE.staff.name, `إرجاع <b>${esc(row.name)}</b> إلى الإعداد.`,'');
+  toast('عاد إلى الإعداد', 'info');
 }
 
 /* ------------------------------ إجراءات المراجعة ------------------------------ */
@@ -1899,22 +2241,22 @@ function fixRow(i, reason){
   row.review = 'fix';
   row.reason = why;
   addAudit(tick(4), PEOPLE.legal.name, `رد ملف <b>${esc(row.name)}</b> بطلب تعديل: ${esc(why)}`,'');
-  toast('أُرسل طلب التعديل إلى الموظف', 'info');
+  toast('أُرسل طلب التعديل إلى مدخل البيانات', 'info');
   return true;
 }
 
 /* ------------------------------ آلة الحالات ------------------------------ */
 function go(next){
   state = next;
-  if(state === 'legal'){
-    createdCount = picked();
-    /* لا اعتماد مسبقًا: كل ملف منشأ يبدأ بانتظار قرار المراجع */
-    rows.forEach(r => { r.review = r.on ? null : 'skip'; });
+  if(state === 'entry'){
+    /* الملفات أُنشئت الآن. كلها قيد الإعداد حتى يعلّمها مدخل البيانات جاهزة.
+       والرجوع إلى هذه الخطوة من المراجعة لا يمسح ما اعتُمد أو رُدّ. */
+    if(!createdCount){
+      createdCount = picked();
+      rows.forEach(r => { r.review = r.on ? 'draft' : 'skip'; });
+    }
   }
-  if(state === 'pub'){
-    /* يُنشر المعتمد وحده. ما لم يُراجع يبقى بانتظار المراجعة, ولا يُعتمد بالنشر. */
-    rows.forEach(r => { if(r.review === 'ok') r.review = 'pub'; });
-  }
+  /* الوصول إلى خطوة النشر ليس نشرًا: النشر فعل يفعله أحد فيها, بتأكيد. */
   render();
   window.scrollTo({ top:0, behavior:'smooth' });
 }
@@ -1924,13 +2266,8 @@ function renderHeadActions(){
   $('#headActions').innerHTML = `
     <span class="who-pill">
       <span class="avatar ${p.cls}">${esc(p.short)}</span>
-      <span>${esc(p.name)}</span>
+      <span><b>${esc(p.title)}</b> · ${esc(p.name)}</span>
     </span>
-    ${inLegal() ? `<span class="role-switch">
-      <span class="rs-label">الصفة</span>
-      <button class="role-btn ${role==='staff'?'is-on':''}" data-role-to="staff">موظف المحتوى</button>
-      <button class="role-btn ${role==='legal'?'is-on':''}" data-role-to="legal">مراجع قانوني</button>
-    </span>` : ''}
     <button class="btn btn-secondary btn-sm" id="btnReset">
       <svg class="icon-sm"><use href="#i-refresh"/></svg> إعادة المحاكاة
     </button>`;
@@ -1980,15 +2317,16 @@ function render(){
   renderAudit();
   renderDrawer();
   animateRows = false;   // استُهلكت هذه المرة, ولا تتكرر في الرسم التالي
-  $('#resultHeadEnd').innerHTML = inLegal()
-    ? `<button class="btn btn-secondary btn-sm"><svg class="icon-sm"><use href="#i-eye"/></svg> فتح المجلد</button>`
-    : `<button class="btn btn-tertiary btn-sm" id="btnBackPick"><svg class="icon-sm mirror"><use href="#i-arrow-left"/></svg> عدد آخر</button>`;
+  $('#resultHeadEnd').innerHTML = created()
+    ? '<button class="btn btn-secondary btn-sm"><svg class="icon-sm"><use href="#i-eye"/></svg> فتح المجلد</button>'
+    : '<button class="btn btn-tertiary btn-sm" id="btnBackPick"><svg class="icon-sm mirror"><use href="#i-arrow-left"/></svg> عدد آخر</button>';
 }
 
 function restart(){
   stopFetch();
   editing = false;
   closeConfirm();
+  closeLink();
   resetData();
   state = 'pick';
   render();
@@ -2023,19 +2361,75 @@ document.addEventListener('click', e => {
     if(fixRow(+dFix.dataset.drawerFix, ta ? ta.value : '')){ closeDrawer(); render(); }
     return;
   }
+  const dReady = t.closest('[data-drawer-ready]');
+  if(dReady){ markReady(+dReady.dataset.drawerReady); closeDrawer(); render(); return; }
   if(t.closest('[data-drawer-close]') || t.closest('[data-drawer-scrim]') === t){ closeDrawer(); return; }
+
+  /* نافذة الربط */
+  if(t.closest('[data-link-add]')){ addLink(); return; }
+  const lDel = t.closest('[data-link-del]');
+  if(lDel){ removeLink(lDel.dataset.linkDel); return; }
+  if(t.closest('[data-link-close]') || t.closest('[data-link-scrim]') === t){ closeLink(); return; }
+
+  const slot = t.closest('[data-slot]');
+  if(slot){
+    /* في الخطوات التي لا تُعدَّل فيها البيانات تُقرأ الروابط ولا تُغيَّر */
+    if(!canEdit()){ openDrawer(+slot.dataset.row); return; }
+    openLink(+slot.dataset.row, slot.dataset.slot);
+    return;
+  }
 
   const open = t.closest('[data-open]');
   if(open){ openDrawer(+open.dataset.open); return; }
 
-  const roleBtn = t.closest('[data-role-to]');
-  if(roleBtn){
-    const to = roleBtn.dataset.roleTo;
-    if(to !== role){
-      role = to;
-      toast(`تعمل الآن بصفة ${me().title}: ${me().name}`, 'info');
-      render();
-    }
+  const ready = t.closest('[data-ready]');
+  if(ready){ markReady(+ready.dataset.ready); render(); return; }
+  const unready = t.closest('[data-unready]');
+  if(unready){ markDraft(+unready.dataset.unready); render(); return; }
+
+  if(t.closest('#btnReadyAll')){
+    const pending = rows.map((r,i) => [r,i]).filter(([r]) => r.on && r.review === 'draft');
+    if(!pending.length) return;
+    askConfirm({
+      title:'تعليم الكل جاهزًا',
+      sub:`${me().title}: ${me().name}`,
+      confirmLabel:`تعليم ${arCount(pending.length,'ملف واحد','ملفين','ملفات','ملفًا')}`,
+      body:`سيُعلَّم <b>${esc(arCount(pending.length,'ملف واحد','ملفين','ملفات','ملفًا'))}</b> جاهزًا للمراجعة `
+        + 'دفعة واحدة, ويُقيَّد ذلك باسمك في سجل التوثيق.',
+      onConfirm(){
+        pending.forEach(([,i]) => markReady(i, true));
+        addAudit(tick(6), PEOPLE.staff.name,
+          `تعليم <b>${esc(arCount(pending.length,'ملف واحد','ملفين','ملفات','ملفًا'))}</b> جاهزًا للمراجعة.`,'');
+        toast(`صار ${arCount(pending.length,'ملف واحد','ملفان','ملفات','ملفًا')} جاهزًا`);
+        render();
+      }
+    });
+    return;
+  }
+
+  /* انتهاء عمل مدخل البيانات: ينتقل العدد إلى المراجعة القانونية */
+  if(t.closest('#btnSendReview')){
+    const c = counts();
+    if(!c.ready) return;
+    askConfirm({
+      title:'إرسال إلى المراجعة القانونية',
+      sub:`العدد ${ISSUE.no} · ${ISSUE.hijri}`,
+      kind: c.draft ? 'warn' : '',
+      confirmLabel:`إرسال ${arCount(c.ready,'ملف واحد','ملفين','ملفات','ملفًا')}`,
+      body:`سيُحال <b>${esc(arCount(c.ready,'ملف واحد','ملفان','ملفات','ملفًا'))}</b> إلى `
+        + `<b>${esc(PEOPLE.legal.name)}</b> للمراجعة.`
+        + (c.draft ? `<div class="modal-list"><div>
+            <svg class="icon-sm" style="color:var(--color-gray-400)"><use href="#i-edit-2"/></svg>
+            <span>${esc(arCount(c.draft,'ملف واحد','ملفان','ملفات','ملفًا'))} ما زال قيد الإعداد, ولن يُرسل.</span>
+          </div></div>` : ''),
+      onConfirm(){
+        const n = counts().ready;
+        addAudit(tick(5), PEOPLE.staff.name,
+          `إحالة <b>${esc(arCount(n,'ملف واحد','ملفين','ملفات','ملفًا'))}</b> إلى المراجعة القانونية.`,'m-ok');
+        go('legal');
+        toast(`أُحيل ${arCount(n,'ملف واحد','ملفان','ملفات','ملفًا')} إلى المراجعة`);
+      }
+    });
     return;
   }
 
@@ -2047,7 +2441,7 @@ document.addEventListener('click', e => {
   if(fix){ openDrawer(+fix.dataset.fix); return; }
 
   if(t.closest('#btnApproveAll')){
-    const pending = rows.map((r,i) => [r,i]).filter(([r]) => r.on && r.review === null);
+    const pending = rows.map((r,i) => [r,i]).filter(([r]) => r.on && r.review === 'ready');
     if(!pending.length) return;
     askConfirm({
       title:'اعتماد المتبقي',
@@ -2074,8 +2468,9 @@ document.addEventListener('click', e => {
   if(t.closest('#btnEdit')){ editing = !editing; render(); return; }
   if(t.closest('#btnAddRow')){
     editing = true;
-    rows.push({ name:'', type:'نظام', no:'', date:'', topic:'', auth:'',
-                on:true, inferred:[], review:null, manual:true });
+    rows.push({ name:'', type:'نظام', no:'', date:'', topic:'', auth:'', event:'جديد',
+                on:true, inferred:[], review:null, links:[], origin:'', reason:'',
+                text:'', manual:true });
     render();
     const last = $$('#gridBody tr').pop();
     if(last) last.querySelector('.cell-in').focus();
@@ -2098,18 +2493,9 @@ document.addEventListener('click', e => {
   if(t.closest('#btnCreate')){
     const n = picked();
     addAudit(tick(3), me().name,
-      `إنشاء <b>${esc(arCount(n,'ملف واحد','ملفين','ملفات','ملفًا'))}</b> في مجلد `
-      + `<b>${esc(ISSUE.folder)}</b> وإرسالها إلى المراجعة القانونية.`,'m-ok');
-    go('legal');
-    return;
-  }
-
-  if(t.closest('#btnRemind')){
-    const w = counts().wait;
-    addAudit(tick(6), PEOPLE.staff.name,
-      `تذكير المراجعين بـ <b>${esc(arCount(w,'ملف واحد','ملفين','ملفات','ملفًا'))}</b> بانتظار المراجعة.`,'');
-    toast('أُرسل التذكير إلى المراجعين', 'info');
-    renderAudit();
+      `إنشاء <b>${esc(arCount(n,'ملف واحد','ملفين','ملفات','ملفًا'))}</b> في مجلد <b>${esc(ISSUE.folder)}</b>.`,'m-ok');
+    go('entry');
+    toast(`أُنشئ ${arCount(n,'ملف واحد','ملفان','ملفات','ملفًا')}. أكمل بياناتها ثم علّمها جاهزة.`);
     return;
   }
 
@@ -2118,9 +2504,10 @@ document.addEventListener('click', e => {
     const c = counts();
     if(!c.ok) return;
     const held = [
-      c.wait ? [`${arCount(c.wait,'ملف واحد','ملفان','ملفات','ملفًا')} بانتظار المراجعة`, '#i-clock'] : null,
-      c.fix  ? [`${arCount(c.fix,'ملف واحد','ملفان','ملفات','ملفًا')} مردود بطلب تعديل`, '#i-warning-2'] : null,
-      c.skip ? [`${arCount(c.skip,'تشريع واحد','تشريعان','تشريعات','تشريعًا')} مستثنى`, '#i-close-circle'] : null
+      c.draft ? [`${arCount(c.draft,'ملف واحد','ملفان','ملفات','ملفًا')} ما زال قيد الإعداد`, '#i-edit-2'] : null,
+      c.wait  ? [`${arCount(c.wait,'ملف واحد','ملفان','ملفات','ملفًا')} بانتظار قرار المراجع`, '#i-clock'] : null,
+      c.fix   ? [`${arCount(c.fix,'ملف واحد','ملفان','ملفات','ملفًا')} مردود بطلب تعديل`, '#i-warning-2'] : null,
+      c.skip  ? [`${arCount(c.skip,'تشريع واحد','تشريعان','تشريعات','تشريعًا')} مستثنى`, '#i-close-circle'] : null
     ].filter(Boolean);
     askConfirm({
       title:'تأكيد النشر',
@@ -2134,14 +2521,17 @@ document.addEventListener('click', e => {
              <span>${esc(txt)}, لن يُنشر.</span></div>`).join('')}</div>` : ''),
       onConfirm(){
         const n = counts().ok;
+        rows.forEach(r => { if(r.review === 'ok') r.review = 'pub'; });
         addAudit(tick(12), PEOPLE.staff.name,
           `نشر <b>${esc(arCount(n,'ملف واحد','ملفين','ملفات','ملفًا'))}</b> من العدد ${esc(ISSUE.no)} في المكتبة.`,'m-pub');
-        go('pub');
+        render();
         toast(`نُشر ${arCount(n,'ملف واحد','ملفان','ملفات','ملفًا')} في المكتبة`);
       }
     });
     return;
   }
+
+  if(t.closest('#btnToPublish')){ go('pub'); return; }
 
   const step = t.closest('.step');
   if(step && (step.classList.contains('is-done') || step.classList.contains('is-current'))){
@@ -2153,10 +2543,12 @@ document.addEventListener('click', e => {
   }
 });
 
-/* Escape يُغلق ما هو مفتوح: الحوار قبل اللوحة, لأنه الأعلى طبقةً */
+/* Escape يُغلق ما هو مفتوح, من الأعلى طبقةً إلى الأدنى */
 document.addEventListener('keydown', e => {
   if(e.key !== 'Escape') return;
-  if(pendingConfirm !== null || $('#modalHost').innerHTML){ closeConfirm(); return; }
+  if(pendingConfirm !== null){ closeConfirm(); return; }
+  if(linkAt !== null){ closeLink(); return; }
+  if($('#modalHost').innerHTML){ closeConfirm(); return; }
   if(drawerAt !== null) closeDrawer();
 });
 
