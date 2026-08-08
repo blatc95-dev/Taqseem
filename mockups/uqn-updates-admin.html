@@ -786,6 +786,41 @@ table.grid tbody tr.rowin{animation:rowIn .26s ease both;}
 }
 .modal-foot .spacer{flex:1;}
 
+/* ------------------- نافذة النشر في التحديثات -------------------
+   قائمة اختيار لا نصّ تأكيد, فهي أوسع ولها منطقة تمرير خاصة بها. */
+.modal-lg{width:min(680px,100%);}
+.upd-bar{
+  display:flex;align-items:center;gap:var(--space-md);
+  padding:var(--space-lg) var(--space-2xl);
+  border-block:1px solid var(--color-border-secondary);
+  background:var(--color-gray-50);
+}
+.upd-bar .spacer{flex:1;}
+.upd-count{font-size:var(--local-size-xs);color:var(--color-text-secondary);}
+.upd-list{max-height:46vh;overflow-y:auto;}
+.upd-item{
+  display:flex;align-items:flex-start;gap:var(--space-lg);
+  padding:var(--space-lg) var(--space-2xl);
+  border-block-end:1px solid var(--color-gray-100);cursor:pointer;
+}
+.upd-item:last-child{border-block-end:none;}
+.upd-item:hover{background:var(--color-brand-25);}
+.upd-item input{margin-block-start:3px;}
+.upd-main{flex:1;min-width:0;}
+.upd-name{
+  display:block;font-size:var(--local-size-sm);font-weight:var(--font-weight-medium);
+  line-height:1.6;
+}
+.upd-meta{
+  display:flex;align-items:center;gap:var(--space-md);flex-wrap:wrap;
+  margin-block-start:var(--space-xs);
+  font-size:var(--local-size-2xs);color:var(--color-gray-500);
+}
+/* ما لم يُنشر يبقى معروضًا لا مخفيًّا: أن ترى سبب استثنائه خير من أن تبحث عنه */
+.upd-item.is-off{background:var(--color-gray-50);cursor:not-allowed;}
+.upd-item.is-off .upd-name{color:var(--color-gray-500);font-weight:var(--font-weight-regular);}
+.upd-item.is-off:hover{background:var(--color-gray-100);}
+
 /* ------------------------------ لوحة المراجعة ------------------------------
    المراجع لا يعتمد صفًّا في جدول, يعتمد نصًّا قرأه. */
 .drawer-scrim{
@@ -1435,6 +1470,7 @@ let createdCount = 0;
 let drawerAt = null;
 let linkAt = null;      // الصف المفتوح في نافذة الربط
 let linkKind = null;    // 'links' أو 'origin'
+let updSel = null;      // ما هو محدد في نافذة النشر في التحديثات
 
 /* من يعمل الآن مشتق من الخطوة, لا مختار من مبدّل */
 const actor = () => (STEPS.find(s => s.key === state) || {}).by || 'staff';
@@ -1443,11 +1479,13 @@ const me = () => PEOPLE[actor()];
 /* حالات الملف بعد إنشائه */
 const created  = () => state === 'entry' || state === 'legal' || state === 'pub';
 const canEdit  = () => state === 'review' || state === 'entry';
+/* تمّ العدد: نُشر منه شيء فعلًا. عندها تُختم خطوة النشر هي نفسها بعلامة. */
+const flowDone = () => state === 'pub' && rows.some(r => r.review === 'pub');
 
 function resetData(){
   rows = SEED.map((r,i) => Object.assign({}, r, {
     inferred:r.inferred.slice(), review:null, text:TEXTS[i] || '', reason:'',
-    links:[], origin:''
+    links:[], origin:'', inUpdates:false
   }));
   audit = [];
   createdCount = 0;
@@ -1485,18 +1523,23 @@ function renderStepper(){
       + '<span class="step-track"></span><span class="step-fill" id="stepFill"></span>';
     stepperBuilt = true;
   }
+  /* عند تمام العدد تُختم الخطوة الأخيرة هي نفسها, فالشريط كله علامات
+     ولا تبقى خطوة تبدو جارية بعد أن انتهى العمل. */
+  const all = flowDone();
   $$('#stepper .step').forEach((el,i) => {
     const wasDone = el.classList.contains('is-done');
     const wasCur  = el.classList.contains('is-current');
-    const isDone = i < cur, isCur = i === cur;
+    const isDone = all || i < cur;
+    const isCur  = !all && i === cur;
     el.classList.toggle('is-done', isDone);
     el.classList.toggle('is-current', isCur);
     /* تنبض الشارة عند تغيّر حالتها فقط, لا في كل رسم */
     if((isDone && !wasDone) || (isCur && !wasCur)) pulse(el.querySelector('.step-num'), 'just-changed');
   });
-  /* حافة الشريط تقف عند منتصف الخطوة الحالية: "أنت هنا" لا "أنجزت هذا" */
+  /* حافة الشريط تقف عند منتصف الخطوة الحالية: "أنت هنا" لا "أنجزت هذا",
+     إلا أن يتم العدد فتمتلئ إلى آخره. */
   const fill = $('#stepFill');
-  if(fill) fill.style.inlineSize = (((cur + 0.5) / STEPS.length) * 100).toFixed(2) + '%';
+  if(fill) fill.style.inlineSize = all ? '100%' : (((cur + 0.5) / STEPS.length) * 100).toFixed(2) + '%';
 }
 
 /* ------------------------------ تقدّم الجلب ------------------------------
@@ -1861,12 +1904,17 @@ function renderBar(){
       </button>`;
     return;
   }
+  const inUpd = rows.filter(r => r.inUpdates).length;
   bar.innerHTML = `
     <span class="ab-note">اكتمل العدد. ${c.fix
       ? esc(arCount(c.fix,'ملف واحد باقٍ','ملفان باقيان','ملفات باقية')) + ' عند مدخل البيانات.' : ''}</span>
     <span class="spacer"></span>
     <button class="btn btn-secondary"><svg class="icon-sm"><use href="#i-eye"/></svg> فتح المجلد</button>
-    <button class="btn btn-secondary" id="btnReset2"><svg class="icon-sm"><use href="#i-refresh"/></svg> عدد جديد</button>`;
+    <button class="btn btn-secondary" id="btnReset2"><svg class="icon-sm"><use href="#i-refresh"/></svg> عدد جديد</button>
+    <button class="btn ${inUpd ? 'btn-secondary' : 'btn-primary'}" id="btnUpdates">
+      <svg class="icon-sm"><use href="#i-notification"/></svg>
+      ${inUpd ? `تعديل النشر في التحديثات (<bdi>${inUpd}</bdi>)` : 'النشر في التحديثات'}
+    </button>`;
 }
 
 /* اللافتات تقول ما حدث, لا ما ستحدثه الشاشة. كل رقم فيها من الصفوف. */
@@ -1924,6 +1972,11 @@ function renderBanners(){
     if(c.fix) out.push(`<div class="banner banner-warn">
       <svg class="icon-sm"><use href="#i-warning-2"/></svg>
       <div><b>${esc(arCount(c.fix,'ملف واحد مردود','ملفان مردودان','ملفات مردودة','ملفًا مردودًا'))}</b> لن يُنشر.</div>
+    </div>`);
+    const inUpd = rows.filter(r => r.inUpdates).length;
+    if(inUpd) out.push(`<div class="banner banner-info">
+      <svg class="icon-sm"><use href="#i-notification"/></svg>
+      <div><b>${esc(arCount(inUpd,'تشريع واحد','تشريعان','تشريعات','تشريعًا'))}</b> في <b>تحديثات قانونية</b>.</div>
     </div>`);
   }
   b.innerHTML = out.join('');
@@ -2203,6 +2256,105 @@ function removeLink(name){
   renderBody(); renderTools(); renderBar(); renderAudit();
 }
 
+/* ---------------------- النشر في التحديثات ----------------------
+   إدراج التشريع في "تحديثات قانونية" إشعارٌ يخرج إلى المستخدمين, فلا يصح
+   إلا لملف منشور: إشعار يشير إلى ملف غير منشور يقود قارئه إلى لا شيء.
+   لذلك تُعرض التشريعات كلها ليُرى ما استُثني ولماذا, ويُمنع اختيار ما لم
+   يُنشر بدل أن يُخفى. */
+const canAnnounce = r => r.review === 'pub';
+
+function openUpdates(){
+  const announced = rows.map((r,i) => [r,i]).filter(([r]) => r.inUpdates).map(([,i]) => i);
+  const publishable = rows.map((r,i) => [r,i]).filter(([r]) => canAnnounce(r)).map(([,i]) => i);
+  updSel = new Set(announced.length ? announced : publishable);
+  renderUpdates();
+}
+function closeUpdates(){ updSel = null; $('#modalHost').innerHTML = ''; }
+
+function renderUpdates(){
+  if(!updSel) return;
+  const list = rows.map((r,i) => [r,i]).filter(([r]) => r.name && r.review !== 'skip');
+  const selectable = list.filter(([r]) => canAnnounce(r)).map(([,i]) => i);
+  const allOn = selectable.length > 0 && selectable.every(i => updSel.has(i));
+  const keep = $('.upd-list') ? $('.upd-list').scrollTop : 0;
+
+  $('#modalHost').innerHTML = `<div class="scrim" data-upd-scrim>
+    <div class="modal modal-lg" role="dialog" aria-modal="true" aria-label="النشر في التحديثات">
+      <div class="modal-head">
+        <span class="m-icon"><svg class="icon"><use href="#i-notification"/></svg></span>
+        <div>
+          <div class="modal-title">النشر في التحديثات</div>
+          <div class="modal-sub">العدد ${esc(ISSUE.no)} · <bdi>${esc(ISSUE.hijri)}</bdi></div>
+        </div>
+      </div>
+      <div class="upd-bar">
+        <button class="btn btn-secondary btn-sm" data-upd-all>
+          <svg class="icon-sm"><use href="${allOn ? '#i-close-circle' : '#i-tick-circle'}"/></svg>
+          ${allOn ? 'إلغاء اختيار الكل' : 'اختيار الكل'}
+        </button>
+        <span class="spacer"></span>
+        <span class="upd-count"><bdi>${updSel.size}</bdi> من <bdi>${selectable.length}</bdi> مختار</span>
+      </div>
+      <div class="upd-list">
+        ${list.map(([r,i]) => {
+          const ok = canAnnounce(r);
+          const [cls,ic,txt] = REVIEW_CHIP[r.review] || REVIEW_CHIP.draft;
+          return `<label class="upd-item${ok ? '' : ' is-off'}">
+            <input type="checkbox" data-upd="${i}"${updSel.has(i) ? ' checked' : ''}${ok ? '' : ' disabled'}>
+            <span class="upd-main">
+              <span class="upd-name">${esc(r.name)}</span>
+              <span class="upd-meta">
+                <span class="type-chip">${esc(r.type)}</span>
+                ${r.no ? `<bdi class="mono">${esc(r.no)}</bdi> ·` : ''}
+                <bdi class="mono">${esc(r.date)}</bdi> · ${esc(r.auth)}
+              </span>
+            </span>
+            ${ok ? '' : `<span class="chip ${cls}"><svg class="icon-xs"><use href="${ic}"/></svg> ${esc(txt)}</span>`}
+          </label>`;
+        }).join('')}
+      </div>
+      <div class="modal-foot">
+        <span class="spacer"></span>
+        <button class="btn btn-secondary" data-upd-close>إلغاء</button>
+        <button class="btn btn-primary" data-upd-ok${updSel.size ? '' : ' disabled'}>${esc(updOkLabel(updSel.size))}</button>
+      </div>
+    </div>
+  </div>`;
+  if($('.upd-list')) $('.upd-list').scrollTop = keep;
+}
+
+/* تبديل خانة واحدة لا يعيد بناء القائمة: إعادة البناء تُتلف العنصر الذي
+   تحت الإصبع, فيضيع تركيز لوحة المفاتيح مع كل اختيار. يتغيّر ما تغيّر فقط. */
+function updSelectable(){
+  return rows.map((r,i) => [r,i]).filter(([r]) => canAnnounce(r)).map(([,i]) => i);
+}
+function updOkLabel(n){
+  return n ? `نشر ${arCount(n,'تشريع واحد','تشريعين','تشريعات','تشريعًا')} في التحديثات`
+           : 'نشر في التحديثات';
+}
+function refreshUpdatesChrome(){
+  const selectable = updSelectable();
+  const allOn = selectable.length > 0 && selectable.every(i => updSel.has(i));
+  const btn = $('[data-upd-all]');
+  if(btn) btn.innerHTML = `<svg class="icon-sm"><use href="${allOn ? '#i-close-circle' : '#i-tick-circle'}"/></svg>
+    ${allOn ? 'إلغاء اختيار الكل' : 'اختيار الكل'}`;
+  const cnt = $('.upd-count');
+  if(cnt) cnt.innerHTML = `<bdi>${updSel.size}</bdi> من <bdi>${selectable.length}</bdi> مختار`;
+  const ok = $('[data-upd-ok]');
+  if(ok){ ok.disabled = !updSel.size; ok.textContent = updOkLabel(updSel.size); }
+}
+
+function applyUpdates(){
+  const n = updSel.size;
+  if(!n) return;
+  rows.forEach((r,i) => { r.inUpdates = updSel.has(i); });
+  addAudit(tick(7), PEOPLE.staff.name,
+    `نشر <b>${esc(arCount(n,'تشريع واحد','تشريعين','تشريعات','تشريعًا'))}</b> من العدد ${esc(ISSUE.no)} في <b>تحديثات قانونية</b>.`,'m-pub');
+  closeUpdates();
+  render();
+  toast(`نُشر ${arCount(n,'تشريع واحد','تشريعان','تشريعات','تشريعًا')} في التحديثات`);
+}
+
 /* ------------------------ إجراءات مدخل البيانات ------------------------ */
 function markReady(i, silent){
   const row = rows[i];
@@ -2364,6 +2516,18 @@ document.addEventListener('click', e => {
   const dReady = t.closest('[data-drawer-ready]');
   if(dReady){ markReady(+dReady.dataset.drawerReady); closeDrawer(); render(); return; }
   if(t.closest('[data-drawer-close]') || t.closest('[data-drawer-scrim]') === t){ closeDrawer(); return; }
+
+  /* نافذة النشر في التحديثات */
+  if(t.closest('[data-upd-all]')){
+    const selectable = updSelectable();
+    const allOn = selectable.length > 0 && selectable.every(i => updSel.has(i));
+    updSel = new Set(allOn ? [] : selectable);
+    renderUpdates();   // هنا تتغيّر كل الخانات, فإعادة البناء هي الصواب
+    return;
+  }
+  if(t.closest('[data-upd-ok]')){ applyUpdates(); return; }
+  if(t.closest('[data-upd-close]') || t.closest('[data-upd-scrim]') === t){ closeUpdates(); return; }
+  if(t.closest('#btnUpdates')){ openUpdates(); return; }
 
   /* نافذة الربط */
   if(t.closest('[data-link-add]')){ addLink(); return; }
@@ -2547,6 +2711,7 @@ document.addEventListener('click', e => {
 document.addEventListener('keydown', e => {
   if(e.key !== 'Escape') return;
   if(pendingConfirm !== null){ closeConfirm(); return; }
+  if(updSel !== null){ closeUpdates(); return; }
   if(linkAt !== null){ closeLink(); return; }
   if($('#modalHost').innerHTML){ closeConfirm(); return; }
   if(drawerAt !== null) closeDrawer();
@@ -2581,6 +2746,13 @@ document.addEventListener('input', e => {
 });
 
 document.addEventListener('change', e => {
+  const upd = e.target.closest('[data-upd]');
+  if(upd && updSel){
+    const i = +upd.dataset.upd;
+    if(upd.checked) updSel.add(i); else updSel.delete(i);
+    refreshUpdatesChrome();
+    return;
+  }
   const all = e.target.closest('#chkAll');
   if(all){
     rows.forEach(r => { r.on = all.checked; });
