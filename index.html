@@ -649,6 +649,30 @@
   table.src-table .col-acts{white-space:nowrap;width:1%;}
   .col-acts .btn-ghost{padding:7px 14px;font-size:12.5px;}
   .col-acts-pair{display:flex;gap:7px;}
+  /* one search sweeps many جهات, so the log shows the sweep and opens on press
+     to the جهات inside it */
+  table.src-table tr.log-group{cursor:pointer;}
+  table.src-table tr.log-group.is-open > td{background:var(--bg-soft);border-bottom-color:transparent;}
+  .log-toggle{
+    display:inline-flex;align-items:center;gap:7px;
+    background:var(--surface);color:var(--text);font-weight:600;font-size:12.5px;
+    padding:7px 14px;border-radius:10px;border:1px solid var(--border);
+  }
+  tr.log-group:hover .log-toggle{background:var(--blue-bg);border-color:var(--blue-bg-hover);color:var(--blue);}
+  .log-toggle .caret{font-size:9px;color:var(--text-muted);transition:transform .15s;}
+  .log-toggle[aria-expanded="true"] .caret{transform:rotate(180deg);}
+  /* a جهة inside an opened sweep: the same columns, tinted and stepped in from
+     the الجهة column so it reads as belonging to the row above */
+  table.src-table tr.log-sub-row > td{background:var(--bg-soft);font-size:12.5px;}
+  /* the tint alone is too faint to say "these belong to the row above", so the
+     جهة column carries a rule down the side of the whole opened sweep */
+  table.src-table tr.log-sub-row td.col-entity{
+    padding-inline-start:30px;font-weight:600;
+    /* box-shadow has no logical form, and the page is rtl — so the negative
+       offset is what puts the rule on the column's start edge */
+    box-shadow:inset -3px 0 0 0 var(--blue-bg-hover);
+  }
+  .log-sub-row .btn-ghost{padding:6px 13px;font-size:12px;}
   .su-note{
     margin-top:14px;padding:12px 14px;border-radius:10px;
     background:var(--bg-soft);border:1px solid var(--border);
@@ -1175,13 +1199,22 @@ function formatDateOnly(iso){
    style to learn, not two.
 
    A cell returns HTML, so a column that carries a link or a button builds its
-   own; escaping is therefore the column's job and not this function's. */
-function logTableHtml(cols, rows){
+   own; escaping is therefore the column's job and not this function's.
+
+   `opts.trAttrs` and `opts.after` are for a log whose rows are not all alike: a
+   row that opens gets its own attributes, and `after` returns the rows it opens
+   into — handed the columns, so what those rows put in each one stays under the
+   heading it belongs to. */
+function logTableHtml(cols, rows, opts){
+  const o = opts || {};
   const head = cols.map(c =>
     `<th class="${c.cls || ''}"${c.hideLabel ? ' aria-label="' + escapeHtml(c.label) + '"' : ''}>${
       c.hideLabel ? '' : escapeHtml(c.label)}</th>`).join('');
-  const body = rows.map(r =>
-    `<tr>${cols.map(c => `<td class="${c.cls || ''}">${c.cell(r) || ED_NONE}</td>`).join('')}</tr>`).join('');
+  const body = rows.map(r => {
+    const cells = cols.map(c => `<td class="${c.cls || ''}">${c.cell(r) || ED_NONE}</td>`).join('');
+    const attrs = o.trAttrs ? o.trAttrs(r) : '';
+    return `<tr${attrs ? ' ' + attrs : ''}>${cells}</tr>` + (o.after ? o.after(r, cols) : '');
+  }).join('');
   return `<div class="src-table-wrap">
     <table class="src-table"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>
   </div>`;
@@ -4692,7 +4725,95 @@ function suRenderSetup(){
   </div>`;
 }
 
-/* ---------- the log ---------- */
+/* ---------- the log ----------
+   One press of حفظ writes a record per جهة, because that is the unit a coverage
+   is claimed and deleted in. But it is not the unit anyone remembers doing: a
+   sweep of the whole registry is one act, and it used to land as seventeen rows
+   saying the same thing about the same range — the sweep itself nowhere on the
+   page, only its pieces.
+
+   So the log shows the act, and opens on press to the جهات inside it. The
+   records carry no batch id to group by, and adding one would mean a migration
+   for something the rows already say: a sweep is the records one person saved
+   over one range in one sitting. Bucketing by (owner, range) gets the first two;
+   the gap in time is what separates two sittings that happened to sweep the same
+   range, and it is minutes wide because a seventeen-جهة save is seventeen round
+   trips, not one. */
+const SU_GROUP_GAP_MS = 5 * 60 * 1000;
+function suGroupSearches(rows){
+  const buckets = new Map();
+  rows.forEach(r => {
+    const key = `${r.ownerId}|${r.from}|${r.to}`;
+    if(!buckets.has(key)) buckets.set(key, []);
+    buckets.get(key).push(r);
+  });
+  const groups = [];
+  buckets.forEach((bucket, key) => {
+    /* newest first inside the bucket, so a run of records is walked in one
+       direction and the gap to the previous one is what ends the group */
+    bucket.sort((a, b) => (a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0));
+    let group = null;
+    let sitting = 0;
+    bucket.forEach(r => {
+      const at = new Date(r.createdAt).getTime();
+      if(group && group.oldestAt - at <= SU_GROUP_GAP_MS){
+        group.records.push(r);
+        group.oldestAt = at;
+        return;
+      }
+      /* A group is a view of records, not a row, so it has no id of its own —
+         and naming it after one of its records would lose which sweeps are open
+         the moment that record is deleted. Its identity is what made it a group:
+         whose it is, over which range, and the how-many-th sitting of that range
+         it was. Deleting a جهة out of a sweep leaves all three untouched. */
+      group = { records: [r], oldestAt: at, key: `${key}|${++sitting}`.replace(/[^a-zA-Z0-9-]/g, '-') };
+      groups.push(group);
+    });
+  });
+  groups.forEach(g => {
+    const first = g.records[0];
+    Object.assign(g, {
+      ownerId: first.ownerId, user: first.user,
+      from: first.from, to: first.to, createdAt: first.createdAt,
+      itemCount: g.records.reduce((n, r) => n + (r.itemCount || 0), 0),
+      scannedCount: g.records.reduce((n, r) => n + (r.scannedCount || 0), 0),
+      withItems: g.records.filter(r => r.itemCount > 0).length
+    });
+  });
+  groups.sort((a, b) => (a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0));
+  return groups;
+}
+/* a جهة as the log knows it: the registry still holds the authority and its
+   تصنيف apart, and a key no longer in the registry keeps the label it was saved
+   with */
+function suLogSiteHtml(r, sub){
+  const site = SU_SITES.find(s => s.key === r.siteKey);
+  if(!site) return escapeHtml(r.siteName || r.siteKey || '');
+  return `${escapeHtml(site.name)}<span class="${sub}">${escapeHtml(site.section)}</span>`;
+}
+function suLogActionsHtml(r){
+  const mine = r.ownerId === currentUser.id;
+  return `<button class="btn-ghost su-log-btn" data-id="${r.id}" data-action="view">${
+      mine ? 'عرض وتعديل' : 'عرض'}</button>
+    ${mine ? `<button class="btn-ghost su-log-btn log-danger" data-id="${r.id}" data-action="delete">حذف</button>` : ''}`;
+}
+/* which sweeps are open — kept across a re-render, so deleting one جهة out of an
+   open sweep does not snap the rest shut */
+const suExpanded = new Set();
+/* What a sweep opens into is rows of the same table, not a list inside one cell:
+   the counts have to fall under العناصر and the buttons under the buttons, or
+   the columns stop being columns the moment a sweep is opened. The cells the
+   sweep's own row already said — the range, who, when — are left empty rather
+   than repeated down its جهات. */
+function suGroupDetailHtml(g, cols){
+  const hide = suExpanded.has(g.key) ? '' : ' hidden';
+  return g.records.map(r => {
+    const cells = cols.map(c =>
+      `<td class="${c.cls || ''}">${c.subCell ? c.subCell(r) : ''}</td>`).join('');
+    return `<tr class="log-sub-row" data-su-detail="${g.key}"${hide}>${cells}</tr>`;
+  }).join('');
+}
+
 let suLogCache = [];
 async function suRenderLog(){
   const list = $('#suLogList');
@@ -4711,32 +4832,42 @@ async function suRenderLog(){
   suSetupState.table = false;
   suRenderSetup();
   suLogCache = res.rows;
-  list.innerHTML = res.rows.length
+  const groups = suGroupSearches(res.rows);
+  /* a sweep that reached one جهة is already one line — there is nothing to open
+     it into, so it keeps its own name and its own buttons */
+  const single = g => g.records.length === 1;
+  list.innerHTML = groups.length
     ? logTableHtml([
-        /* the جهة is stored as one label, but the registry still holds the two
-           halves apart — so the authority is the line you read down the column
-           and its تصنيف sits under it, which is what tells six ministry rows
-           apart at a glance. A key no longer in the registry keeps the label it
-           was saved with. */
-        { label:'الجهة', cls:'col-entity', cell: r => {
-            const site = SU_SITES.find(s => s.key === r.siteKey);
-            return site
-              ? `${escapeHtml(site.name)}<span class="src-sub">${escapeHtml(site.section)}</span>`
-              : escapeHtml(r.siteName || r.siteKey || '');
-          } },
-        { label:'من', cls:'col-date', cell: r => escapeHtml(r.from || '') },
-        { label:'إلى', cls:'col-date', cell: r => escapeHtml(r.to || '') },
+        { label:'الجهة', cls:'col-entity',
+          cell: g => single(g)
+            ? suLogSiteHtml(g.records[0], 'src-sub')
+            : `<b>${escapeHtml(arCount(g.records.length, 'جهة واحدة', 'جهتان', 'جهات', 'جهة'))}</b>
+               <span class="src-sub">${g.withItems
+                 ? escapeHtml(arCount(g.withItems, 'واحدة منها فيها تحديثات', 'اثنتان منها فيها تحديثات',
+                     'منها فيها تحديثات', 'منها فيها تحديثات'))
+                 : 'لا تحديثات في أيٍّ منها'}</span>`,
+          subCell: r => suLogSiteHtml(r, 'src-sub') },
+        { label:'من', cls:'col-date', cell: g => escapeHtml(g.from || '') },
+        { label:'إلى', cls:'col-date', cell: g => escapeHtml(g.to || '') },
         { label:'العناصر', cls:'col-count',
-          cell: r => `<b>${r.itemCount}</b><span class="src-sub">من ${r.scannedCount} مفحوصًا</span>` },
-        { label:'من بحث', cls:'col-user', cell: r => escapeHtml(r.user || 'غير معروف') },
-        { label:'تاريخ البحث', cls:'col-date', cell: r => logWhenHtml(r.createdAt) },
-        { label:'إجراءات', cls:'col-acts', hideLabel:true, cell: r => `<div class="col-acts-pair">
-            <button class="btn-ghost su-log-btn" data-id="${r.id}" data-action="view">${
-              r.ownerId === currentUser.id ? 'عرض وتعديل' : 'عرض'}</button>
-            ${r.ownerId === currentUser.id
-              ? `<button class="btn-ghost su-log-btn log-danger" data-id="${r.id}" data-action="delete">حذف</button>` : ''}
-          </div>` }
-      ], res.rows)
+          cell: g => `<b>${g.itemCount}</b><span class="src-sub">من ${g.scannedCount} مفحوصًا</span>`,
+          subCell: r => `<b>${r.itemCount}</b><span class="src-sub">من ${r.scannedCount} مفحوصًا</span>` },
+        { label:'من بحث', cls:'col-user', cell: g => escapeHtml(g.user || 'غير معروف') },
+        { label:'تاريخ البحث', cls:'col-date', cell: g => logWhenHtml(g.createdAt) },
+        { label:'إجراءات', cls:'col-acts', hideLabel:true,
+          cell: g => single(g)
+            ? `<div class="col-acts-pair">${suLogActionsHtml(g.records[0])}</div>`
+            : `<button class="log-toggle" data-su-toggle="${g.key}"
+                 aria-expanded="${suExpanded.has(g.key)}">
+                 <span class="log-toggle-word">${suExpanded.has(g.key) ? 'إخفاء الجهات' : 'عرض الجهات'}</span>
+                 <span class="caret" aria-hidden="true">▾</span>
+               </button>`,
+          subCell: r => `<div class="col-acts-pair">${suLogActionsHtml(r)}</div>` }
+      ], groups, {
+        trAttrs: g => single(g) ? '' :
+          `class="log-group${suExpanded.has(g.key) ? ' is-open' : ''}" data-su-group="${g.key}"`,
+        after: (g, cols) => single(g) ? '' : suGroupDetailHtml(g, cols)
+      })
     : '<div class="empty-hint">لا يوجد أي بحث محفوظ بعد</div>';
 }
 
@@ -5120,6 +5251,28 @@ async function suOnEnter(){
   });
 
   $('#suLogList').addEventListener('click', async e => {
+    /* the whole summary row opens the sweep, not only its button: the row is
+       what was pressed at, and the button is there to say the row can be. Any
+       other button inside the row keeps its own meaning. */
+    const toggle = e.target.closest('[data-su-toggle]');
+    const row = e.target.closest('.log-group');
+    if(toggle || (row && !e.target.closest('button, a'))){
+      const key = toggle ? toggle.dataset.suToggle : row.dataset.suGroup;
+      const open = !suExpanded.has(key);
+      if(open) suExpanded.add(key); else suExpanded.delete(key);
+      const list = $('#suLogList');
+      /* one row per جهة in the sweep, so every one of them is shown or hidden */
+      list.querySelectorAll(`[data-su-detail="${key}"]`).forEach(tr => { tr.hidden = !open; });
+      const summary = list.querySelector(`[data-su-group="${key}"]`);
+      const button = list.querySelector(`[data-su-toggle="${key}"]`);
+      if(summary) summary.classList.toggle('is-open', open);
+      if(button){
+        button.setAttribute('aria-expanded', String(open));
+        const word = button.querySelector('.log-toggle-word');
+        if(word) word.textContent = open ? 'إخفاء الجهات' : 'عرض الجهات';
+      }
+      return;
+    }
     const btn = e.target.closest('.su-log-btn');
     if(!btn) return;
     const rec = suLogCache.find(r => r.id === btn.dataset.id);
