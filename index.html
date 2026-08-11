@@ -715,8 +715,24 @@
   }
   .su-pick:has(input:checked){border-color:var(--blue);background:var(--blue-bg);}
   .su-pick input{accent-color:var(--blue);margin-top:3px;flex:none;}
-  .su-pick span{font-weight:600;}
+  .su-pick .su-pick-name{font-weight:600;flex:1;min-width:0;}
   .su-pick em{display:block;font-style:normal;font-size:11.5px;color:var(--text-muted);font-weight:400;}
+  /* a جهة nobody has swept yet, said once beside its name and once above the
+     whole card — the picker is hidden in «جميع الجهات», and the mark has to be
+     seen without opening it */
+  .su-tag-new{
+    flex:none;align-self:flex-start;
+    font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:999px;
+    background:var(--blue);color:#fff;white-space:nowrap;
+  }
+  .su-new{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+    margin-bottom:16px;padding:11px 14px;border-radius:11px;
+    background:var(--blue-bg);border:1px solid var(--blue-bg-hover);
+  }
+  .su-new-text{font-size:12.5px;color:var(--text);line-height:1.9;}
+  .su-new-text b{font-weight:700;}
+  .su-new .pill-btn{flex:none;}
 
   /* ---------- a result, read by default and edited on request ---------- */
   .ed-note{font-size:12px;color:var(--text-muted);line-height:1.8;margin:0 0 12px;}
@@ -1041,6 +1057,7 @@
     </div>
 
     <div class="card">
+      <div class="su-new" id="suNew" hidden></div>
       <div class="su-scope">
         <div class="su-modes" role="radiogroup" aria-label="نطاق البحث">
           <label class="su-mode"><input type="radio" name="suScope" value="all" checked><span>جميع الجهات</span></label>
@@ -3850,7 +3867,12 @@ function suFileDatedScanner(url, label, parse){
    `dateMeaning` is shown next to the range, because "published on" means two
    different things across these sites and an employee reading a result has to
    know which one they are looking at. `note` carries a limit worth stating up
-   front rather than leaving to be inferred from a short result. */
+   front rather than leaving to be inferred from a short result.
+
+   `added` is the day a جهة entered this list. A جهة nobody has swept yet is
+   invisible in a tab whose every screen is about what was already read, so it
+   is marked «جديد» until someone sweeps it — see suNewSites. Setting it on a
+   new entry is the whole of what that takes; the mark clears itself. */
 const SU_SITES = [
   { key: 'sama-circulars', name: 'البنك المركزي السعودي', section: 'التعاميم',
     home: SAMA_LIST_URL, dateMeaning: 'تاريخ الإصدار الميلادي المنشور في الجدول',
@@ -3860,18 +3882,23 @@ const SU_SITES = [
     scan: hrsdScanner('decision', 'compiled', 'قرارات الموارد البشرية') },
   { key: 'hrsd-systems', name: 'وزارة الموارد البشرية والتنمية الاجتماعية', section: 'الأنظمة',
     home: HRSD_RP_URL + '/system', dateMeaning: 'تاريخ النشر الميلادي المنشور في البطاقة',
+    added: '2026-08-11',
     scan: hrsdScanner('regulations_and_procedures', 'compiled_system', 'أنظمة الموارد البشرية') },
   { key: 'hrsd-regulations', name: 'وزارة الموارد البشرية والتنمية الاجتماعية', section: 'اللوائح',
     home: HRSD_RP_URL + '/regulation', dateMeaning: 'تاريخ النشر الميلادي المنشور في البطاقة',
+    added: '2026-08-11',
     scan: hrsdScanner('regulations_and_procedures', 'compiled_regulation', 'لوائح الموارد البشرية') },
   { key: 'hrsd-procedures', name: 'وزارة الموارد البشرية والتنمية الاجتماعية', section: 'الإجراءات',
     home: HRSD_RP_URL + '/procedure', dateMeaning: 'تاريخ النشر الميلادي المنشور في البطاقة',
+    added: '2026-08-11',
     scan: hrsdScanner('regulations_and_procedures', 'compiled_procedure', 'إجراءات الموارد البشرية') },
   { key: 'hrsd-evidence', name: 'وزارة الموارد البشرية والتنمية الاجتماعية', section: 'الأدلة',
     home: HRSD_RP_URL + '/evidence', dateMeaning: 'تاريخ النشر الميلادي المنشور في البطاقة',
+    added: '2026-08-11',
     scan: hrsdScanner('regulations_and_procedures', 'compiled_evidence', 'أدلة الموارد البشرية') },
   { key: 'hrsd-violations', name: 'وزارة الموارد البشرية والتنمية الاجتماعية', section: 'المخالفات',
     home: HRSD_RP_URL + '/violations', dateMeaning: 'تاريخ النشر الميلادي المنشور في البطاقة',
+    added: '2026-08-11',
     scan: hrsdScanner('regulations_and_procedures', 'compiled_violations', 'مخالفات الموارد البشرية') },
   { key: 'cma-regulations', name: 'هيئة السوق المالية', section: 'التشريعات',
     home: CMA_REGULATIONS_URL, dateMeaning: 'التاريخ المنشور على بطاقة التشريع',
@@ -4824,6 +4851,8 @@ async function suRenderLog(){
     suSetupState.table = missing;
     suRenderSetup();
     suLogCache = [];
+    suLogLoaded = false;
+    suSyncNewBadges();
     list.innerHTML = missing
       ? '<div class="empty-hint">السجل غير متاح حتى تكتمل التجهيزة أعلاه</div>'
       : `<div class="empty-hint">تعذر تحميل السجل — ${escapeHtml(msg || 'خطأ غير معروف')}</div>`;
@@ -4832,6 +4861,8 @@ async function suRenderLog(){
   suSetupState.table = false;
   suRenderSetup();
   suLogCache = res.rows;
+  suLogLoaded = true;
+  suSyncNewBadges();
   const groups = suGroupSearches(res.rows);
   /* a sweep that reached one جهة is already one line — there is nothing to open
      it into, so it keeps its own name and its own buttons */
@@ -4893,7 +4924,11 @@ function suRenderPicker(){
     <div class="su-picker-list">
       ${SU_SITES.map(s => `<label class="su-pick">
         <input type="checkbox" value="${escapeHtml(s.key)}">
-        <span>${escapeHtml(s.name)}<em>${escapeHtml(s.section)}</em></span>
+        <span class="su-pick-name">${escapeHtml(s.name)}<em>${escapeHtml(s.section)}</em></span>
+        ${s.added
+          ? `<span class="su-tag-new" data-su-new="${escapeHtml(s.key)}" hidden
+               title="أُضيفت في ${escapeHtml(suFormatIso(s.added))} ولم يُبحث فيها بعد">جديد</span>`
+          : ''}
       </label>`).join('')}
     </div>`;
 }
@@ -4903,6 +4938,54 @@ function suSyncScope(){
   const count = suChosenSites().length;
   const el = $('#suPickCount');
   if(el) el.textContent = count ? `${count} من ${SU_SITES.length} جهة محددة` : 'لم تُحدَّد أي جهة بعد';
+}
+
+/* ---------- the جهات nobody has swept yet ----------
+   Every screen in this tab is about what was already read — the log, the covered
+   ranges, the default last-seven-days — so a جهة that has just been added is
+   the one thing none of them can show. It is marked «جديد» instead, and the mark
+   is not a flag anyone has to clear: a جهة is new while `added` is set and the
+   log holds no coverage for it, so the first saved sweep is what retires it, for
+   everyone, without a click.
+
+   The log has to have actually arrived first. Before it does — and if it fails —
+   `suLogCache` is empty, which is indistinguishable from "nothing was ever
+   swept", so the mark stays off rather than claiming something unread. */
+let suLogLoaded = false;
+function suNewSites(){
+  if(!suLogLoaded) return [];
+  return SU_SITES.filter(s => s.added && !suCoveredFor(s.key).length);
+}
+/* five new جهات are five listings of one ministry, and printing its name five
+   times would bury the only part that differs */
+function suNewNamesHtml(sites){
+  const byName = new Map();
+  sites.forEach(s => {
+    if(!byName.has(s.name)) byName.set(s.name, []);
+    if(s.section) byName.get(s.name).push(s.section);
+  });
+  return Array.from(byName, ([name, sections]) =>
+    `<b>${escapeHtml(name)}</b>${sections.length ? ' — ' + sections.map(escapeHtml).join('، ') : ''}`)
+    .join(' · ');
+}
+/* the picker is not re-rendered to update these: it holds the employee's
+   checkboxes, and rebuilding it mid-choice would throw them away */
+function suSyncNewBadges(){
+  const fresh = suNewSites();
+  const keys = new Set(fresh.map(s => s.key));
+  $('#suPicker').querySelectorAll('[data-su-new]').forEach(tag => {
+    tag.hidden = !keys.has(tag.dataset.suNew);
+  });
+  const banner = $('#suNew');
+  banner.hidden = !fresh.length;
+  if(!fresh.length) return;
+  banner.innerHTML = `<div class="su-new-text">
+      <span class="su-tag-new">جديد</span>
+      ${escapeHtml(arCount(fresh.length, 'جهة أُضيفت حديثًا', 'جهتان أُضيفتا حديثًا',
+        'جهات أُضيفت حديثًا', 'جهة أُضيفت حديثًا'))} ولم يُبحث فيها بعد:
+      ${suNewNamesHtml(fresh)}
+    </div>
+    <button class="pill-btn" data-su-picknew>ابحث فيها</button>`;
 }
 
 /* ---------- the range: default, coverage, and the overlap question ---------- */
@@ -5187,6 +5270,24 @@ async function suOnEnter(){
     suRenderRangeNote();
   });
   $('#suPicker').addEventListener('change', () => { suSyncScope(); suRenderRangeNote(); });
+
+  /* the notice names the new جهات, and finding them again by hand in a
+     seventeen-جهة picker is the work it exists to save — so it selects exactly
+     them and opens the picker on that choice, leaving the range and the press of
+     «بحث» to the employee */
+  $('#suNew').addEventListener('click', e => {
+    if(!e.target.closest('[data-su-picknew]')) return;
+    const keys = new Set(suNewSites().map(s => s.key));
+    if(!keys.size) return;
+    suCloseConfirm(false);
+    const some = document.querySelector('input[name="suScope"][value="some"]');
+    if(some) some.checked = true;
+    $('#suPicker').querySelectorAll('input[type="checkbox"]').forEach(c => { c.checked = keys.has(c.value); });
+    suSyncScope();
+    suRenderRangeNote();
+    suValidateRange();
+    $('#suPicker').scrollIntoView({ block:'nearest' });
+  });
 
   ['#suFrom','#suTo'].forEach(sel => $(sel).addEventListener('change', ()=>{
     /* an open "هل أنت متأكد؟" was asked about the old range, so editing the
