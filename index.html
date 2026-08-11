@@ -640,6 +640,15 @@
   table.src-table .col-date{min-width:104px;white-space:nowrap;}
   table.src-table .col-type{min-width:96px;}
   table.src-table .col-entity{min-width:160px;}
+  /* the two logs are src-tables as well: a count belongs under its heading and
+     not inside a sentence, and the row's own buttons take the last column */
+  table.src-table .col-count{white-space:nowrap;text-align:center;}
+  table.src-table td.col-count b{font-size:13.5px;}
+  /* a person's name broken across two lines reads as two people */
+  table.src-table .col-user{min-width:112px;}
+  table.src-table .col-acts{white-space:nowrap;width:1%;}
+  .col-acts .btn-ghost{padding:7px 14px;font-size:12.5px;}
+  .col-acts-pair{display:flex;gap:7px;}
   .su-note{
     margin-top:14px;padding:12px 14px;border-radius:10px;
     background:var(--bg-soft);border:1px solid var(--border);
@@ -1149,15 +1158,42 @@ function showToast(msg){
 function escapeHtml(str){
   return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
-function formatDate(iso){
-  if(!iso) return '';
-  const d = new Date(iso);
-  return d.toLocaleString('ar-SA', { dateStyle:'medium', timeStyle:'short' });
-}
 function formatDateOnly(iso){
   if(!iso) return '';
   const d = new Date(iso);
   return d.toLocaleDateString('ar-SA', { dateStyle:'medium' });
+}
+
+/* ---------- a log, as a table ----------
+   Both logs used to print a record as two lines of running text — a title, then
+   a meta line of everything else strung together with «·». But a log is not
+   prose: it is the same five or six facts repeated down the page, and the
+   questions asked of it are "which range did we already cover" and "how much
+   did that one bring back" — questions answered by reading a column, which
+   sentences do not have. So each record is a row, each fact a column, in the
+   same `src-table` the extracted tables themselves are shown in: one table
+   style to learn, not two.
+
+   A cell returns HTML, so a column that carries a link or a button builds its
+   own; escaping is therefore the column's job and not this function's. */
+function logTableHtml(cols, rows){
+  const head = cols.map(c =>
+    `<th class="${c.cls || ''}"${c.hideLabel ? ' aria-label="' + escapeHtml(c.label) + '"' : ''}>${
+      c.hideLabel ? '' : escapeHtml(c.label)}</th>`).join('');
+  const body = rows.map(r =>
+    `<tr>${cols.map(c => `<td class="${c.cls || ''}">${c.cell(r) || ED_NONE}</td>`).join('')}</tr>`).join('');
+  return `<div class="src-table-wrap">
+    <table class="src-table"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>
+  </div>`;
+}
+/* when a record was saved: the day, and under it how long ago that was —
+   «أمس» or «قبل ٣ ساعات» is what places a record without arithmetic. Past a
+   month relTime gives up and returns the date itself, and printing it twice
+   would say nothing, so the second line is dropped instead. */
+function logWhenHtml(iso){
+  const day = formatDateOnly(iso);
+  const rel = relTime(iso);
+  return escapeHtml(day) + (rel && rel !== day ? `<span class="src-sub">${escapeHtml(rel)}</span>` : '');
 }
 
 /* ---------- view routing: home (stats + log) / editor(steps 1-3) / settings ---------- */
@@ -2881,16 +2917,21 @@ async function uqnRenderLog(){
     list.innerHTML = '<div class="empty-hint">لا يوجد أي استخراج محفوظ بعد</div>';
     return;
   }
-  list.innerHTML = recs.map(r => `<div class="log-card">
-    <div class="log-card-main">
-      <div class="log-title">العدد ${escapeHtml(r.issueNumber || '—')} · ${escapeHtml(r.hijriLabel || '')}</div>
-      <div class="log-meta">${escapeHtml(r.user || 'غير معروف')} · ${formatDate(r.createdAt)} · ${r.itemCount} تشريعًا</div>
-    </div>
-    <div class="log-card-actions">
-      <button class="btn-ghost uqn-log-btn" data-id="${r.id}" data-action="view">عرض</button>
-      ${r.ownerId === currentUser.id ? `<button class="btn-ghost uqn-log-btn log-danger" data-id="${r.id}" data-action="delete">حذف</button>` : ''}
-    </div>
-  </div>`).join('');
+  list.innerHTML = logTableHtml([
+    { label:'العدد', cls:'col-count',
+      cell: r => r.issueNumber ? `<b>${escapeHtml(r.issueNumber)}</b>` : '' },
+    { label:'تاريخ العدد', cls:'col-entity',
+      cell: r => escapeHtml(r.hijriLabel || '') },
+    { label:'الموافق', cls:'col-date', cell: r => escapeHtml(r.iso || '') },
+    { label:'التشريعات', cls:'col-count', cell: r => `<b>${r.itemCount}</b>` },
+    { label:'من استخرجه', cls:'col-user', cell: r => escapeHtml(r.user || 'غير معروف') },
+    { label:'تاريخ الاستخراج', cls:'col-date', cell: r => logWhenHtml(r.createdAt) },
+    { label:'إجراءات', cls:'col-acts', hideLabel:true, cell: r => `<div class="col-acts-pair">
+        <button class="btn-ghost uqn-log-btn" data-id="${r.id}" data-action="view">عرض</button>
+        ${r.ownerId === currentUser.id
+          ? `<button class="btn-ghost uqn-log-btn log-danger" data-id="${r.id}" data-action="delete">حذف</button>` : ''}
+      </div>` }
+  ], recs);
 }
 $('#uqnLogList').addEventListener('click', async e => {
   if(e.target.closest('#uqnCopySqlBtn')){
@@ -4671,17 +4712,31 @@ async function suRenderLog(){
   suRenderSetup();
   suLogCache = res.rows;
   list.innerHTML = res.rows.length
-    ? res.rows.map(r => `<div class="log-card">
-        <div class="log-card-main">
-          <div class="log-title">${escapeHtml(r.siteName || '')} · من ${escapeHtml(r.from)} إلى ${escapeHtml(r.to)}</div>
-          <div class="log-meta">${escapeHtml(r.user || 'غير معروف')} · ${formatDate(r.createdAt)} · ${r.itemCount} عنصرًا من ${r.scannedCount} عنصرًا مفحوصًا</div>
-        </div>
-        <div class="log-card-actions">
-          <button class="btn-ghost su-log-btn" data-id="${r.id}" data-action="view">${
-            r.ownerId === currentUser.id ? 'عرض وتعديل' : 'عرض'}</button>
-          ${r.ownerId === currentUser.id ? `<button class="btn-ghost su-log-btn log-danger" data-id="${r.id}" data-action="delete">حذف</button>` : ''}
-        </div>
-      </div>`).join('')
+    ? logTableHtml([
+        /* the جهة is stored as one label, but the registry still holds the two
+           halves apart — so the authority is the line you read down the column
+           and its تصنيف sits under it, which is what tells six ministry rows
+           apart at a glance. A key no longer in the registry keeps the label it
+           was saved with. */
+        { label:'الجهة', cls:'col-entity', cell: r => {
+            const site = SU_SITES.find(s => s.key === r.siteKey);
+            return site
+              ? `${escapeHtml(site.name)}<span class="src-sub">${escapeHtml(site.section)}</span>`
+              : escapeHtml(r.siteName || r.siteKey || '');
+          } },
+        { label:'من', cls:'col-date', cell: r => escapeHtml(r.from || '') },
+        { label:'إلى', cls:'col-date', cell: r => escapeHtml(r.to || '') },
+        { label:'العناصر', cls:'col-count',
+          cell: r => `<b>${r.itemCount}</b><span class="src-sub">من ${r.scannedCount} مفحوصًا</span>` },
+        { label:'من بحث', cls:'col-user', cell: r => escapeHtml(r.user || 'غير معروف') },
+        { label:'تاريخ البحث', cls:'col-date', cell: r => logWhenHtml(r.createdAt) },
+        { label:'إجراءات', cls:'col-acts', hideLabel:true, cell: r => `<div class="col-acts-pair">
+            <button class="btn-ghost su-log-btn" data-id="${r.id}" data-action="view">${
+              r.ownerId === currentUser.id ? 'عرض وتعديل' : 'عرض'}</button>
+            ${r.ownerId === currentUser.id
+              ? `<button class="btn-ghost su-log-btn log-danger" data-id="${r.id}" data-action="delete">حذف</button>` : ''}
+          </div>` }
+      ], res.rows)
     : '<div class="empty-hint">لا يوجد أي بحث محفوظ بعد</div>';
 }
 
