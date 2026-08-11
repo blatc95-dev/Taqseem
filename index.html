@@ -3284,10 +3284,16 @@ function suSplitByRange(entries, range){
   rows.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
   return { rows, undated };
 }
-/* Drupal's pager is identical on three of these sites: ?page=N counting from
-   zero, newest first, and a page past the end renders the view empty. So a page
-   whose every entry predates the window ends the sweep — nothing behind it can
-   still be inside. */
+/* Drupal's pager works the same way wherever it turns up here: ?page=N counting
+   from zero, and a page past the end comes back with the view empty — which
+   holds whether the page is read as markup or, on hrsd, as the render array its
+   own pager fetches.
+
+   What does not hold everywhere is the order. Where a listing really is newest
+   first, a page whose every entry predates the window ends the sweep, since
+   nothing behind it can still be inside; `newestFirst` is how an adapter says
+   that of its listing, and without it every page is read. Claiming it of a
+   listing that is ordered some other way would silently drop entries. */
 async function suScanDrupalPages(cfg, range, onProgress){
   const entries = [];
   let pagesRead = 0;
@@ -3300,7 +3306,7 @@ async function suScanDrupalPages(cfg, range, onProgress){
     if(!page.length) break;
     pagesRead = pg + 1;
     entries.push(...page);
-    if(page.every(e => e.date && e.date < range.from)) break;
+    if(cfg.newestFirst && page.every(e => e.date && e.date < range.from)) break;
   }
   return { entries, pagesRead };
 }
@@ -3450,32 +3456,91 @@ async function samaScan(range, onProgress){
   return { ...suSplitByRange(entries, range), scanned: entries.length, pagesRead: 1 };
 }
 
-/* ---------- وزارة الموارد البشرية والتنمية الاجتماعية — القرارات الوزارية ----------
-   A Drupal view whose every card prints both calendars through the site's own
-   hijri_dual_date_formatter; the Gregorian half is the one read. */
+/* ---------- وزارة الموارد البشرية والتنمية الاجتماعية — ستة تصنيفات ----------
+   The ministry files its legislation under six sibling listings — القرارات
+   العامة، الأنظمة، اللوائح، الإجراءات، الأدلة، المخالفات — and each is one
+   Drupal view behind a Next.js front end.
+
+   That front end is why these pages cannot be read the way the other Drupal
+   listings here are: `?page=2` comes back holding page one, every time, because
+   the pager is not a set of links any more. It is a React control that fetches
+   the view through the endpoint the site keeps for it:
+
+     /api/proxy?langcode=ar&page=N&path=/api/v1/stelios/view/<view>/<display>
+
+   So that endpoint is what the sweep reads — the same one the visible pager
+   uses, page numbered from zero, and a page past the end comes back with no
+   rows. It answers with Drupal's render array rather than markup, and the two
+   fields worth keeping sit at different depths inside it: the title and its
+   link arrive as a blob of themed markup, the date as the dual-calendar
+   formatter's own `start_gregorian` (the Gregorian half of what the card
+   prints). Each row is therefore walked for the first of each rather than
+   indexed into — the path down to either one is the site's theme structure, and
+   that is not a contract. The markup that comes back is handed to the DOM, so
+   the title is read with the same selectors the rendered card was read with. */
 const HRSD_ORIGIN = 'https://www.hrsd.gov.sa';
-const HRSD_LIST_URL = HRSD_ORIGIN + '/knowledge-centre/decisions-and-regulations/ministerial-decisions';
+const HRSD_KC_URL = HRSD_ORIGIN + '/knowledge-centre/decisions-and-regulations';
+const HRSD_DECISIONS_URL = HRSD_KC_URL + '/ministerial-decisions';
+const HRSD_RP_URL = HRSD_KC_URL + '/regulation-and-procedures';
 const HRSD_MAX_PAGES = 25;
 
-function hrsdParse(html){
-  const doc = suDoc(html);
-  const cards = doc.querySelectorAll('.views-row');
-  if(!cards.length) return [];
-  return Array.from(cards).map(card => {
-    const link = card.querySelector('h2 a[href], h3 a[href]');
+function hrsdViewUrl(view, display){
+  return HRSD_ORIGIN + '/api/proxy?langcode=ar&path=' +
+    encodeURIComponent(`/api/v1/stelios/view/${view}/${display}`);
+}
+
+/* the response's own `rows` are the view's row-plugin groups, one per
+   unformatted list, and each of these listings renders exactly one */
+function hrsdViewRows(payload){
+  const cmd = ((payload && payload.commands) || []).find(c => c && c.command === 'update-view');
+  const groups = cmd && cmd.data && cmd.data.rows;
+  if(!Array.isArray(groups)) return null;
+  const rows = [];
+  groups.forEach(g => { if(g && Array.isArray(g.rows)) rows.push(...g.rows); });
+  return rows;
+}
+function hrsdRowFields(node, found){
+  if(Array.isArray(node)){ node.forEach(v => hrsdRowFields(v, found)); return found; }
+  if(!node || typeof node !== 'object') return found;
+  Object.keys(node).forEach(k => {
+    const v = node[k];
+    if(typeof v === 'string'){
+      /* a card holds a second link — its «اقرأ المزيد» button — so the heading
+         is what tells the two apart */
+      if(k === '#markup' && !found.markup && /<h[23][\s>]/i.test(v)) found.markup = v;
+      else if(k === 'start_gregorian' && !found.date) found.date = v;
+    }else hrsdRowFields(v, found);
+  });
+  return found;
+}
+
+function hrsdParse(body){
+  let payload;
+  try{ payload = JSON.parse(body); }catch(e){ return null; }
+  const rows = hrsdViewRows(payload);
+  if(!rows) return null;   // the endpoint's shape changed — better to fail loudly
+  return rows.map(row => {
+    const found = hrsdRowFields(row, {});
+    const link = suDoc(found.markup || '').querySelector('h2 a[href], h3 a[href]');
     return suEntry({
-      title: suText(link) || suText(card.querySelector('h2, h3')),
-      date: suGregToIso(suText(card.querySelector('.gregorian-date'))),
+      title: suText(link),
+      date: suGregToIso(found.date),
       fileUrl: link ? suSameOrigin(link.getAttribute('href'), HRSD_ORIGIN, HRSD_ORIGIN) : ''
     });
   }).filter(e => e.title);
 }
 
-async function hrsdScan(range, onProgress){
-  const got = await suScanDrupalPages(
-    { url: HRSD_LIST_URL, maxPages: HRSD_MAX_PAGES, label: 'القرارات الوزارية', parse: hrsdParse },
-    range, onProgress);
-  return { ...suSplitByRange(got.entries, range), scanned: got.entries.length, pagesRead: got.pagesRead };
+/* Every page is read, without stopping at the first one that predates the
+   window: these six views are not all ordered by date — القرارات العامة prints
+   a 2026 قرار on its last page, behind rows from 2017 — and none of them runs
+   past five pages anyway. */
+function hrsdScanner(view, display, label){
+  const url = hrsdViewUrl(view, display);
+  return async function(range, onProgress){
+    const got = await suScanDrupalPages(
+      { url, maxPages: HRSD_MAX_PAGES, label, parse: hrsdParse }, range, onProgress);
+    return { ...suSplitByRange(got.entries, range), scanned: got.entries.length, pagesRead: got.pagesRead };
+  };
 }
 
 /* ---------- هيئة السوق المالية — التشريعات، والتعاميم ----------
@@ -3555,7 +3620,8 @@ function sfdaParse(html){
 
 async function sfdaScan(range, onProgress){
   const got = await suScanDrupalPages(
-    { url: SFDA_LIST_URL, maxPages: SFDA_MAX_PAGES, label: 'لوائح الغذاء والدواء', parse: sfdaParse },
+    { url: SFDA_LIST_URL, maxPages: SFDA_MAX_PAGES, label: 'لوائح الغذاء والدواء',
+      parse: sfdaParse, newestFirst: true },
     range, onProgress);
   return { ...suSplitByRange(got.entries, range), scanned: got.entries.length, pagesRead: got.pagesRead };
 }
@@ -3623,7 +3689,8 @@ function ncnpParse(html){
 
 async function ncnpScan(range, onProgress){
   const got = await suScanDrupalPages(
-    { url: NCNP_LIST_URL, maxPages: NCNP_MAX_PAGES, label: 'تعاميم القطاع غير الربحي', parse: ncnpParse },
+    { url: NCNP_LIST_URL, maxPages: NCNP_MAX_PAGES, label: 'تعاميم القطاع غير الربحي',
+      parse: ncnpParse, newestFirst: true },
     range, onProgress);
   return { ...suSplitByRange(got.entries, range), scanned: got.entries.length, pagesRead: got.pagesRead };
 }
@@ -3715,8 +3782,23 @@ const SU_SITES = [
     home: SAMA_LIST_URL, dateMeaning: 'تاريخ الإصدار الميلادي المنشور في الجدول',
     scan: samaScan },
   { key: 'hrsd-decisions', name: 'وزارة الموارد البشرية والتنمية الاجتماعية', section: 'القرارات الوزارية',
-    home: HRSD_LIST_URL, dateMeaning: 'تاريخ القرار الميلادي المنشور في البطاقة',
-    scan: hrsdScan },
+    home: HRSD_DECISIONS_URL, dateMeaning: 'تاريخ القرار الميلادي المنشور في البطاقة',
+    scan: hrsdScanner('decision', 'compiled', 'قرارات الموارد البشرية') },
+  { key: 'hrsd-systems', name: 'وزارة الموارد البشرية والتنمية الاجتماعية', section: 'الأنظمة',
+    home: HRSD_RP_URL + '/system', dateMeaning: 'تاريخ النشر الميلادي المنشور في البطاقة',
+    scan: hrsdScanner('regulations_and_procedures', 'compiled_system', 'أنظمة الموارد البشرية') },
+  { key: 'hrsd-regulations', name: 'وزارة الموارد البشرية والتنمية الاجتماعية', section: 'اللوائح',
+    home: HRSD_RP_URL + '/regulation', dateMeaning: 'تاريخ النشر الميلادي المنشور في البطاقة',
+    scan: hrsdScanner('regulations_and_procedures', 'compiled_regulation', 'لوائح الموارد البشرية') },
+  { key: 'hrsd-procedures', name: 'وزارة الموارد البشرية والتنمية الاجتماعية', section: 'الإجراءات',
+    home: HRSD_RP_URL + '/procedure', dateMeaning: 'تاريخ النشر الميلادي المنشور في البطاقة',
+    scan: hrsdScanner('regulations_and_procedures', 'compiled_procedure', 'إجراءات الموارد البشرية') },
+  { key: 'hrsd-evidence', name: 'وزارة الموارد البشرية والتنمية الاجتماعية', section: 'الأدلة',
+    home: HRSD_RP_URL + '/evidence', dateMeaning: 'تاريخ النشر الميلادي المنشور في البطاقة',
+    scan: hrsdScanner('regulations_and_procedures', 'compiled_evidence', 'أدلة الموارد البشرية') },
+  { key: 'hrsd-violations', name: 'وزارة الموارد البشرية والتنمية الاجتماعية', section: 'المخالفات',
+    home: HRSD_RP_URL + '/violations', dateMeaning: 'تاريخ النشر الميلادي المنشور في البطاقة',
+    scan: hrsdScanner('regulations_and_procedures', 'compiled_violations', 'مخالفات الموارد البشرية') },
   { key: 'cma-regulations', name: 'هيئة السوق المالية', section: 'التشريعات',
     home: CMA_REGULATIONS_URL, dateMeaning: 'التاريخ المنشور على بطاقة التشريع',
     scan: cmaScanner(CMA_REGULATIONS_URL, 'تشريعات هيئة السوق المالية', true) },
@@ -3954,7 +4036,7 @@ function edSafeName(name, fallback, ext){
 }
 
 /* ---------- the unified result table ----------
-   One shape for twelve listings, so a sweep across them reads as one answer.
+   One shape for every listing, so a sweep across them reads as one answer.
    Four columns and a download: the جهة, what was published, when, and the
    file itself. The last column is the same fileUrl seen twice — once as
    something to open on the source site, once as bytes to save. */
@@ -4127,7 +4209,7 @@ async function suLoadSearches(){
 }
 
 /* A save writes one record per جهة: the overlap question is asked per site and
-   so is deleting a coverage, and both would blur if a twelve-site sweep
+   so is deleting a coverage, and both would blur if a whole-registry sweep
    landed as a single row. A site whose sweep failed is not written at all — its
    range was never actually read. */
 async function suSaveDraft(){
@@ -4715,8 +4797,8 @@ function suCloseConfirm(answer){
   $('#suConflict').innerHTML = '';
   resolve(answer);
 }
-/* asked once for the whole sweep and not once per جهة: twelve interruptions
-   would be answered blind */
+/* asked once for the whole sweep and not once per جهة: an interruption per
+   listing would be answered blind */
 function suConfirmOverlap(clashes, sites){
   const free = suFreeRangeForSites(sites);
   const shown = clashes.slice(0, 8);
@@ -4794,8 +4876,8 @@ async function suSearch(){
       }catch(err){
         /* a proxy that is missing would fail every جهة, so it stops the sweep;
            one site refusing is a hole in the answer, not the end of it —
-           twelve good results are worth having, and the hole gets named so
-           nobody reads the table as complete */
+           the results that did arrive are worth having, and the hole gets
+           named so nobody reads the table as complete */
         if(err && (err.proxyMissing || err.proxyStale)) throw err;
         failures.push({ label: suSiteLabel(site), message: (err && err.message) || 'خطأ غير معروف' });
       }
