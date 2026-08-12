@@ -293,3 +293,48 @@ create policy "owners can update their own site updates"
   to authenticated
   using (owner_id = auth.uid())
   with check (owner_id = auth.uid());
+
+-- وزارة السياحة's تعاميم arrived after these databases were built, and that
+-- جهة reads the mirror rather than the site, so without its two tables the
+-- sweep refuses that one source with PostgREST's "could not find the table"
+-- carried straight through the tab's error line.
+--
+-- Written to be run twice safely, unlike the statements above: a half-applied
+-- attempt is the likeliest state to find a database in here, since the first
+-- of the two tables can exist while the second does not.
+create table if not exists public.mt_circulars (
+  id integer primary key,
+  title text not null default '',
+  circular_type text not null default '',
+  circular_date date,
+  file_url text not null default '',
+  synced_at timestamptz not null default now()
+);
+
+create index if not exists mt_circulars_circular_date_idx
+  on public.mt_circulars(circular_date desc);
+
+create table if not exists public.mt_circular_syncs (
+  id uuid primary key default gen_random_uuid(),
+  ran_at timestamptz not null default now(),
+  item_count integer not null default 0
+);
+
+create index if not exists mt_circular_syncs_ran_at_idx
+  on public.mt_circular_syncs(ran_at desc);
+
+alter table public.mt_circulars enable row level security;
+alter table public.mt_circular_syncs enable row level security;
+
+-- postgres has no CREATE POLICY IF NOT EXISTS, so each is dropped first
+drop policy if exists "circulars are viewable by authenticated users" on public.mt_circulars;
+create policy "circulars are viewable by authenticated users"
+  on public.mt_circulars for select
+  to authenticated
+  using (true);
+
+drop policy if exists "circular syncs are viewable by authenticated users" on public.mt_circular_syncs;
+create policy "circular syncs are viewable by authenticated users"
+  on public.mt_circular_syncs for select
+  to authenticated
+  using (true);
