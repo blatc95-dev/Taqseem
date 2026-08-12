@@ -1,0 +1,14 @@
+{
+  "name": "taqseem-mt-circulars",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Mirrors وزارة السياحة's تعاميم into Supabase, through a real browser on the ministry's own origin.",
+  "scripts": {
+    "sync": "node sync.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0",
+    "playwright": "^1.47.0"
+  }
+}

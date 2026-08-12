@@ -3965,6 +3965,64 @@ async function mtRegulationsScan(range, onProgress){
   return { ...suSplitByRange(dated, range), scanned: entries.length, pagesRead: 1 };
 }
 
+/* ---------- وزارة السياحة — التعاميم ----------
+   The one جهة here that the tab does not read for itself, because neither of
+   the two clients it has can reach the listing, and each is turned away for a
+   different reason:
+
+     * site-proxy is refused as a non-browser — the same filter the الأنظمة
+       listing above works around. It reads the client itself, so no
+       server-side fetch passes it however it presents itself.
+     * the browser is refused by CORS. Unlike the ministry's bundles, this
+       endpoint's preflight names https://mt.gov.sa and nothing else — not this
+       app's origin, not a sandboxed `null`, not a localhost dev origin.
+
+   Neither wall can be talked around from here, and no client clears both. One
+   thing does: an ordinary browser standing on the ministry's own page, which
+   is a browser and is on mt.gov.sa. So a scheduled job drives one
+   (scripts/mt-circulars) and writes the listing into mt_circulars; this reads
+   that table.
+
+   Which makes this جهة a mirror rather than a live read, and that difference
+   is not cosmetic. A mirror that stopped refreshing would answer every later
+   range with "لا تحديثات" — a claim nobody verified, and one the log would
+   then freeze in place. So the sweep reaches only as far as the newest run
+   that actually succeeded, and asks for another run rather than guessing past
+   it. That refusal is the feature; a سعي that fails is named in the results
+   and the rest of the sweep carries on without it. */
+const MT_CIRCULARS_URL = MT_ORIGIN + '/about/circulars-and-regulations';
+
+async function mtCircularsScan(range, onProgress){
+  onProgress('جاري قراءة تعاميم وزارة السياحة…');
+  const { data: syncs, error: syncError } = await sb.from('mt_circular_syncs')
+    .select('ran_at').order('ran_at', { ascending:false }).limit(1);
+  if(syncError) throw new Error(`تعذر قراءة حالة نسخة التعاميم — ${syncError.message}`);
+  /* the run's own timestamp, folded into the Saudi day like every other date
+     in this tab, is how far the mirror can speak for */
+  const lastRun = syncs && syncs[0] ? suHttpDateToIso(syncs[0].ran_at) : '';
+  if(!lastRun){
+    throw new Error('نسخة تعاميم وزارة السياحة لم تُبنَ بعد — شغّل مهمة mt-circulars مرة واحدة ثم أعد البحث');
+  }
+  if(lastRun < range.to){
+    throw new Error(`نسخة تعاميم وزارة السياحة محدَّثة حتى ${suFormatIso(lastRun)}`
+      + ` والنطاق يمتد إلى ${suFormatIso(range.to)} — شغّل مهمة mt-circulars ثم أعد البحث`);
+  }
+
+  const { data, error } = await sb.from('mt_circulars')
+    .select('title,circular_date,file_url');
+  if(error) throw new Error(`تعذر قراءة تعاميم وزارة السياحة — ${error.message}`);
+
+  /* the mirror keeps the ministry's circularType, but it is not read here: the
+     three fields below are all this table has room for, and every other جهة
+     drops its site's own نوع for the same reason */
+  const entries = (data || []).map(r => suEntry({
+    title: r.title,
+    date: r.circular_date || '',
+    fileUrl: r.file_url || ''
+  }));
+  return { ...suSplitByRange(entries, range), scanned: entries.length, pagesRead: 1 };
+}
+
 /* ---------- the site registry ----------
    `dateMeaning` is shown next to the range, because "published on" means two
    different things across these sites and an employee reading a result has to
@@ -4037,7 +4095,12 @@ const SU_SITES = [
     home: MT_REGULATIONS_URL, dateMeaning: 'تاريخ نشر الملف على الموقع (Last-Modified للملف)',
     added: '2026-08-12',
     note: 'الصفحة تعرض 23 بطاقة، اثنتان منها (حقوق السائح وحقوق المستثمر) تفتحان صفحة على موقع الوزارة لا ملفًا منشورًا، فلا تدخلان في الفحص.',
-    scan: mtRegulationsScan }
+    scan: mtRegulationsScan },
+  { key: 'mt-circulars', name: 'وزارة السياحة', section: 'التعاميم',
+    home: MT_CIRCULARS_URL, dateMeaning: 'تاريخ التعميم المنشور على بطاقته',
+    added: '2026-08-12',
+    note: 'الموقع يمنع القراءة الآلية، فهذه الجهة تُقرأ من نسخة يحدّثها متصفح مجدول يوميًا (مهمة mt-circulars) لا من الموقع مباشرة، ويُرفض أي نطاق يتجاوز آخر تحديث ناجح.',
+    scan: mtCircularsScan }
 ];
 function suSiteLabel(site){ return site.section ? `${site.name} — ${site.section}` : site.name; }
 

@@ -1,0 +1,55 @@
+# Taqseem — keep the وزارة السياحة تعاميم mirror current.
+#
+# The tab reads this mirror instead of the ministry's site, because neither of
+# the two clients Taqseem has can call the ministry's endpoint: the proxy is
+# refused as a non-browser, and the browser is refused by CORS. A real browser
+# on the ministry's own page clears both at once, which is what sync.mjs drives.
+#
+# The tab refuses any range the newest successful run does not cover, so a run
+# that fails shows up as a refusal to sweep rather than as an empty result. That
+# is the intended behaviour — do not make a failure here silent.
+#
+# Two repository secrets are required (Settings -> Secrets and variables ->
+# Actions). Add them yourself; neither belongs in the repo:
+#   SUPABASE_URL                the project url, same one index.html carries
+#   SUPABASE_SERVICE_ROLE_KEY   service role, so the write bypasses RLS
+name: mt-circulars
+
+on:
+  schedule:
+    # 04:00 UTC = 07:00 KSA, before the working day. The listing gains a row
+    # every week or two, so daily is already far more often than it changes.
+    - cron: '0 4 * * *'
+  workflow_dispatch:
+
+# a second run writing the same rows would be harmless, but there is no reason
+# to have two browsers reading the ministry at once
+concurrency:
+  group: mt-circulars
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: scripts/mt-circulars
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Sync the mirror
+        run: node sync.mjs
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}

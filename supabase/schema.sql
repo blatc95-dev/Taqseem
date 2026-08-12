@@ -216,6 +216,55 @@ create policy "owners can delete their own site updates"
   to authenticated
   using (owner_id = auth.uid());
 
+-- ---------- mt_circulars ----------
+-- The one جهة the app does not read for itself. وزارة السياحة serves its
+-- تعاميم from an endpoint that refuses both of Taqseem's clients: site-proxy
+-- because it filters non-browsers outright, and the browser because its CORS
+-- preflight names https://mt.gov.sa alone. A real browser standing on the
+-- ministry's own page clears both at once, so a scheduled job drives one
+-- (scripts/mt-circulars) and lands the listing here for the tab to read.
+--
+-- These two tables are therefore not a log of what an employee did — they are
+-- a mirror of somebody else's page, written only by that job. It holds the
+-- service role, which bypasses RLS, so neither table carries a write policy:
+-- nothing an employee's session can do should be able to edit a mirror, since
+-- what it claims is "this is what the ministry published".
+create table public.mt_circulars (
+  id integer primary key,                    -- the ministry's own id for the تعميم
+  title text not null default '',
+  circular_type text not null default '',    -- تعميم or ضابط, as the site labels it
+  circular_date date,                        -- null when the site's date would not parse
+  file_url text not null default '',
+  synced_at timestamptz not null default now()
+);
+
+create index mt_circulars_circular_date_idx on public.mt_circulars(circular_date desc);
+
+-- One row per successful run, whether or not anything changed. This is what
+-- makes the mirror honest: without it a job that stopped running would leave
+-- the tab reporting "no updates" for every range after it died. The tab reads
+-- the newest row and refuses any range reaching past it.
+create table public.mt_circular_syncs (
+  id uuid primary key default gen_random_uuid(),
+  ran_at timestamptz not null default now(),
+  item_count integer not null default 0
+);
+
+create index mt_circular_syncs_ran_at_idx on public.mt_circular_syncs(ran_at desc);
+
+alter table public.mt_circulars enable row level security;
+alter table public.mt_circular_syncs enable row level security;
+
+create policy "circulars are viewable by authenticated users"
+  on public.mt_circulars for select
+  to authenticated
+  using (true);
+
+create policy "circular syncs are viewable by authenticated users"
+  on public.mt_circular_syncs for select
+  to authenticated
+  using (true);
+
 -- ---------- migrations for projects created earlier ----------
 -- Run these on an existing database only; a project created from the schema
 -- above is already in this shape.
