@@ -3863,6 +3863,108 @@ function suFileDatedScanner(url, label, parse){
   };
 }
 
+/* ---------- وزارة السياحة — الأنظمة واللوائح ----------
+   The one listing here the proxy cannot fetch. mt.gov.sa answers every
+   non-browser client with a 403 block page — not a robots rule and nothing
+   behind a login, but a filter that reads the client itself rather than the
+   headers it sends, so a server-side fetch cannot pass it however it presents
+   itself. The employee's own browser does pass it, so this listing is read the
+   way the أم القرى tab reads uqn.gov.sa: straight from the page. What lets that
+   work is that the ministry serves its Angular bundles with
+   `Access-Control-Allow-Origin: *`, which the portal itself does not.
+
+   The bundle is also where the list actually is. The published page is an empty
+   shell — the documents are compiled into the micro-frontend's own JavaScript,
+   so there is no markup to parse even with the page in hand. Three reads reach
+   them:
+
+     /                 the shell, which names its runtime — main.<hash>.js
+     main.<hash>.js    webpack's chunk map, {id: "<hash>", …}
+     1546.<hash>.js    the module holding the array
+
+   Every hash changes on each deployment, which is why they are resolved rather
+   than written down. The chunk *id* is webpack's deterministic id, derived from
+   the module's path, so it outlives a rebuild of the content — which is the
+   rebuild that matters, since editing the list is what triggers one. If it ever
+   stops matching, the sweep fails loudly rather than reporting a ministry that
+   published nothing.
+
+   The listing carries no date anywhere, so the files carry them — and those do
+   go through the proxy: the documents sit on cdn.mt.gov.sa, a different host,
+   outside the filter and reachable server-side. */
+const MT_ORIGIN = 'https://mt.gov.sa';
+const MT_REGULATIONS_URL = MT_ORIGIN + '/policies-regulations/regulations';
+/* the micro-frontend that renders that page, and the CDN its links are stored
+   relative to */
+const MT_APP_ORIGIN = 'https://prd-fe-pr.mt.gov.sa';
+const MT_CDN_BASE = 'https://cdn.mt.gov.sa/mtportal/mt-fe-production/';
+const MT_REG_CHUNK = '1546';
+
+/* the only read in this tab that does not go through site-proxy. It is kept
+   separate from suGetPage rather than folded into it, so that no other adapter
+   can quietly acquire a direct path to a source site: the proxy is what keeps
+   the reach policy in one place, and this is a documented exception to it. */
+async function mtGetDirect(url, label){
+  let res;
+  try{
+    res = await fetch(url, { credentials: 'omit', referrerPolicy: 'no-referrer' });
+  }catch(e){
+    /* the two ways a direct read dies look identical from here — no network, or
+       the ministry dropping the header that lets a page outside it read the
+       answer — so neither is asserted over the other */
+    throw new Error(`تعذر فتح ${label} مباشرة من المتصفح — تعذّر الاتصال أو منع الموقع القراءة من خارجه`);
+  }
+  if(!res.ok) throw new Error(`تعذر فتح ${label} (${res.status})`);
+  return res.text();
+}
+
+/* The bundle is minified, so every Arabic title arrives \u-escaped and an inner
+   quote as \". JSON.parse reads exactly that grammar for a quoted string and —
+   unlike eval — cannot run what it reads, which is the whole point when the
+   text is a third party's JavaScript. */
+function mtUnquote(raw){
+  try{ return JSON.parse(`"${raw}"`); }
+  catch(e){ return raw.replace(/\\u([0-9a-fA-F]{4})/g, (m, h) => String.fromCharCode(parseInt(h, 16))); }
+}
+
+/* Each document is an object carrying `title_ar` and `link_ar`. They are read by
+   walking title to title rather than by matching a whole object: the array's own
+   name is minifier-chosen and changes between builds, so there is nothing stable
+   to anchor on. The categories that group the documents carry `title_ar` too,
+   but no `link_ar`, so they drop out on their own — as do the two cards that
+   open a page on the ministry's site rather than a published file. */
+function mtRegulationsParse(js){
+  const out = [];
+  const re = /title_ar:"((?:[^"\\]|\\.)*)"([\s\S]*?)(?=title_ar:"|$)/g;
+  let m;
+  while((m = re.exec(js))){
+    const link = /link_ar:"((?:[^"\\]|\\.)*)"/.exec(m[2]);
+    const title = mtUnquote(m[1]).trim();
+    if(!link || !title) continue;
+    out.push(suEntry({ title, fileUrl: MT_CDN_BASE + mtUnquote(link[1]) }));
+  }
+  return out.length ? out : null;
+}
+
+async function mtRegulationsScan(range, onProgress){
+  const shapeChanged = () => new Error('تعذر قراءة الأنظمة واللوائح — تغيّر شكل الصفحة');
+  onProgress('جاري قراءة صفحة الأنظمة واللوائح…');
+  const shell = await mtGetDirect(MT_APP_ORIGIN + '/', 'صفحة الأنظمة واللوائح');
+  const main = /src="(main\.[0-9a-f]+\.js)"/.exec(shell);
+  if(!main) throw shapeChanged();
+  const runtime = await mtGetDirect(`${MT_APP_ORIGIN}/${main[1]}`, 'ملف الوزارة الرئيس');
+  /* anchored on a separator so that an id ending in these digits cannot match */
+  const hash = new RegExp(`[,{]${MT_REG_CHUNK}:"([0-9a-f]+)"`).exec(runtime);
+  if(!hash) throw shapeChanged();
+  onProgress('جاري قراءة قائمة الأنظمة واللوائح…');
+  const chunk = await mtGetDirect(
+    `${MT_APP_ORIGIN}/${MT_REG_CHUNK}.${hash[1]}.js`, 'قائمة الأنظمة واللوائح');
+  const entries = mtRegulationsParse(chunk);
+  if(!entries) throw shapeChanged();
+  const dated = await suDateByFile(entries, onProgress);
+  return { ...suSplitByRange(dated, range), scanned: entries.length, pagesRead: 1 };
+}
+
 /* ---------- the site registry ----------
    `dateMeaning` is shown next to the range, because "published on" means two
    different things across these sites and an employee reading a result has to
@@ -3930,7 +4032,12 @@ const SU_SITES = [
   { key: 'sba-regulations', name: 'الهيئة السعودية للمحامين', section: 'اللوائح',
     home: SBA_LIST_URL, dateMeaning: 'تاريخ نشر الملف على الموقع (Last-Modified للملف)',
     note: 'الموقع ينشر تاريخ إصدار بالشهر فقط (مثل «2024/11 م») ولا يصلح لنطاق محسوب بالأيام، فالتاريخ المعتمد هو تاريخ الملف.',
-    scan: suFileDatedScanner(SBA_LIST_URL, 'لوائح المحامين', sbaParse) }
+    scan: suFileDatedScanner(SBA_LIST_URL, 'لوائح المحامين', sbaParse) },
+  { key: 'mt-regulations', name: 'وزارة السياحة', section: 'الأنظمة واللوائح',
+    home: MT_REGULATIONS_URL, dateMeaning: 'تاريخ نشر الملف على الموقع (Last-Modified للملف)',
+    added: '2026-08-12',
+    note: 'الصفحة تعرض 23 بطاقة، اثنتان منها (حقوق السائح وحقوق المستثمر) تفتحان صفحة على موقع الوزارة لا ملفًا منشورًا، فلا تدخلان في الفحص.',
+    scan: mtRegulationsScan }
 ];
 function suSiteLabel(site){ return site.section ? `${site.name} — ${site.section}` : site.name; }
 
