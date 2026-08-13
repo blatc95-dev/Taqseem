@@ -38,9 +38,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # 22, not 20: supabase-js builds a realtime client the moment it is
+      # created, and that throws outright on a node with no native WebSocket —
+      # which node 20 is. This job never opens a socket, but the constructor
+      # runs before it can decline to.
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Install dependencies
         run: npm install --no-audit --no-fund
