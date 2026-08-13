@@ -1,0 +1,14 @@
+{
+  "name": "taqseem-daily-sweep",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Runs every جهة's adapter in a real browser before noon, so the log is waiting when the employee arrives.",
+  "scripts": {
+    "sweep": "node sweep.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0",
+    "playwright": "^1.47.0"
+  }
+}

@@ -182,6 +182,13 @@ create table public.site_updates (
   scanned_count integer not null default 0,  -- entries examined on the site
   item_count integer not null default 0,     -- of those, entries in range
   items jsonb not null default '[]'::jsonb,
+  -- written by the daily sweep rather than by a person. The row is otherwise
+  -- an ordinary coverage — what the flag buys is that any employee may open and
+  -- correct it (see the policy below), where a colleague's row stays read-only,
+  -- and that the log can say who checked the machine's work.
+  automatic boolean not null default false,
+  reviewed_at timestamptz,
+  reviewed_by text not null default '',
   created_at timestamptz not null default now(),
   constraint site_updates_range_order check (range_from <= range_to)
   -- deliberately no exclusion constraint on (site_key, range): overlap is a
@@ -215,6 +222,66 @@ create policy "owners can delete their own site updates"
   on public.site_updates for delete
   to authenticated
   using (owner_id = auth.uid());
+
+-- The daily sweep's rows are the one exception to "your rows are yours". They
+-- are signed by an account nobody logs into, so without this they would be
+-- read-only to everyone and the machine's mistakes would be uncorrectable —
+-- which is the opposite of the point. The check keeps an automatic row
+-- automatic: it can be corrected and confirmed, not adopted.
+create policy "employees can review the automatic sweep"
+  on public.site_updates for update
+  to authenticated
+  using (automatic)
+  with check (automatic);
+
+-- ---------- auto_sweeps ----------
+-- The daily sweep runs every جهة before noon so that an employee arriving at
+-- twelve reads a result instead of waiting for one. Its coverage lands in
+-- site_updates like anybody else's — same shape, same range, signed by the
+-- "بحث تلقائي" account — which is what lets the log group it into one line and
+-- lets an employee open it, correct it and confirm it.
+--
+-- What cannot land there is a جهة that failed. A row in site_updates is a
+-- claim that a range was read, and a sweep that threw read nothing; writing it
+-- would turn a hole in the answer into a coverage nobody has. So the failures
+-- live here instead, beside the run that produced them, and the tab shows them
+-- rather than leaving silence to be read as "لا جديد".
+--
+-- `seen_at` is the other half of that: a run that found something raises an
+-- alert in the tab, and the alert clears when somebody actually opens the log.
+create table public.auto_sweeps (
+  id uuid primary key default gen_random_uuid(),
+  ran_at timestamptz not null default now(),
+  range_from date not null,
+  range_to date not null,
+  site_count integer not null default 0,     -- جهات attempted
+  ok_count integer not null default 0,       -- of those, read without error
+  item_count integer not null default 0,     -- entries found in range
+  -- entries the sweep could not date at all. They are counted rather than
+  -- stored: a listing that never dates a file yields the same undateable rows
+  -- every single day, so keeping them would make every run look like a run
+  -- that found something, and the alert would fire daily and mean nothing.
+  undated_count integer not null default 0,
+  failures jsonb not null default '[]'::jsonb,  -- [{label, message}]
+  seen_at timestamptz,
+  seen_by text not null default ''
+);
+
+create index auto_sweeps_ran_at_idx on public.auto_sweeps(ran_at desc);
+
+alter table public.auto_sweeps enable row level security;
+
+create policy "auto sweeps are viewable by authenticated users"
+  on public.auto_sweeps for select
+  to authenticated
+  using (true);
+
+-- any employee may clear the alert: it says "somebody has looked", not "I have"
+create policy "authenticated users can mark a sweep seen"
+  on public.auto_sweeps for update
+  to authenticated
+  using (true)
+  with check (true);
 
 -- ---------- mt_circulars ----------
 -- The one جهة the app does not read for itself. وزارة السياحة serves its
@@ -338,3 +405,48 @@ create policy "circular syncs are viewable by authenticated users"
   on public.mt_circular_syncs for select
   to authenticated
   using (true);
+
+-- The daily sweep came later still. Without these an existing database keeps
+-- working exactly as it did — the sweep simply has nowhere to record itself,
+-- and its rows would be read-only to the employees meant to confirm them.
+alter table public.site_updates add column if not exists automatic boolean not null default false;
+alter table public.site_updates add column if not exists reviewed_at timestamptz;
+alter table public.site_updates add column if not exists reviewed_by text not null default '';
+
+create table if not exists public.auto_sweeps (
+  id uuid primary key default gen_random_uuid(),
+  ran_at timestamptz not null default now(),
+  range_from date not null,
+  range_to date not null,
+  site_count integer not null default 0,
+  ok_count integer not null default 0,
+  item_count integer not null default 0,
+  undated_count integer not null default 0,
+  failures jsonb not null default '[]'::jsonb,
+  seen_at timestamptz,
+  seen_by text not null default ''
+);
+
+create index if not exists auto_sweeps_ran_at_idx on public.auto_sweeps(ran_at desc);
+
+alter table public.auto_sweeps enable row level security;
+
+drop policy if exists "auto sweeps are viewable by authenticated users" on public.auto_sweeps;
+create policy "auto sweeps are viewable by authenticated users"
+  on public.auto_sweeps for select
+  to authenticated
+  using (true);
+
+drop policy if exists "authenticated users can mark a sweep seen" on public.auto_sweeps;
+create policy "authenticated users can mark a sweep seen"
+  on public.auto_sweeps for update
+  to authenticated
+  using (true)
+  with check (true);
+
+drop policy if exists "employees can review the automatic sweep" on public.site_updates;
+create policy "employees can review the automatic sweep"
+  on public.site_updates for update
+  to authenticated
+  using (automatic)
+  with check (automatic);

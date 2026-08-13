@@ -1,0 +1,68 @@
+# Taqseem — the daily sweep.
+#
+# Reads every جهة before noon so that an employee arriving at twelve reads a
+# result instead of starting one. It drives the app's own adapters in a real
+# browser rather than reimplementing them — see scripts/daily-sweep/sweep.mjs.
+#
+# The تعاميم mirror runs first, in the same job and in that order on purpose:
+# that جهة reads the mirror, and refuses any range the newest successful mirror
+# run does not cover. Two separate schedules would race, and on the mornings the
+# sweep won the race it would report that one جهة as failed for no reason.
+#
+# Secrets (Settings -> Secrets and variables -> Actions):
+#   SUPABASE_URL                the project url
+#   SUPABASE_SERVICE_ROLE_KEY   service role, so the writes bypass RLS
+#   AUTO_SWEEP_EMAIL            the بحث تلقائي account
+#   AUTO_SWEEP_PASSWORD         its password
+name: daily-sweep
+
+on:
+  schedule:
+    # 08:00 UTC = 11:00 KSA. An hour before the employee is expected, because
+    # the sweep itself takes minutes — nineteen جهات, some of them twenty pages
+    # deep — and a result that is still being fetched at noon is not a result.
+    - cron: '0 8 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: daily-sweep
+  cancel-in-progress: false
+
+jobs:
+  sweep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      # 22, not 20: supabase-js builds a realtime client on creation and that
+      # throws on a node with no native WebSocket
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: |
+          npm install --no-audit --no-fund --prefix scripts/mt-circulars
+          npm install --no-audit --no-fund --prefix scripts/daily-sweep
+
+      # real Chrome: the ministry's filter reads the browser itself, and the
+      # bundled Chromium is read as a robot
+      - name: Install Chrome
+        run: npx --prefix scripts/daily-sweep playwright install --with-deps chrome chromium
+
+      - name: Refresh the تعاميم mirror
+        working-directory: scripts/mt-circulars
+        run: node sync.mjs
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+      - name: Sweep every جهة
+        working-directory: scripts/daily-sweep
+        run: node sweep.mjs
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          AUTO_SWEEP_EMAIL: ${{ secrets.AUTO_SWEEP_EMAIL }}
+          AUTO_SWEEP_PASSWORD: ${{ secrets.AUTO_SWEEP_PASSWORD }}

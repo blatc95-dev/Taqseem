@@ -734,6 +734,46 @@
   .su-new-text b{font-weight:700;}
   .su-new .pill-btn{flex:none;}
 
+  /* ---------- what the daily sweep left ----------
+     The mark on the rail is the only part of this an employee sees before
+     opening anything, so it pulses rather than sits: a static dot on a tab
+     nobody is looking at is a dot nobody notices. It stops at the first press,
+     because by then it has done its job — and it stops for good under
+     prefers-reduced-motion, where a pulse is not a hint but an irritation. */
+  .rail-item{position:relative;}
+  .rail-dot{
+    position:absolute;top:7px;inset-inline-end:7px;
+    width:9px;height:9px;border-radius:999px;background:var(--blue);
+    box-shadow:0 0 0 0 var(--blue);animation:railPulse 2s ease-out infinite;
+  }
+  @keyframes railPulse{
+    0%{box-shadow:0 0 0 0 color-mix(in srgb, var(--blue) 55%, transparent);}
+    70%{box-shadow:0 0 0 7px transparent;}
+    100%{box-shadow:0 0 0 0 transparent;}
+  }
+  @media (prefers-reduced-motion: reduce){ .rail-dot{animation:none;} }
+
+  .su-auto{
+    margin-bottom:14px;padding:11px 14px;border-radius:11px;
+    background:var(--blue-bg);border:1px solid var(--blue-bg-hover);
+  }
+  .su-auto-line{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .su-tag-auto{
+    flex:none;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:999px;
+    background:var(--blue);color:#fff;white-space:nowrap;
+  }
+  .su-auto-text{font-size:12.5px;color:var(--text);flex:1;min-width:0;}
+  .su-auto-text b{font-weight:700;}
+  .su-auto-when{font-size:11.5px;color:var(--text-muted);flex:none;}
+  /* a sweep that could not read a جهة has not said there is nothing new there,
+     so the whole card changes colour rather than adding a quiet line */
+  .su-auto-warn{background:var(--amber-bg,#fff8e6);border-color:var(--amber-border,#f0d9a0);}
+  .su-auto-fail{margin-top:10px;padding-top:10px;border-top:1px solid var(--amber-border,#f0d9a0);}
+  .su-auto-fail-head{font-size:12.5px;font-weight:700;color:var(--text);margin-bottom:6px;}
+  .su-auto-fail-list{margin:0;padding-inline-start:18px;font-size:12px;line-height:1.85;}
+  .su-auto-fail-list b{font-weight:700;}
+  .su-auto-fail-list span{color:var(--text-muted);display:block;}
+
   /* ---------- a result, read by default and edited on request ---------- */
   .ed-note{font-size:12px;color:var(--text-muted);line-height:1.8;margin:0 0 12px;}
   .ed-note b{color:var(--text);}
@@ -1087,6 +1127,8 @@
 
     <div class="log-section" id="suLogSection" style="margin-top:34px;">
       <div class="log-section-title">سجل عمليات البحث</div>
+      <!-- what the daily sweep found, above the log it wrote into -->
+      <div id="suAuto" hidden></div>
       <div class="log-list" id="suLogList"></div>
     </div>
   </div>
@@ -1136,7 +1178,7 @@
     <button class="rail-item" id="navHome" title="الرئيسية"><span class="icon icon-home"></span><span class="rail-label">الرئيسية</span></button>
     <button class="rail-item" id="navNewFile" title="تقسيم"><span class="icon icon-document"></span><span class="rail-label">تقسيم</span></button>
     <button class="rail-item" id="navUqn" title="تشريعات أم القرى"><span class="icon icon-newspaper"></span><span class="rail-label">تشريعات أم القرى</span></button>
-    <button class="rail-item" id="navSiteUpdates" title="تحديثات المواقع"><span class="icon icon-globe"></span><span class="rail-label">تحديثات المواقع</span></button>
+    <button class="rail-item" id="navSiteUpdates" title="تحديثات المواقع"><span class="icon icon-globe"></span><span class="rail-label">تحديثات المواقع</span><span class="rail-dot" id="suAutoDot" hidden aria-label="الفحص التلقائي وجد ما يستحق النظر"></span></button>
     <button class="rail-item" id="navSettings" title="الإعدادات"><span class="icon icon-setting"></span><span class="rail-label">الإعدادات</span></button>
   </nav>
   <div class="rail-account">
@@ -1688,6 +1730,11 @@ function continueOnboarding(){
   document.body.classList.remove('pre-auth');
   railAccountName.textContent = currentUser.fullName;
   goToView('home');
+  /* the whole point of the mark is being seen from wherever the employee lands,
+     so it is fetched on the way in rather than when the tab is opened — by then
+     they have already found it. Not awaited: a sweep nobody has read yet must
+     not hold up the app opening. */
+  suLoadAutoSweep().then(s => { suAutoSweep = s; suRenderAutoAlert(); });
 }
 
 loginForm.addEventListener('submit', async e=>{
@@ -4330,7 +4377,7 @@ const suDraft = {
 function suResetDraft(){
   Object.assign(suDraft, {
     rows: [], sites: [], range: null, stats: {}, failures: [],
-    recordIds: null, readOnly: false, editing: false,
+    recordIds: null, automatic: false, readOnly: false, editing: false,
     head: '', note: '', footer: '', emptyHint: '', dirty: false, saving: false
   });
   $('#suResult').innerHTML = '';
@@ -4469,6 +4516,12 @@ function suMapRow(row){
     scannedCount: row.scanned_count,
     itemCount: row.item_count,
     items: Array.isArray(row.items) ? row.items : [],
+    /* written by the daily sweep rather than by a person. Everyone may open and
+       correct it — nobody can log in as the account that signed it, so treating
+       it like a colleague's row would leave the machine's mistakes standing. */
+    automatic: !!row.automatic,
+    reviewedBy: row.reviewed_by || '',
+    reviewedAt: row.reviewed_at || null,
     createdAt: row.created_at
   };
 }
@@ -4494,8 +4547,6 @@ async function suSaveDraft(){
     const rows = suDraft.rows.filter(r => r.siteKey === site.key);
     const stat = suDraft.stats[site.key] || {};
     const payload = {
-      owner_id: currentUser.id,
-      owner_name: currentUser.fullName,
       site_key: site.key,
       site_name: site.label,
       range_from: suDraft.range.from,
@@ -4505,6 +4556,18 @@ async function suSaveDraft(){
       item_count: rows.length,
       items: rows
     };
+    /* Saving the daily sweep's record is a review, not an authorship claim. The
+       corrections go in like anyone's, but من بحث has to keep saying بحث تلقائي
+       — that is who read the sites — so what the press adds is who checked it.
+       Reassigning owner_id would also put the row outside the very policy that
+       allowed the edit. */
+    if(suDraft.automatic){
+      payload.reviewed_at = new Date().toISOString();
+      payload.reviewed_by = currentUser.fullName;
+    }else{
+      payload.owner_id = currentUser.id;
+      payload.owner_name = currentUser.fullName;
+    }
     const existing = ids[site.key];
     const { data, error } = existing
       ? await sb.from('site_updates').update(payload).eq('id', existing).select().maybeSingle()
@@ -4988,10 +5051,15 @@ function suLogSiteHtml(r, sub){
   if(!site) return escapeHtml(r.siteName || r.siteKey || '');
   return `${escapeHtml(site.name)}<span class="${sub}">${escapeHtml(site.section)}</span>`;
 }
+/* Who may change a record: its owner, and — for the daily sweep's rows —
+   anybody, since the account that signed them is one nobody logs into. Deleting
+   stays with the owner either way: an automatic coverage is the sweep's own
+   account of what it read, and correcting it is not the same as erasing it. */
+function suCanEdit(r){ return r.ownerId === currentUser.id || r.automatic; }
 function suLogActionsHtml(r){
   const mine = r.ownerId === currentUser.id;
   return `<button class="btn-ghost su-log-btn" data-id="${r.id}" data-action="view">${
-      mine ? 'عرض وتعديل' : 'عرض'}</button>
+      suCanEdit(r) ? 'عرض وتعديل' : 'عرض'}</button>
     ${mine ? `<button class="btn-ghost su-log-btn log-danger" data-id="${r.id}" data-action="delete">حذف</button>` : ''}`;
 }
 /* which sweeps are open — kept across a re-render, so deleting one جهة out of an
@@ -5033,6 +5101,9 @@ async function suRenderLog(){
   suLogCache = res.rows;
   suLogLoaded = true;
   suSyncNewBadges();
+  suAutoSweep = await suLoadAutoSweep();
+  suRenderAutoSweep();
+  suRenderAutoAlert();
   const groups = suGroupSearches(res.rows);
   /* a sweep that reached one جهة is already one line — there is nothing to open
      it into, so it keeps its own name and its own buttons */
@@ -5156,6 +5227,88 @@ function suSyncNewBadges(){
       ${suNewNamesHtml(fresh)}
     </div>
     <button class="pill-btn" data-su-picknew>ابحث فيها</button>`;
+}
+
+/* ---------- the daily sweep ----------
+   It runs before noon so the log is already written when the employee arrives,
+   which means the tab has to say two things the log's own rows cannot.
+
+   The first is failure. A row in site_updates claims a range was read, so a
+   جهة whose sweep threw is not written at all — and the sweep's line would then
+   read "١٨ جهة، لا تحديثات" with the nineteenth simply absent. Absence is the
+   one thing nobody notices, so the failures are carried beside the run and
+   named here.
+
+   The second is that something is waiting. A سجل that quietly gained rows
+   overnight is a سجل nobody opens, so a run that found anything raises a mark
+   on the tab itself and keeps it until somebody opens the log — «أحد الموظفين»,
+   not each of them: the mark says the team has looked, not that this employee
+   has. */
+let suAutoSweep = null;
+async function suLoadAutoSweep(){
+  const { data, error } = await sb.from('auto_sweeps')
+    .select('*').order('ran_at', { ascending:false }).limit(1);
+  /* the table not being there is not an error worth showing: a project that
+     never set the sweep up is a project with no sweep, not a broken one */
+  if(error) return null;
+  return (data && data[0]) || null;
+}
+/* the mark is worth raising for anything the employee has to act on — new
+   entries, or a جهة nobody managed to read */
+function suAutoNeedsEye(s){
+  return !!s && !s.seen_at && ((s.item_count || 0) > 0 || (s.failures || []).length > 0);
+}
+function suRenderAutoAlert(){
+  const dot = $('#suAutoDot');
+  if(dot) dot.hidden = !suAutoNeedsEye(suAutoSweep);
+}
+function suRenderAutoSweep(){
+  const box = $('#suAuto');
+  if(!box) return;
+  const s = suAutoSweep;
+  if(!s){ box.hidden = true; box.innerHTML = ''; return; }
+  const failures = Array.isArray(s.failures) ? s.failures : [];
+  const when = logWhenHtml(s.ran_at);
+  const range = s.range_from === s.range_to
+    ? `يوم ${escapeHtml(suFormatIso(s.range_from))}`
+    : `من ${escapeHtml(suFormatIso(s.range_from))} إلى ${escapeHtml(suFormatIso(s.range_to))}`;
+  const found = s.item_count
+    ? `<b>${escapeHtml(arCount(s.item_count, 'تحديث واحد', 'تحديثان', 'تحديثات', 'تحديثًا'))}</b>`
+    : 'لا تحديثات';
+  const undated = s.undated_count
+    ? ` · ${escapeHtml(arCount(s.undated_count, 'عنصر واحد بلا تاريخ', 'عنصران بلا تاريخ',
+        'عناصر بلا تاريخ', 'عنصرًا بلا تاريخ'))}`
+    : '';
+  /* the failures are the loud half: a sweep that could not read a جهة has not
+     told anyone there is nothing new there */
+  const failHtml = failures.length ? `<div class="su-auto-fail">
+      <div class="su-auto-fail-head">${escapeHtml(arCount(failures.length,
+        'جهة لم تُقرأ', 'جهتان لم تُقرآ', 'جهات لم تُقرأ', 'جهة لم تُقرأ'))} في هذا الفحص —
+        لا يمكن القول إنه لا جديد فيها:</div>
+      <ul class="su-auto-fail-list">${failures.map(f =>
+        `<li><b>${escapeHtml(f.label || '')}</b><span>${escapeHtml(f.message || '')}</span></li>`).join('')}</ul>
+    </div>` : '';
+  box.hidden = false;
+  box.className = failures.length ? 'su-auto su-auto-warn' : 'su-auto';
+  box.innerHTML = `<div class="su-auto-line">
+      <span class="su-tag-auto">فحص تلقائي</span>
+      <span class="su-auto-text">${range} · ${found}${undated} ·
+        ${escapeHtml(String(s.ok_count || 0))} من ${escapeHtml(String(s.site_count || 0))} جهة قُرئت</span>
+      <span class="su-auto-when">${when}</span>
+    </div>${failHtml}`;
+}
+/* Opening the log is the reading, so the mark clears on the way in rather than
+   on a button nobody would press. It is written once — a second employee
+   opening the tab does not re-stamp who saw it first. */
+async function suMarkAutoSeen(){
+  if(!suAutoNeedsEye(suAutoSweep)) return;
+  const seenAt = new Date().toISOString();
+  const { error } = await sb.from('auto_sweeps')
+    .update({ seen_at: seenAt, seen_by: currentUser.fullName })
+    .eq('id', suAutoSweep.id).is('seen_at', null);
+  if(error) return;                       // the mark can wait for the next visit
+  suAutoSweep.seen_at = seenAt;
+  suRenderAutoAlert();
 }
 
 /* ---------- the range: default, coverage, and the overlap question ---------- */
@@ -5382,7 +5535,7 @@ function suOpenRecord(rec){
      it silently taking on the identity of whichever site happens to be first */
   const site = SU_SITES.find(s => s.key === rec.siteKey)
     || { key: rec.siteKey, name: rec.siteName || rec.siteKey, section: '', home: rec.sourceUrl || '' };
-  const mine = rec.ownerId === currentUser.id;
+  const editable = suCanEdit(rec);
   Object.assign(suDraft, {
     rows: rec.items.map(it => ({ ...it, siteKey: site.key })),
     sites: [{ key: site.key, label: rec.siteName || suSiteLabel(site), home: rec.sourceUrl || site.home }],
@@ -5390,11 +5543,20 @@ function suOpenRecord(rec){
     stats: { [site.key]: { scanned: rec.scannedCount, pagesRead: 0 } },
     failures: [],
     recordIds: { [site.key]: rec.id },
-    readOnly: !mine, editing: false,
+    automatic: !!rec.automatic,
+    readOnly: !editable, editing: false,
     dirty: false, saving: false,
     head: `${escapeHtml(rec.siteName || suSiteLabel(site))}
-           <span>· من ${escapeHtml(rec.from)} إلى ${escapeHtml(rec.to)} · ${rec.items.length} عنصرًا · ${escapeHtml(rec.user || '')}</span>`,
-    note: mine ? 'سجل محفوظ — أي تعديل هنا يحدّثه في مكانه بعد الضغط على حفظ.' : 'سجل محفوظ.',
+           <span>· من ${escapeHtml(rec.from)} إلى ${escapeHtml(rec.to)} · ${rec.items.length} عنصرًا · ${escapeHtml(rec.user || '')}${
+             rec.reviewedBy ? ` · راجعه ${escapeHtml(rec.reviewedBy)}` : ''}</span>`,
+    /* the automatic record is the one an employee is meant to check, so it says
+       what pressing حفظ will record — that they looked, not just that they
+       changed something */
+    note: rec.automatic
+      ? (rec.reviewedBy
+          ? `فحص تلقائي — راجعه ${escapeHtml(rec.reviewedBy)}. أي تعديل هنا يحدّثه في مكانه بعد الضغط على حفظ.`
+          : 'فحص تلقائي لم يراجعه أحد بعد — صحّح ما يحتاج تصحيحًا ثم اضغط حفظ ليُسجَّل أنك راجعته.')
+      : editable ? 'سجل محفوظ — أي تعديل هنا يحدّثه في مكانه بعد الضغط على حفظ.' : 'سجل محفوظ.',
     emptyHint: 'هذا السجل لا يحتوي أي عنصر.',
     footer: ''
   });
@@ -5413,6 +5575,9 @@ async function suOnEnter(){
     if(!suDraft.rows.length) suSetStatus('');
   }
   await suRenderLog();
+  /* opening the tab is the reading, so the mark clears here — after the log is
+     on the screen, not before it */
+  await suMarkAutoSeen();
   suSyncScope();
   suRenderRangeNote();
   suValidateRange();
