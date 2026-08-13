@@ -3718,7 +3718,19 @@ async function samaScan(range, onProgress){
    fields worth keeping sit at different depths inside it: the title and its
    link arrive as a blob of themed markup, the date as the dual-calendar
    formatter's own `start_gregorian` (the Gregorian half of what the card
-   prints). Each row is therefore walked for the first of each rather than
+   prints).
+
+   That date is the card's, and it is not the document's. `start_gregorian`
+   comes paired with an `end_gregorian`, which is the shape of a display or
+   validity window rather than a publication — and the documents bear this out:
+   الدليل الإجرائي لتوطين مهن إدارة المشاريع carried 13-اغسطس-2026 on its card
+   while its own page gave تاريخ النشر ٠٢-أبريل-٢٠٢٣ and تاريخ الإصدار the same
+   day. So the ministry re-dating a card lands here as a سعي result, which is
+   the wanted behaviour — a دليل the ministry touched today is worth seeing —
+   but it must not be read as "published today", and `dateMeaning` says so on
+   all six. The document's real dates are on its own page, one fetch per entry
+   away, and are deliberately not read: they would hide exactly the rows this
+   is meant to surface. Each row is therefore walked for the first of each rather than
    indexed into — the path down to either one is the site's theme structure, and
    that is not a contract. The markup that comes back is handed to the DOM, so
    the title is read with the same selectors the rendered card was read with. */
@@ -4191,26 +4203,26 @@ const SU_SITES = [
     home: SAMA_LIST_URL, dateMeaning: 'تاريخ الإصدار الميلادي المنشور في الجدول',
     scan: samaScan },
   { key: 'hrsd-decisions', name: 'وزارة الموارد البشرية والتنمية الاجتماعية', section: 'القرارات الوزارية',
-    home: HRSD_DECISIONS_URL, dateMeaning: 'تاريخ القرار الميلادي المنشور في البطاقة',
+    home: HRSD_DECISIONS_URL, dateMeaning: 'التاريخ المنشور على البطاقة — وهو تاريخ إدراجها في القائمة لا تاريخ صدور القرار',
     scan: hrsdScanner('decision', 'compiled', 'قرارات الموارد البشرية') },
   { key: 'hrsd-systems', name: 'وزارة الموارد البشرية والتنمية الاجتماعية', section: 'الأنظمة',
-    home: HRSD_RP_URL + '/system', dateMeaning: 'تاريخ النشر الميلادي المنشور في البطاقة',
+    home: HRSD_RP_URL + '/system', dateMeaning: 'التاريخ المنشور على البطاقة — وهو تاريخ إدراجها في القائمة لا تاريخ نشر الوثيقة',
     added: '2026-08-11',
     scan: hrsdScanner('regulations_and_procedures', 'compiled_system', 'أنظمة الموارد البشرية') },
   { key: 'hrsd-regulations', name: 'وزارة الموارد البشرية والتنمية الاجتماعية', section: 'اللوائح',
-    home: HRSD_RP_URL + '/regulation', dateMeaning: 'تاريخ النشر الميلادي المنشور في البطاقة',
+    home: HRSD_RP_URL + '/regulation', dateMeaning: 'التاريخ المنشور على البطاقة — وهو تاريخ إدراجها في القائمة لا تاريخ نشر الوثيقة',
     added: '2026-08-11',
     scan: hrsdScanner('regulations_and_procedures', 'compiled_regulation', 'لوائح الموارد البشرية') },
   { key: 'hrsd-procedures', name: 'وزارة الموارد البشرية والتنمية الاجتماعية', section: 'الإجراءات',
-    home: HRSD_RP_URL + '/procedure', dateMeaning: 'تاريخ النشر الميلادي المنشور في البطاقة',
+    home: HRSD_RP_URL + '/procedure', dateMeaning: 'التاريخ المنشور على البطاقة — وهو تاريخ إدراجها في القائمة لا تاريخ نشر الوثيقة',
     added: '2026-08-11',
     scan: hrsdScanner('regulations_and_procedures', 'compiled_procedure', 'إجراءات الموارد البشرية') },
   { key: 'hrsd-evidence', name: 'وزارة الموارد البشرية والتنمية الاجتماعية', section: 'الأدلة',
-    home: HRSD_RP_URL + '/evidence', dateMeaning: 'تاريخ النشر الميلادي المنشور في البطاقة',
+    home: HRSD_RP_URL + '/evidence', dateMeaning: 'التاريخ المنشور على البطاقة — وهو تاريخ إدراجها في القائمة لا تاريخ نشر الوثيقة',
     added: '2026-08-11',
     scan: hrsdScanner('regulations_and_procedures', 'compiled_evidence', 'أدلة الموارد البشرية') },
   { key: 'hrsd-violations', name: 'وزارة الموارد البشرية والتنمية الاجتماعية', section: 'المخالفات',
-    home: HRSD_RP_URL + '/violations', dateMeaning: 'تاريخ النشر الميلادي المنشور في البطاقة',
+    home: HRSD_RP_URL + '/violations', dateMeaning: 'التاريخ المنشور على البطاقة — وهو تاريخ إدراجها في القائمة لا تاريخ نشر الوثيقة',
     added: '2026-08-11',
     scan: hrsdScanner('regulations_and_procedures', 'compiled_violations', 'مخالفات الموارد البشرية') },
   { key: 'cma-regulations', name: 'هيئة السوق المالية', section: 'التشريعات',
