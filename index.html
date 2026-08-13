@@ -496,6 +496,17 @@
     background:var(--surface);color:var(--text-muted);font-size:12.5px;font-weight:600;
   }
   .settings-options button.selected{background:var(--blue-bg);border-color:var(--blue-bg-hover);color:var(--blue);}
+  .settings-input{
+    padding:8px 12px;border-radius:9px;border:1px solid var(--border);
+    background:var(--surface);color:var(--text);font:inherit;font-size:13px;
+    min-width:0;width:230px;max-width:100%;text-align:start;
+  }
+  /* the email is shown, not offered: it is how the account is identified, and
+     nothing in the app can change it */
+  .settings-input[readonly]{background:var(--bg);color:var(--text-muted);cursor:default;}
+  .settings-name-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  .settings-note{padding-top:12px;font-size:12px;color:var(--text-muted);line-height:1.8;}
+  .settings-note-error{color:var(--danger,#b42318);font-weight:600;}
   .settings-lang-row{display:flex;align-items:center;gap:8px;}
   .settings-lang-current{font-size:13px;font-weight:600;color:var(--text);}
   .soon-badge{font-size:11px;font-weight:600;color:var(--text-muted);background:var(--bg-soft);padding:3px 9px;border-radius:999px;}
@@ -869,19 +880,12 @@
       <div class="card login-card">
         <div class="eyebrow">أداة داخلية · إدخال البيانات</div>
         <h1>مرحبًا بك</h1>
-        <p class="sub">اختر اسمك من القائمة للمتابعة.</p>
+        <p class="sub">اكتب اسمك للمتابعة. سيظهر بجانب كل ما تحفظه، ويمكنك تغييره لاحقًا من الإعدادات.</p>
         <form id="chooseNameForm">
           <div class="user-box">
-            <label for="chooseNameSelect">الاسم</label>
-            <select id="chooseNameSelect" required>
-              <option value="" disabled selected>اختر اسمك</option>
-              <option value="عمر">عمر</option>
-              <option value="نجوى">نجوى</option>
-              <option value="نزار">نزار</option>
-              <option value="ذكرى">ذكرى</option>
-              <option value="ندى">ندى</option>
-              <option value="دانا">دانا</option>
-            </select>
+            <label for="chooseNameInput">الاسم</label>
+            <input id="chooseNameInput" type="text" required maxlength="40"
+                   autocomplete="name" spellcheck="false" placeholder="اسمك كما تريده أن يظهر">
           </div>
           <div class="login-error" id="chooseNameError"></div>
           <button class="btn-primary" type="submit" id="chooseNameSubmitBtn" style="width:100%;justify-content:center;margin-top:16px;">متابعة</button>
@@ -1137,6 +1141,20 @@
     <div class="section-top">
       <h2>الإعدادات</h2>
     </div>
+    <div class="card" style="margin-bottom:14px;">
+      <div class="settings-row">
+        <label for="acctEmail">البريد الإلكتروني</label>
+        <input class="settings-input" id="acctEmail" type="text" readonly tabindex="-1">
+      </div>
+      <div class="settings-row">
+        <label for="acctName">اسم المستخدم</label>
+        <div class="settings-name-row">
+          <input class="settings-input" id="acctName" type="text" maxlength="40" autocomplete="off" spellcheck="false">
+          <button class="pill-btn" id="acctNameSave" type="button">حفظ</button>
+        </div>
+      </div>
+      <div class="settings-note" id="acctNameNote">هذا الاسم يظهر بجانب كل ما تحفظه، وتغييره يغيّره في سجلاتك السابقة أيضًا.</div>
+    </div>
     <div class="card">
       <div class="settings-row">
         <label>حجم الخط</label>
@@ -1297,6 +1315,7 @@ function goToView(view){
   if(view === 'home') renderHome();
   if(view === 'uqn') uqnRenderLog();
   if(view === 'siteUpdates') suOnEnter();
+  if(view === 'settings') settingsOnEnter();
 }
 
 function goToStep(n){
@@ -1689,7 +1708,7 @@ const resetPasswordConfirm = $('#resetPasswordConfirm');
 const resetPasswordError = $('#resetPasswordError');
 const resetPasswordSubmitBtn = $('#resetPasswordSubmitBtn');
 const chooseNameForm = $('#chooseNameForm');
-const chooseNameSelect = $('#chooseNameSelect');
+const chooseNameInput = $('#chooseNameInput');
 const chooseNameError = $('#chooseNameError');
 const chooseNameSubmitBtn = $('#chooseNameSubmitBtn');
 
@@ -1698,7 +1717,22 @@ function showLoginGate(){
   goToView('login');
 }
 
-const NAME_OPTIONS = ['عمر','نجوى','نزار','ذكرى','ندى','دانا'];
+const NAME_MAX = 40;
+/* The name used to be one of six written into the page, which meant a new
+   employee could not be onboarded — and a wrong choice could not be undone —
+   without editing and redeploying the app. So any name is accepted now, and
+   what is checked is only that it is a name at all.
+   The email test is the one rule kept from the old list: the database trigger
+   used to fall back to the address when no name was set, and those leftovers
+   still have to read as "no name chosen yet" rather than become somebody's
+   display name. */
+function nameIsChosen(s){
+  const t = String(s || '').trim();
+  return !!t && !t.includes('@');
+}
+function cleanName(s){
+  return String(s || '').replace(/\s+/g, ' ').trim().slice(0, NAME_MAX);
+}
 
 /* onboarding order after a successful login: (1) force a password reset
    away from the admin-set temporary password, then (2) make the employee
@@ -1706,14 +1740,12 @@ const NAME_OPTIONS = ['عمر','نجوى','نزار','ذكرى','ندى','دان
 async function enterApp(user){
   const { data: profile } = await sb.from('profiles').select('full_name,must_reset_password').eq('id', user.id).single();
   const storedName = (profile && profile.full_name) || '';
-  // only trust a name that's actually one of the fixed options — older
-  // accounts may have a leftover email address in this column (the DB
-  // trigger used to fall back to the email when no name was set), which
-  // must still be treated as "no name chosen yet".
-  const fullName = NAME_OPTIONS.includes(storedName) ? storedName : '';
+  const fullName = nameIsChosen(storedName) ? storedName.trim() : '';
   // missing column/row reads as "must reset" (fail safe rather than skip it)
   const mustResetPassword = !profile || profile.must_reset_password !== false;
-  currentUser = { id: user.id, fullName, mustResetPassword };
+  /* the address is carried so الإعدادات can show which account this is — it is
+     the one thing about the account nothing in the app may change */
+  currentUser = { id: user.id, email: user.email || '', fullName, mustResetPassword };
   document.body.classList.add('pre-auth');
   if(currentUser.mustResetPassword){
     goToView('resetPassword');
@@ -1784,9 +1816,14 @@ resetPasswordForm.addEventListener('submit', async e=>{
 
 chooseNameForm.addEventListener('submit', async e=>{
   e.preventDefault();
-  const name = chooseNameSelect.value;
-  if(!name) return;
+  const name = cleanName(chooseNameInput.value);
   chooseNameError.textContent = '';
+  if(!nameIsChosen(name)){
+    chooseNameError.textContent = name.includes('@')
+      ? 'اكتب اسمك لا بريدك الإلكتروني'
+      : 'اكتب اسمك للمتابعة';
+    return;
+  }
   chooseNameSubmitBtn.disabled = true;
   const { error } = await sb.from('profiles').update({ full_name: name }).eq('id', currentUser.id);
   chooseNameSubmitBtn.disabled = false;
@@ -1797,6 +1834,75 @@ chooseNameForm.addEventListener('submit', async e=>{
   currentUser.fullName = name;
   continueOnboarding();
 });
+
+/* ---------- الحساب, in الإعدادات ----------
+   The name is not only in `profiles`: every record carries the name of whoever
+   saved it, copied in at save time so a log stays readable without joining
+   anything. That copy is what the log actually shows — so renaming without
+   rewriting it would leave somebody's past work signed by the name they are
+   trying to correct, which is the whole reason anyone opens this.
+   Only their own rows are touched, which is also all row-level security would
+   permit; the daily sweep's rows are signed بحث تلقائي and are nobody's to
+   rename. */
+const NAME_STAMPED_TABLES = ['records', 'uqn_extractions', 'site_updates'];
+const ACCT_NOTE = 'هذا الاسم يظهر بجانب كل ما تحفظه، وتغييره يغيّره في سجلاتك السابقة أيضًا.';
+function settingsOnEnter(){
+  if(!currentUser) return;
+  $('#acctEmail').value = currentUser.email || '—';
+  $('#acctName').value = currentUser.fullName || '';
+  /* the outcome of the last save is about that save, so it does not survive
+     leaving the page — least of all a failure, which would sit there looking
+     like the state of things now */
+  $('#acctNameNote').textContent = ACCT_NOTE;
+  $('#acctNameNote').classList.remove('settings-note-error');
+}
+async function saveAccountName(){
+  const btn = $('#acctNameSave');
+  const note = $('#acctNameNote');
+  const name = cleanName($('#acctName').value);
+  const fail = msg => {
+    note.textContent = msg;
+    note.classList.add('settings-note-error');
+  };
+  if(!nameIsChosen(name)){
+    fail(name.includes('@') ? 'اكتب اسمًا لا بريدًا إلكترونيًا.' : 'الاسم لا يمكن أن يكون فارغًا.');
+    return;
+  }
+  if(name === currentUser.fullName){
+    note.classList.remove('settings-note-error');
+    note.textContent = 'الاسم كما هو — لم يتغيّر شيء.';
+    return;
+  }
+  btn.disabled = true;
+  note.classList.remove('settings-note-error');
+  note.textContent = 'جاري الحفظ…';
+
+  const { error } = await sb.from('profiles').update({ full_name: name }).eq('id', currentUser.id);
+  if(error){
+    btn.disabled = false;
+    fail('تعذر حفظ الاسم، حاول مرة أخرى.');
+    return;
+  }
+  /* the profile is the name from now on, so it is set before the older records
+     are rewritten: if one of those fails, the name is still changed and the
+     stragglers are named rather than the whole thing reported as failed */
+  currentUser.fullName = name;
+  railAccountName.textContent = name;
+  const stale = [];
+  for(const table of NAME_STAMPED_TABLES){
+    const { error: e2 } = await sb.from(table)
+      .update({ owner_name: name }).eq('owner_id', currentUser.id);
+    if(e2) stale.push(table);
+  }
+  btn.disabled = false;
+  $('#acctName').value = name;
+  if(stale.length){
+    fail(`حُفظ الاسم، لكن تعذر تحديثه في سجلات سابقة (${stale.join('، ')}). حاول الحفظ مرة أخرى.`);
+    return;
+  }
+  note.textContent = 'تم الحفظ — حُدِّث الاسم هنا وفي سجلاتك السابقة.';
+  showToast('تم حفظ الاسم');
+}
 
 $('#navSignOut').addEventListener('click', async ()=>{
   await sb.auth.signOut();
@@ -5793,6 +5899,8 @@ $('#navNewFile').addEventListener('click', ()=>{
 $('#navUqn').addEventListener('click', ()=>goToView('uqn'));
 $('#navSiteUpdates').addEventListener('click', ()=>goToView('siteUpdates'));
 $('#navSettings').addEventListener('click', ()=>goToView('settings'));
+$('#acctNameSave').addEventListener('click', saveAccountName);
+$('#acctName').addEventListener('keydown', e => { if(e.key === 'Enter') saveAccountName(); });
 
 function applyFontScale(scale){
   document.documentElement.setAttribute('data-font-scale', scale);
