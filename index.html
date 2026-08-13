@@ -3786,6 +3786,42 @@ function hrsdParse(body){
   }).filter(e => e.title);
 }
 
+/* The card's date is not the document's, and a row saying 13-اغسطس-2026 over a
+   دليل written in 2023 is the kind of thing an employee has to be told rather
+   than left to discover. The document's own page carries تاريخ النشر plainly,
+   so it is read — but only for the rows that actually landed in the range,
+   which is a handful on a normal day, not the ninety a listing holds.
+   The label is matched exactly and the date taken from the smallest ancestor
+   around it that holds one, so تاريخ الإصدار and تاريخ تنفيذ القرار next to it
+   cannot be picked up by mistake. */
+function hrsdPublishedOn(html){
+  const doc = suDoc(html);
+  const labels = Array.from(doc.querySelectorAll('*'))
+    .filter(el => !el.children.length && suText(el) === 'تاريخ النشر');
+  for(const label of labels){
+    let scope = label;
+    for(let up = 0; up < 5 && scope.parentElement; up++){
+      scope = scope.parentElement;
+      const greg = scope.querySelector('.gregorian-date');
+      if(greg) return suGregToIso(suText(greg));
+    }
+  }
+  return '';
+}
+/* only where the two disagree: a row whose card date is the publication date
+   has nothing to add, and a note under every date would be noise */
+async function hrsdAddPublishedOn(rows, onProgress){
+  const urls = Array.from(new Set(rows.map(r => r.fileUrl).filter(Boolean)));
+  if(!urls.length) return;
+  onProgress(`جاري قراءة تواريخ نشر الوثائق… (${urls.length})`);
+  const pages = await suProxyFetchMany(urls, 'GET', () => {});
+  const dateFor = new Map(pages.map(p => [p.url, p.ok ? hrsdPublishedOn(p.body) : '']));
+  rows.forEach(r => {
+    const on = r.fileUrl && dateFor.get(r.fileUrl);
+    if(on && on !== r.date) r.publishedOn = on;
+  });
+}
+
 /* Every page is read, without stopping at the first one that predates the
    window: these six views are not all ordered by date — القرارات العامة prints
    a 2026 قرار on its last page, behind rows from 2017 — and none of them runs
@@ -3795,7 +3831,12 @@ function hrsdScanner(view, display, label){
   return async function(range, onProgress){
     const got = await suScanDrupalPages(
       { url, maxPages: HRSD_MAX_PAGES, label, parse: hrsdParse }, range, onProgress);
-    return { ...suSplitByRange(got.entries, range), scanned: got.entries.length, pagesRead: got.pagesRead };
+    const split = suSplitByRange(got.entries, range);
+    /* a page that would not open costs the note, not the row: the sweep already
+       found the entry, and losing it over a second read nobody asked for would
+       be worse than showing it without its publication date */
+    try{ await hrsdAddPublishedOn(split.rows, onProgress); }catch(e){}
+    return { ...split, scanned: got.entries.length, pagesRead: got.pagesRead };
   };
 }
 
@@ -4318,6 +4359,14 @@ function edCellHtml(col, row, i, draft){
     if(col.type === 'site'){
       const site = draft.sites.find(s => s.key === value);
       return escapeHtml((site && site.label) || value) || ED_NONE;
+    }
+    /* Where the source's own listing date is not when the document was
+       published, the row says both. Otherwise a دليل from 2023 that the
+       ministry merely re-dated reads as published today, and the range's note
+       cannot help — it speaks about the جهة, and this is about this row. */
+    if(col.type === 'date' && row.publishedOn){
+      return `${escapeHtml(value) || ED_NONE}<span class="src-sub">الوثيقة منشورة ${
+        escapeHtml(suFormatIso(row.publishedOn))}</span>`;
     }
     return escapeHtml(value) || ED_NONE;
   }
