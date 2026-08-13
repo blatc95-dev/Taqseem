@@ -4525,11 +4525,36 @@ function suMapRow(row){
     createdAt: row.created_at
   };
 }
+/* The two kinds of record are loaded apart because one of them arrives every
+   morning. The daily sweep writes a row per جهة, so a single «newest 300» would
+   be nothing but sweep inside a fortnight and the searches people actually ran
+   would fall off the end of their own log. Manual records keep the whole
+   window; the sweep keeps a month, which is far more than the log shows of it
+   anyway — it collapses to one line a day. */
+const SU_LOG_MANUAL_LIMIT = 300;
+const SU_LOG_AUTO_DAYS = 30;
+const SU_LOG_AUTO_LIMIT = 1200;      // ~19 جهة × 30 يومًا, with room to spare
 async function suLoadSearches(){
-  const { data, error } = await sb.from('site_updates')
-    .select('*').order('created_at', { ascending:false }).limit(300);
-  if(error) return { error };
-  return { rows: data.map(suMapRow) };
+  const since = suShiftIso(suTodayIso(), -SU_LOG_AUTO_DAYS);
+  const [manual, auto] = await Promise.all([
+    sb.from('site_updates').select('*').eq('automatic', false)
+      .order('created_at', { ascending:false }).limit(SU_LOG_MANUAL_LIMIT),
+    sb.from('site_updates').select('*').eq('automatic', true)
+      .gte('range_to', since)
+      .order('created_at', { ascending:false }).limit(SU_LOG_AUTO_LIMIT),
+  ]);
+  /* a database that has not taken the sweep's columns yet has no `automatic` to
+     filter on, and both halves fail on it. That is not a broken log — it is a
+     log with no sweep in it, so it is read the way it always was. */
+  if(manual.error && /automatic/.test(manual.error.message || '')){
+    const { data, error } = await sb.from('site_updates')
+      .select('*').order('created_at', { ascending:false }).limit(SU_LOG_MANUAL_LIMIT);
+    if(error) return { error };
+    return { rows: data.map(suMapRow) };
+  }
+  if(manual.error) return { error: manual.error };
+  if(auto.error) return { error: auto.error };
+  return { rows: manual.data.concat(auto.data).map(suMapRow) };
 }
 
 /* A save writes one record per جهة: the overlap question is asked per site and
@@ -5325,14 +5350,27 @@ function suCoveredFor(siteKey){
   return suLogCache.filter(r => r.siteKey === siteKey)
     .slice().sort((a,b) => (a.from < b.from ? 1 : -1));
 }
+/* The overlap question asks "somebody already did this — do you mean to do it
+   again?", and that only makes sense about work a person did. The daily sweep
+   covers today, every day, on every جهة: counted here it would put the question
+   in front of every search anybody ever runs, and a question that always
+   appears is one people learn to click past — including the morning it is
+   about a colleague's actual sweep.
+   The sweep is also the thing an employee is most expected to go over again,
+   so treating its coverage as a reason not to look would be backwards. */
+function suHumanCoverageFor(siteKey){
+  return suCoveredFor(siteKey).filter(r => !r.automatic);
+}
 function suConflictsFor(siteKey, range){
-  return suCoveredFor(siteKey).filter(r => suRangesOverlap(range, r));
+  return suHumanCoverageFor(siteKey).filter(r => suRangesOverlap(range, r));
 }
 /* the natural next sweep across everything chosen: start the day after the
-   newest day already covered on any of them, and run to today */
+   newest day already covered on any of them, and run to today. The sweep's own
+   coverage is left out for the same reason — otherwise this always answers
+   "tomorrow", and there is never a range left to suggest */
 function suFreeRangeForSites(sites){
   let newest = '';
-  sites.forEach(s => suCoveredFor(s.key).forEach(r => { if(r.to > newest) newest = r.to; }));
+  sites.forEach(s => suHumanCoverageFor(s.key).forEach(r => { if(r.to > newest) newest = r.to; }));
   if(!newest) return null;
   const from = suShiftIso(newest, 1);
   const to = suTodayIso();
@@ -5355,9 +5393,12 @@ function suRenderRangeNote(){
       notes.map(s => `<br>· <b>${escapeHtml(s.name)}</b> — ${escapeHtml(s.note)}`).join(''));
   }
   /* coverage is per site, so with many chosen only the ones that were already
-     swept are worth listing — the rest have nothing to say */
+     swept are worth listing — the rest have nothing to say. The daily sweep is
+     left out here too: two chips a جهة, eight in all, and it would spend every
+     one of them saying "اليوم" on every جهة, which is the one thing already
+     known. What is worth seeing is which days a person covered. */
   const covered = [];
-  sites.forEach(s => suCoveredFor(s.key).slice(0, 2).forEach(r =>
+  sites.forEach(s => suHumanCoverageFor(s.key).slice(0, 2).forEach(r =>
     covered.push(`${s.name}: من ${r.from} إلى ${r.to}`)));
   const chips = covered.length
     ? `<div class="su-covered">${covered.slice(0, 8)
