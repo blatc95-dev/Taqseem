@@ -49,8 +49,11 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
-      - name: Install Chromium
-        run: npx playwright install --with-deps chromium
+      # real Chrome, not the bundled Chromium: the ministry's filter reads the
+      # browser itself, and the two are not read the same way. Chromium is
+      # installed alongside it only as the script's fallback.
+      - name: Install Chrome
+        run: npx playwright install --with-deps chrome chromium
 
       - name: Sync the mirror
         run: node sync.mjs

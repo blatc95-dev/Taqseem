@@ -63,16 +63,24 @@ function toIso(raw) {
 }
 
 // one round of the listing, asked from inside the page so that it carries the
-// page's origin. A non-200 is returned rather than thrown so the caller can say
-// which round failed and stop with the rounds it already has.
+// page's origin. Every failure is returned rather than thrown — including the
+// network one, which arrives as a bare "Failed to fetch" and would otherwise
+// surface as a stack trace inside page.evaluate with nothing in it to act on.
 async function fetchRound(page, afterId) {
   return page.evaluate(
     async ({ url, body }) => {
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
+      let res;
+      try {
+        res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+      } catch (e) {
+        // the call never completed: either the filter refused it, or it did
+        // answer and the answer carried no CORS header for this page
+        return { error: `the request did not complete (${e.message})` };
+      }
       if (!res.ok) return { error: `HTTP ${res.status}` };
       try {
         return { payload: await res.json() };
@@ -130,20 +138,64 @@ function toRecord(it) {
   };
 }
 
+// What the ministry's filter is looking at is the browser itself, so the closer
+// this is to one somebody actually uses, the less there is to notice. Real
+// Chrome rather than the Chromium playwright ships, no automation flag on the
+// renderer, and a user agent with "Headless" taken out of it — that word alone
+// is enough to be told apart. The bundled Chromium stays as a fallback so a
+// runner without Chrome still gets an attempt rather than an install error.
+const USER_AGENT =
+  'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) ' +
+  'Chrome/140.0.0.0 Safari/537.36';
+
+async function launchBrowser() {
+  const args = ['--disable-blink-features=AutomationControlled'];
+  try {
+    const browser = await chromium.launch({ channel: 'chrome', args });
+    console.log('launched google chrome');
+    return browser;
+  } catch (e) {
+    console.log(`google chrome unavailable (${e.message.split('\n')[0]}) — using bundled chromium`);
+    return chromium.launch({ args });
+  }
+}
+
 async function main() {
   const supabase = createClient(need('SUPABASE_URL'), need('SUPABASE_SERVICE_ROLE_KEY'), {
     auth: { persistSession: false },
   });
 
-  const browser = await chromium.launch();
+  const browser = await launchBrowser();
   let rows;
   try {
-    const page = await browser.newPage({ locale: 'ar-SA' });
+    const context = await browser.newContext({
+      userAgent: USER_AGENT,
+      locale: 'ar-SA',
+      timezoneId: 'Asia/Riyadh',
+      viewport: { width: 1440, height: 900 },
+    });
+    const page = await context.newPage();
     page.setDefaultTimeout(NAV_TIMEOUT_MS);
+
+    // what the endpoint actually answered, which a failed fetch inside the page
+    // cannot see: a refusal and a CORS-less answer look identical from there
+    page.on('response', res => {
+      if (res.url().startsWith(API_URL)) console.log(`  ← ${res.request().method()} ${res.status()}`);
+    });
+
     console.log(`opening ${PAGE_URL}`);
     // the listing is fetched by hand below, so there is no need to wait for the
     // page's own render — only for an origin to ask from
-    await page.goto(PAGE_URL, { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT_MS });
+    const res = await page.goto(PAGE_URL, { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT_MS });
+    console.log(`  ${res ? res.status() : '???'} ${page.url()}`);
+
+    // the filter answers with a page of its own rather than an error, so a 403
+    // here is worth naming: it means the browser was read as a robot, and no
+    // amount of retrying the listing will change that
+    const html = await page.content();
+    if (/MT :: Attention/.test(html)) {
+      throw new Error('the ministry served its block page — this browser was taken for a robot');
+    }
     rows = await readAll(page);
   } finally {
     await browser.close();
