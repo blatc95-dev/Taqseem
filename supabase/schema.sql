@@ -182,6 +182,14 @@ create table public.site_updates (
   scanned_count integer not null default 0,  -- entries examined on the site
   item_count integer not null default 0,     -- of those, entries in range
   items jsonb not null default '[]'::jsonb,
+  -- what the run that produced this row could not read: [{label, message}].
+  -- A جهة that failed is never written as a coverage — its range was not read —
+  -- so it would leave no trace at all, and the search would sit in the log
+  -- looking complete. The note is therefore written onto every row the run did
+  -- save, which also means deleting one جهة out of a search does not take the
+  -- search's note with it. The daily sweep keeps the same information in
+  -- auto_sweeps, beside the rest of its report.
+  notes jsonb not null default '[]'::jsonb,
   -- written by the daily sweep rather than by a person. The row is otherwise
   -- an ordinary coverage — what the flag buys is that any employee may open and
   -- correct it (see the policy below), where a colleague's row stays read-only,
@@ -443,6 +451,13 @@ create policy "authenticated users can mark a sweep seen"
   to authenticated
   using (true)
   with check (true);
+
+-- A search used to report the جهات it could not read only on the screen that
+-- ran it: nothing was written, so the note was gone by the next page load and
+-- the search sat in the log looking like a search that read everything. Without
+-- this column the tab keeps saving searches exactly as before and offers this
+-- statement in its setup card; the note simply does not outlive the page.
+alter table public.site_updates add column if not exists notes jsonb not null default '[]'::jsonb;
 
 drop policy if exists "employees can review the automatic sweep" on public.site_updates;
 create policy "employees can review the automatic sweep"

@@ -795,6 +795,8 @@
      so the whole card changes colour rather than adding a quiet line */
   .su-auto-warn{background:var(--amber-bg,#fff8e6);border-color:var(--amber-border,#f0d9a0);}
   .su-auto-fail{margin-top:10px;padding-top:10px;border-top:1px solid var(--amber-border,#f0d9a0);}
+  /* standing alone there is no summary line above it to be ruled off from */
+  .su-auto-lone .su-auto-fail{margin-top:0;padding-top:0;border-top:none;}
   .su-auto-fail-head{font-size:12.5px;font-weight:700;color:var(--text);margin-bottom:6px;}
   .su-auto-fail-list{margin:0;padding-inline-start:18px;font-size:12px;line-height:1.85;}
   .su-auto-fail-list b{font-weight:700;}
@@ -803,47 +805,6 @@
   /* ---------- a result, read by default and edited on request ---------- */
   .ed-note{font-size:12px;color:var(--text-muted);line-height:1.8;margin:0 0 12px;}
   .ed-note b{color:var(--text);}
-  /* the pair of buttons that pick which half of a sweep is on screen */
-  .ed-panes{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px;}
-  .ed-pane{
-    display:inline-flex;align-items:center;gap:7px;
-    padding:8px 16px;border-radius:9px;
-    background:var(--surface);border:1px solid var(--border);
-    font:inherit;font-size:12.5px;font-weight:700;color:var(--text-muted);cursor:pointer;
-    transition:border-color .15s ease, color .15s ease, background-color .15s ease;
-  }
-  .ed-pane:hover{border-color:var(--blue);color:var(--blue);}
-  .ed-pane.is-on{background:var(--blue-bg);border-color:var(--blue);color:var(--blue);}
-  .ed-pane:focus-visible{outline:2px solid var(--blue);outline-offset:2px;}
-  /* the count of جهات that failed, kept on the button so the hole in the table
-     is visible from the pane that does not show it */
-  .ed-pane-badge{
-    display:inline-flex;align-items:center;justify-content:center;
-    min-width:18px;height:18px;padding:0 5px;border-radius:999px;
-    background:var(--lvl2-bg);color:var(--lvl2-text);
-    border:1px solid var(--lvl2-border);font-size:11px;font-weight:800;
-  }
-
-  /* ---------- the جهات pane ---------- */
-  .su-ents-line{font-size:12.5px;color:var(--text-muted);margin-bottom:10px;}
-  .su-ents-line b{color:var(--text);font-weight:800;font-size:14px;}
-  .su-ent-list{
-    list-style:none;margin:0;padding:0;background:var(--surface);
-    border:1px solid var(--border);border-radius:12px;overflow:hidden;
-  }
-  .su-ent{
-    display:flex;align-items:center;gap:12px;flex-wrap:wrap;
-    padding:11px 14px;border-bottom:1px solid var(--border);font-size:13px;
-  }
-  .su-ent:last-child{border-bottom:none;}
-  .su-ent:hover{background:var(--bg-soft);}
-  .su-ent-name{font-weight:600;flex:1;min-width:0;}
-  .su-ent-count{font-size:12.5px;color:var(--text);white-space:nowrap;text-align:center;}
-  .su-ent-count b{color:var(--blue);font-weight:800;font-size:14px;}
-  /* a جهة that answered with nothing is an answer, so it is stated plainly
-     rather than left as a blank the reader has to interpret */
-  .su-ent-count.is-none{color:var(--text-muted);font-weight:600;}
-  .su-ent-foot{margin-top:8px;font-size:12px;}
   /* the actions sit under the table: that is where a reader arrives having
      decided whether anything needs fixing */
   .ed-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:14px 0 0;}
@@ -1872,7 +1833,11 @@ function continueOnboarding(){
      so it is fetched on the way in rather than when the tab is opened — by then
      they have already found it. Not awaited: a sweep nobody has read yet must
      not hold up the app opening. */
-  suLoadAutoSweep().then(s => { suAutoSweep = s; suRenderAutoAlert(); });
+  suLoadAutoSweeps().then(list => {
+    suAutoSweeps = list;
+    suAutoSweep = list[0] || null;
+    suRenderAutoAlert();
+  });
 }
 
 loginForm.addEventListener('submit', async e=>{
@@ -4776,45 +4741,17 @@ function edBarHtml(draft){
     ? `<button class="pill-btn" data-ed-done>إنهاء التعديل</button>${add}${save}`
     : `<button class="pill-btn" data-ed-edit>تعديل</button>${add}${save}`}</div>`;
 }
-/* ---------- the two questions a sweep answers ----------
-   "What turned up" and "which جهات were actually read" are different questions,
-   and answering both in one scroll answers neither well: the جهات list is long,
-   it sits under the table, and nobody reaches it — yet it is the half that
-   decides whether the other half can be trusted. A جهة that refused to load is
-   not a جهة with nothing new in it.
-
-   So the result carries both and a pair of buttons decides which is on screen.
-   The جهات button keeps a count on it when something failed, because a reader
-   who never presses it must still be told the table has holes in it. */
-function edPane(draft){
-  return draft.panes ? (draft.pane || draft.panes[0].key) : '';
-}
-function edPanesHtml(draft){
-  if(!draft.panes) return '';
-  const on = edPane(draft);
-  return `<div class="ed-panes" role="tablist">${draft.panes.map(p => `
-    <button class="ed-pane${p.key === on ? ' is-on' : ''}" role="tab"
-      aria-selected="${p.key === on}" data-ed-pane="${escapeHtml(p.key)}">${escapeHtml(p.label)}${
-      p.badge ? `<span class="ed-pane-badge">${escapeHtml(String(p.badge))}</span>` : ''}</button>`).join('')}</div>`;
-}
-function edResultsHtml(draft){
-  return `${draft.rows.length
+function edRender(draft){
+  const host = $(draft.hostSel);
+  if(!draft.head && !draft.rows.length){ host.innerHTML = ''; return; }
+  host.innerHTML = `
+    <div class="src-result-top"><div class="src-result-title">${draft.head || ''}</div></div>
+    ${edNoteHtml(draft)}
+    ${draft.rows.length
       ? edTableHtml(draft)
       : `<div class="empty-hint">${escapeHtml(draft.emptyHint || 'لا يوجد شيء')}</div>`}
     ${edBarHtml(draft)}
     ${draft.footer || ''}`;
-}
-function edRender(draft){
-  const host = $(draft.hostSel);
-  if(!draft.head && !draft.rows.length){ host.innerHTML = ''; return; }
-  const pane = edPane(draft);
-  host.innerHTML = `
-    <div class="src-result-top"><div class="src-result-title">${draft.head || ''}</div></div>
-    ${edNoteHtml(draft)}
-    ${edPanesHtml(draft)}
-    ${!draft.panes || pane === 'results'
-      ? edResultsHtml(draft)
-      : (draft.paneHtml ? draft.paneHtml(pane, draft) : '')}`;
 }
 function edBlankRow(draft){
   const row = {};
@@ -4852,14 +4789,6 @@ function edBind(draft){
     if(file){ suDownloadRowFile(draft.rows[+file.dataset.edFile], file); return; }
     const text = e.target.closest('[data-ed-text]');
     if(text){ uqnDownloadRowText(draft.rows[+text.dataset.edText]); return; }
-    /* switching panes is reading too, so it works on a colleague's record —
-       and it is left above the readOnly gate for exactly that reason */
-    const pane = e.target.closest('[data-ed-pane]');
-    if(pane){
-      draft.pane = pane.dataset.edPane;
-      edRender(draft);
-      return;
-    }
     if(draft.readOnly) return;
     if(e.target.closest('[data-ed-edit]') || e.target.closest('[data-ed-done]')){
       /* nothing is discarded either way — the inputs are a view of rows that
@@ -4932,67 +4861,16 @@ const suDraft = {
   recordIds: null, readOnly: false, editing: false,
   head: '', note: '', footer: '', emptyHint: '',
   dirty: false, saving: false,
-  panes: null, pane: 'results', paneHtml: suEntitiesHtml,
   save: function(){ return suSaveDraft(); }
 };
 function suResetDraft(){
   Object.assign(suDraft, {
     rows: [], sites: [], range: null, stats: {}, failures: [],
     recordIds: null, automatic: false, readOnly: false, readOnlyWhy: undefined, editing: false,
-    head: '', note: '', footer: '', emptyHint: '', dirty: false, saving: false,
-    panes: null, pane: 'results'
+    head: '', note: '', footer: '', emptyHint: '', dirty: false, saving: false
   });
   $('#suResult').innerHTML = '';
 }
-/* the two buttons over a sweep's result. النتائج is first because it is what
-   the search was for; الجهات carries the failure count so the hole in the
-   answer is visible from the pane that does not show it */
-function suPanes(failures){
-  return [
-    { key:'results', label:'عرض النتائج' },
-    { key:'entities', label:'عرض الجهات', badge: (failures || []).length || '' }
-  ];
-}
-/* ---------- the جهات half of a sweep ----------
-   Every جهة the search reached, what came out of it, and — the loud part —
-   every جهة it could not read. Silence from a جهة that answered means nothing
-   was published; silence from one that never loaded means nothing is known, and
-   the two must not look alike. */
-function suEntitiesHtml(_pane, draft){
-  const failures = draft.failures || [];
-  const sites = draft.sites || [];
-  const scanned = Object.values(draft.stats || {}).reduce((n, s) => n + (s.scanned || 0), 0);
-  const okHtml = sites.length ? `<ul class="su-ent-list">${sites.map(s => {
-    const items = draft.rows.filter(r => r.siteKey === s.key).length;
-    const stat = (draft.stats || {})[s.key] || {};
-    return `<li class="su-ent">
-      <span class="su-ent-name">${escapeHtml(s.label || s.key)}</span>
-      <span class="su-ent-count${items ? '' : ' is-none'}">${items
-        ? arCountHtml(items, 'ملف واحد', 'ملفان', 'ملفات', 'ملفًا')
-        : 'لا جديد'}<span class="src-sub">من ${stat.scanned || 0} مفحوصًا</span></span>
-      ${/^https?:\/\//.test(s.home || '')
-        ? `<a class="src-link" href="${escapeHtml(s.home)}" target="_blank" rel="noopener noreferrer">فتح الموقع</a>`
-        : ''}
-    </li>`;
-  }).join('')}</ul>` : '<div class="empty-hint">لم تُقرأ أي جهة في هذا البحث</div>';
-  const failHtml = failures.length ? `<div class="su-note warn">
-      <div class="su-note-title">${escapeHtml(arCount(failures.length,
-        'جهة لم تُقرأ', 'جهتان لم تُقرآ', 'جهات لم تُقرأ', 'جهة لم تُقرأ'))} في هذا الفحص —
-        لا يمكن القول إنه لا جديد فيها:</div>
-      <ul>${failures.map(f =>
-        `<li><b>${escapeHtml(f.label || '')}</b> — ${escapeHtml(f.message || 'خطأ غير معروف')}</li>`).join('')}</ul>
-      <div class="su-ent-foot">هذه الجهات لا تُحفظ ولا يُسجَّل نطاقها، فتبقى الفترة مفتوحة عليها.</div>
-    </div>` : '';
-  /* "من ٥" is only worth saying when the sweep did not reach all five — with
-     nothing failed the total is the same number twice */
-  const read = arCountHtml(sites.length, 'جهة واحدة', 'جهتان', 'جهات', 'جهة');
-  return `<div class="su-ents">
-    <div class="su-ents-line">قُرئت ${read}${
-      failures.length ? ` من ${sites.length + failures.length}` : ''} · فُحص ${
-      arCountHtml(scanned, 'عنصر واحد', 'عنصران', 'عناصر', 'عنصرًا')}</div>
-    ${okHtml}${failHtml}</div>`;
-}
-
 /* ---------- downloading one row's file ----------
    The source sites send no CORS header, so the browser cannot fetch the file
    itself; and `download` on a cross-origin link is ignored, so a plain link
@@ -5130,6 +5008,9 @@ function suMapRow(row){
        correct it — nobody can log in as the account that signed it, so treating
        it like a colleague's row would leave the machine's mistakes standing. */
     automatic: !!row.automatic,
+    /* what the run could not read, written on every row it did save — a جهة
+       that failed leaves no row of its own to be read back from */
+    notes: Array.isArray(row.notes) ? row.notes : [],
     reviewedBy: row.reviewed_by || '',
     reviewedAt: row.reviewed_at || null,
     createdAt: row.created_at
@@ -5171,6 +5052,25 @@ async function suLoadSearches(){
    so is deleting a coverage, and both would blur if a whole-registry sweep
    landed as a single row. A site whose sweep failed is not written at all — its
    range was never actually read. */
+/* A database that has not taken the notes column yet must still be able to
+   save — the search is the thing, the note is what it carries. So the first
+   write refused for it drops the field, raises the setup card, and every later
+   write this session skips it rather than failing again. */
+let suNotesMissing = false;
+async function suWriteRecord(payload, existing){
+  const run = p => existing
+    ? sb.from('site_updates').update(p).eq('id', existing).select().maybeSingle()
+    : sb.from('site_updates').insert(p).select().single();
+  const { notes, ...withoutNotes } = payload;
+  if(suNotesMissing) return run(withoutNotes);
+  const res = await run(payload);
+  if(res.error && /notes/.test(res.error.message || '')){
+    suNotesMissing = true;
+    suSetupState.notes = true;
+    return run(withoutNotes);
+  }
+  return res;
+}
 async function suSaveDraft(){
   if(!currentUser || suDraft.saving || suDraft.readOnly) return;
   if(!suDraft.sites.length || !suDraft.range){ showToast('لا يوجد بحث لحفظه'); return; }
@@ -5189,7 +5089,10 @@ async function suSaveDraft(){
       source_url: site.home,
       scanned_count: stat.scanned || 0,
       item_count: rows.length,
-      items: rows
+      items: rows,
+      /* the same note on every row of the run: it is about the run, and any one
+         of its جهات may be deleted later without taking the note with it */
+      notes: suDraft.failures || []
     };
     /* Saving the daily sweep's record is a review, not an authorship claim. The
        corrections go in like anyone's, but من بحث has to keep saying بحث تلقائي
@@ -5204,9 +5107,7 @@ async function suSaveDraft(){
       payload.owner_name = currentUser.fullName;
     }
     const existing = ids[site.key];
-    const { data, error } = existing
-      ? await sb.from('site_updates').update(payload).eq('id', existing).select().maybeSingle()
-      : await sb.from('site_updates').insert(payload).select().single();
+    const { data, error } = await suWriteRecord(payload, existing);
     if(error){ problems.push({ site, code: error.code, message: error.message || '' }); continue; }
     /* an update that matched no row was filtered out by row-level security, and
        the only thing missing is the UPDATE policy — a silent no-op here would
@@ -5258,6 +5159,7 @@ const SU_TABLE_SQL = `create table public.site_updates (
   scanned_count integer not null default 0,
   item_count integer not null default 0,
   items jsonb not null default '[]'::jsonb,
+  notes jsonb not null default '[]'::jsonb,
   created_at timestamptz not null default now(),
   constraint site_updates_range_order check (range_from <= range_to)
 );
@@ -5294,6 +5196,13 @@ create policy "owners can delete their own site updates"
    shape needs this one statement — offered only after a save actually hits it. */
 const SU_DROP_OVERLAP_SQL =
   `alter table public.site_updates drop constraint if exists site_updates_no_overlap;`;
+
+/* A search's own note — the جهات it could not read — is kept on the rows it did
+   save, so it stays with the search in the log instead of living only on the
+   screen that produced it. Offered when a save turns out to have nowhere to
+   put it. */
+const SU_NOTES_SQL =
+  `alter table public.site_updates add column if not exists notes jsonb not null default '[]'::jsonb;`;
 
 /* Both logs were created read-then-insert-then-delete, with no UPDATE policy,
    because nothing used to edit a saved record. Editing one does. */
@@ -5576,11 +5485,11 @@ function suFunctionsUrl(){
   return ref ? `https://supabase.com/dashboard/project/${ref}/functions` : 'https://supabase.com/dashboard';
 }
 
-const suSetupState = { table:false, fn:false, fnStale:false, overlap:false, policy:false, detail:'' };
+const suSetupState = { table:false, fn:false, fnStale:false, overlap:false, policy:false, notes:false, detail:'' };
 function suRenderSetup(){
   const host = $('#suSetup');
   const st = suSetupState;
-  if(!st.table && !st.fn && !st.overlap && !st.policy){ host.innerHTML = ''; return; }
+  if(!st.table && !st.fn && !st.overlap && !st.policy && !st.notes){ host.innerHTML = ''; return; }
   const steps = [];
   if(st.table){
     steps.push(`<div class="src-setup-step">
@@ -5647,6 +5556,21 @@ function suRenderSetup(){
         <a class="pill-btn" href="${uqnSqlEditorUrl()}" target="_blank" rel="noopener noreferrer">فتح SQL Editor</a>
       </div>
       <pre data-su-select title="اضغط لتحديد الأمر">${escapeHtml(SU_DROP_OVERLAP_SQL)}</pre>
+    </div>`);
+  }
+  if(st.notes){
+    steps.push(`<div class="src-setup-step">
+      <div class="src-setup-step-title">ملاحظات البحث تحتاج عمودًا في <b>site_updates</b></div>
+      <div class="src-setup-body">
+        الجهات التي يتعذّر قراءتها في بحثٍ ما تُحفظ مع البحث نفسه، فتبقى ملاحظته في السجل
+        ما بقي. الجدول أُنشئ قبل ذلك، فلا عمود <b>notes</b> فيه — يُحفظ البحث كما كان،
+        لكن ملاحظته لا تبقى بعد مغادرة الصفحة. الأمر أدناه يضيف العمود، مرة واحدة.
+      </div>
+      <div class="src-setup-actions">
+        <button class="pill-btn blue" data-su-copy="notes"><span class="icon icon-copy"></span> نسخ الأمر</button>
+        <a class="pill-btn" href="${uqnSqlEditorUrl()}" target="_blank" rel="noopener noreferrer">فتح SQL Editor</a>
+      </div>
+      <pre data-su-select title="اضغط لتحديد الأمر">${escapeHtml(SU_NOTES_SQL)}</pre>
     </div>`);
   }
   host.innerHTML = `<div class="src-setup">
@@ -5743,15 +5667,27 @@ const suExpanded = new Set();
    the columns stop being columns the moment a sweep is opened. The cells the
    sweep's own row already said — the range, who, when — are left empty rather
    than repeated down its جهات. */
+/* What this run had to say for itself, kept with it for as long as it is in the
+   log. A sweep keeps its whole report in auto_sweeps — the range, the counts,
+   and what it could not read. A person's search keeps the same failures on its
+   own rows, written there when it was saved, because a جهة that failed leaves
+   no record of its own to be read back from. */
+function suGroupReportHtml(g){
+  const sweep = suAutoSweeps.find(s => suGroupHostsSweep(g, s));
+  if(sweep) return suAutoSweepHtml(sweep);
+  const noted = g.records.find(r => (r.notes || []).length);
+  return noted ? suFailuresHtml(noted.notes, 'هذا البحث') : '';
+}
 function suGroupDetailHtml(g, cols){
   const hide = suExpanded.has(g.key) ? '' : ' hidden';
-  /* the daily sweep's own report opens with its جهات, because it is the same
-     answer said twice over: these it read, and these it never reached */
-  const report = suGroupHostsSweep(g, suAutoSweep)
+  /* the run's own report opens with its جهات, because it is the same answer
+     said twice over: these it read, and these it never reached */
+  const report = suGroupReportHtml(g);
+  const reportRow = report
     ? `<tr class="log-sub-row log-sub-report" data-su-detail="${g.key}"${hide}>
-         <td colspan="${cols.length}">${suAutoSweepHtml(suAutoSweep)}</td></tr>`
+         <td colspan="${cols.length}">${report}</td></tr>`
     : '';
-  return report + g.records.map(r => {
+  return reportRow + g.records.map(r => {
     const cells = cols.map(c =>
       `<td class="${c.cls || ''}">${c.subCell ? c.subCell(r) : ''}</td>`).join('');
     return `<tr class="log-sub-row" data-su-detail="${g.key}"${hide}>${cells}</tr>`;
@@ -5793,10 +5729,10 @@ function suOpenGroup(g){
   const reviewedBy = (g.records.find(r => r.reviewedBy) || {}).reviewedBy || '';
   Object.assign(suDraft, {
     rows, sites, range: { from: g.from, to: g.to }, stats,
-    failures: [], recordIds: ids, automatic,
+    failures: (g.records.find(r => (r.notes || []).length) || {}).notes || [],
+    recordIds: ids, automatic,
     readOnly: !editable, readOnlyWhy: clash ? '' : undefined,
     editing: false, dirty: false, saving: false,
-    panes: suPanes([]), pane: 'results',
     head: `تحديثات ${escapeHtml(arCount(sites.length, 'جهة واحدة', 'جهتين', 'جهات', 'جهة'))}
            <span>· من ${escapeHtml(g.from)} إلى ${escapeHtml(g.to)} · ${rows.length} عنصرًا · ${
              escapeHtml(g.user || '')}${reviewedBy ? ` · راجعه ${escapeHtml(reviewedBy)}` : ''}</span>`,
@@ -5834,7 +5770,8 @@ async function suRenderLog(){
   suLogCache = res.rows;
   suLogLoaded = true;
   suSyncNewBadges();
-  suAutoSweep = await suLoadAutoSweep();
+  suAutoSweeps = await suLoadAutoSweeps();
+  suAutoSweep = suAutoSweeps[0] || null;      // the alert is about the newest run alone
   suRenderAutoAlert();
   const groups = suGroupSearches(res.rows);
   suLogGroups = groups;
@@ -5986,13 +5923,19 @@ function suSyncNewBadges(){
    not each of them: the mark says the team has looked, not that this employee
    has. */
 let suAutoSweep = null;
-async function suLoadAutoSweep(){
+/* Every sweep the log can still show, not only this morning's. A run's report
+   is that run's note — the جهات it could not read are as true of last Tuesday's
+   sweep as of today's — so reading one row would leave every older sweep in the
+   log with nothing to open, and a silent row reads as a run that went cleanly. */
+let suAutoSweeps = [];
+const SU_AUTO_SWEEP_LIMIT = 120;
+async function suLoadAutoSweeps(){
   const { data, error } = await sb.from('auto_sweeps')
-    .select('*').order('ran_at', { ascending:false }).limit(1);
+    .select('*').order('ran_at', { ascending:false }).limit(SU_AUTO_SWEEP_LIMIT);
   /* the table not being there is not an error worth showing: a project that
      never set the sweep up is a project with no sweep, not a broken one */
-  if(error) return null;
-  return (data && data[0]) || null;
+  if(error) return [];
+  return data || [];
 }
 /* the mark is worth raising for anything the employee has to act on — new
    entries, or a جهة nobody managed to read */
@@ -6007,6 +5950,27 @@ function suRenderAutoAlert(){
    the جهات it could not read. All of that answers «which جهات», not «what
    turned up» — so it belongs inside عرض الجهات on the sweep's own row in the
    log, rather than above the log greeting everyone who opens the tab. */
+/* The جهات a run could not read. This is the loud half of any search: silence
+   from a جهة that answered means nothing was published, silence from one that
+   never loaded means nothing is known, and the two must never look alike. It is
+   written down with the search, so it stays its note for as long as the search
+   is in the log — not only on the day it ran. */
+function suFailListHtml(failures, what){
+  if(!failures || !failures.length) return '';
+  return `<div class="su-auto-fail">
+    <div class="su-auto-fail-head">${escapeHtml(arCount(failures.length,
+      'جهة لم تُقرأ', 'جهتان لم تُقرآ', 'جهات لم تُقرأ', 'جهة لم تُقرأ'))} في ${escapeHtml(what)} —
+      لا يمكن القول إنه لا جديد فيها:</div>
+    <ul class="su-auto-fail-list">${failures.map(f =>
+      `<li><b>${escapeHtml(f.label || '')}</b><span>${escapeHtml(f.message || '')}</span></li>`).join('')}</ul>
+  </div>`;
+}
+/* the same note standing on its own — a person's search has no run summary
+   above it to hang under, so it carries its own frame */
+function suFailuresHtml(failures, what){
+  return (failures && failures.length)
+    ? `<div class="su-auto su-auto-warn su-auto-lone">${suFailListHtml(failures, what)}</div>` : '';
+}
 function suAutoSweepHtml(s){
   const failures = Array.isArray(s.failures) ? s.failures : [];
   const when = logWhenHtml(s.ran_at);
@@ -6020,22 +5984,13 @@ function suAutoSweepHtml(s){
     ? ` · ${escapeHtml(arCount(s.undated_count, 'عنصر واحد بلا تاريخ', 'عنصران بلا تاريخ',
         'عناصر بلا تاريخ', 'عنصرًا بلا تاريخ'))}`
     : '';
-  /* the failures are the loud half: a sweep that could not read a جهة has not
-     told anyone there is nothing new there */
-  const failHtml = failures.length ? `<div class="su-auto-fail">
-      <div class="su-auto-fail-head">${escapeHtml(arCount(failures.length,
-        'جهة لم تُقرأ', 'جهتان لم تُقرآ', 'جهات لم تُقرأ', 'جهة لم تُقرأ'))} في هذا الفحص —
-        لا يمكن القول إنه لا جديد فيها:</div>
-      <ul class="su-auto-fail-list">${failures.map(f =>
-        `<li><b>${escapeHtml(f.label || '')}</b><span>${escapeHtml(f.message || '')}</span></li>`).join('')}</ul>
-    </div>` : '';
   return `<div class="su-auto${failures.length ? ' su-auto-warn' : ''}">
     <div class="su-auto-line">
       <span class="su-tag-auto">فحص تلقائي</span>
       <span class="su-auto-text">${range} · ${found}${undated} ·
         ${escapeHtml(String(s.ok_count || 0))} من ${escapeHtml(String(s.site_count || 0))} جهة قُرئت</span>
       <span class="su-auto-when">${when}</span>
-    </div>${failHtml}</div>`;
+    </div>${suFailListHtml(failures, 'هذا الفحص')}</div>`;
 }
 /* Which row in the log is this sweep's row: the automatic group over the same
    range. The sweep saves one record per جهة it read, all in one sitting, so
@@ -6262,9 +6217,6 @@ async function suSearch(){
     Object.assign(suDraft, {
       rows, sites: done, range, stats, failures,
       recordIds: null, readOnly: false, dirty: false, editing: false,
-      /* the جهات that were read and the ones that were not both live in the
-         الجهات pane now, so the footer keeps only what is about the table */
-      panes: suPanes(failures), pane: 'results',
       head: rows.length
         ? `تحديثات ${done.length === 1 ? escapeHtml(done[0].label) : done.length + ' جهة'}
            <span>· من ${escapeHtml(range.from)} إلى ${escapeHtml(range.to)} · ${rows.length} عنصرًا</span>`
@@ -6272,10 +6224,13 @@ async function suSearch(){
       note: `فُحص <b>${scanned}</b> عنصرًا على ${done.length === 1 ? 'الجهة' : done.length + ' جهات'}.
              لم يُحفظ شيء بعد — عدّل ما تريد ثم اضغط حفظ.`,
       emptyHint: 'لم يُنشر شيء على الجهات المحددة خلال هذه الفترة — يمكنك إضافة صف يدويًا إن كان لديك ما تسجّله.',
-      footer: undatedCount
-        ? `<div class="su-note"><div class="su-note-title">${undatedCount} عنصرًا وصل بلا تاريخ يمكن التحقق منه</div>
-           صفوفها مميّزة في الجدول وخانة التاريخ فيها فارغة — املأها يدويًا أو احذف الصف.</div>`
-        : ''
+      /* the جهات that could not be read are said here and saved with the search,
+         so the note the employee sees now is the note the log keeps */
+      footer: [
+        undatedCount ? `<div class="su-note"><div class="su-note-title">${undatedCount} عنصرًا وصل بلا تاريخ يمكن التحقق منه</div>
+          صفوفها مميّزة في الجدول وخانة التاريخ فيها فارغة — املأها يدويًا أو احذف الصف.</div>` : '',
+        suFailuresHtml(failures, 'هذا البحث')
+      ].join('')
     });
     edRender(suDraft);
     suSetStatus(failures.length
@@ -6315,15 +6270,13 @@ function suOpenRecord(rec){
     sites: [{ key: site.key, label: rec.siteName || suSiteLabel(site), home: rec.sourceUrl || site.home }],
     range: { from: rec.from, to: rec.to },
     stats: { [site.key]: { scanned: rec.scannedCount, pagesRead: 0 } },
-    failures: [],
+    /* carried, not shown: عرض النتائج is the files. The note is the log's, and
+       keeping it here is what stops a re-save from erasing it. */
+    failures: rec.notes || [],
     recordIds: { [site.key]: rec.id },
     automatic: !!rec.automatic,
     readOnly: !editable, editing: false,
     dirty: false, saving: false,
-    /* a saved record is one جهة, so its الجهات pane has nothing that failed —
-       but it still says what was scanned to produce these rows, and the two
-       buttons stay where the employee learned to find them */
-    panes: suPanes([]), pane: 'results',
     head: `${escapeHtml(rec.siteName || suSiteLabel(site))}
            <span>· من ${escapeHtml(rec.from)} إلى ${escapeHtml(rec.to)} · ${rec.items.length} عنصرًا · ${escapeHtml(rec.user || '')}${
              rec.reviewedBy ? ` · راجعه ${escapeHtml(rec.reviewedBy)}` : ''}</span>`,
@@ -6435,7 +6388,7 @@ async function suOnEnter(){
     if(copy){
       const text = {
         sql: SU_TABLE_SQL, fn: SU_PROXY_SOURCE,
-        overlap: SU_DROP_OVERLAP_SQL, policy: SU_UPDATE_POLICY_SQL
+        overlap: SU_DROP_OVERLAP_SQL, policy: SU_UPDATE_POLICY_SQL, notes: SU_NOTES_SQL
       }[copy.dataset.suCopy];
       showToast(await copyTextToClipboard(text) ? 'تم النسخ' : 'تعذر النسخ، حدّد النص يدويًا');
       return;
@@ -6447,6 +6400,8 @@ async function suOnEnter(){
       suSetupState.fnStale = false;
       suSetupState.overlap = false;
       suSetupState.policy = false;
+      suSetupState.notes = false;
+      suNotesMissing = false;      // let the next save find out for itself
       await suRenderLog();
       suRenderRangeNote();
       suValidateRange();
