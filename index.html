@@ -211,6 +211,7 @@
   .icon-home{-webkit-mask-image:url(icons/home-2.svg);mask-image:url(icons/home-2.svg);}
   .icon-newspaper{-webkit-mask-image:url(icons/newspaper.svg);mask-image:url(icons/newspaper.svg);}
   .icon-globe{-webkit-mask-image:url(icons/globe.svg);mask-image:url(icons/globe.svg);}
+  .icon-assistant{-webkit-mask-image:url(icons/magic-star.svg);mask-image:url(icons/magic-star.svg);}
   /* the only arrow in the kit points right, which is *backwards* in RTL, so a
      "go forward" arrow is that same glyph mirrored */
   .icon-go{
@@ -496,6 +497,13 @@
   .rail-item .icon{flex-shrink:0;}
   .rail-label{opacity:0;width:0;overflow:hidden;transition:opacity .15s ease;}
   body.rail-expanded .rail-label{opacity:1;width:auto;}
+  /* a tab that exists before its tool does. The «قريبًا» badge rides inside the
+     label, so the collapsed rail hides it with the words and no second rule is
+     needed; what carries the same thing at 64px wide is the dimming, and the
+     title attribute for anyone who hovers. */
+  .rail-item.rail-soon{opacity:.6;}
+  .rail-item.rail-soon:hover,.rail-item.rail-soon.active{opacity:1;}
+  .rail-label .soon-badge{font-size:10px;padding:2px 7px;margin-inline-start:5px;vertical-align:middle;}
 
   .theme-dark-only{display:none;}
   :root[data-theme="dark"] .theme-light-only{display:none;}
@@ -1181,6 +1189,23 @@
     </div>
   </div>
 
+  <!-- ============ ASSISTANT: the tab, before the tool ============
+       A rail entry that led nowhere would be a dead icon at 64px wide, where
+       there is no room for the word قريبًا. So it opens, and what it opens says
+       plainly that nothing is here — rather than a screen of controls that do
+       nothing, or a promise about what the tool will do that nobody has decided
+       yet. -->
+  <div class="view" id="viewAssistant">
+    <div class="home-header">
+      <div class="eyebrow">أداة داخلية · لم تُبنَ بعد</div>
+      <h1>المساعد الذكي <span class="soon-badge">قريبًا</span></h1>
+      <p class="sub">التبويب محجوز باسمه، ولا شيء فيه يُستخدم اليوم. ما يفعله المساعد يُكتب هنا حين يُبنى.</p>
+    </div>
+    <div class="card">
+      <div class="empty-hint">لا شيء هنا بعد.</div>
+    </div>
+  </div>
+
   <div class="view" id="viewSettings">
     <div class="section-top">
       <h2>الإعدادات</h2>
@@ -1241,6 +1266,7 @@
     <button class="rail-item" id="navNewFile" title="تقسيم"><span class="icon icon-document"></span><span class="rail-label">تقسيم</span></button>
     <button class="rail-item" id="navUqn" title="تشريعات أم القرى"><span class="icon icon-newspaper"></span><span class="rail-label">تشريعات أم القرى</span></button>
     <button class="rail-item" id="navSiteUpdates" title="تحديثات المواقع"><span class="icon icon-globe"></span><span class="rail-label">تحديثات المواقع</span><span class="rail-dot" id="suAutoDot" hidden aria-label="الفحص التلقائي وجد ما يستحق النظر"></span></button>
+    <button class="rail-item rail-soon" id="navAssistant" title="المساعد الذكي — قريبًا"><span class="icon icon-assistant"></span><span class="rail-label">المساعد الذكي<span class="soon-badge">قريبًا</span></span></button>
     <button class="rail-item" id="navSettings" title="الإعدادات"><span class="icon icon-setting"></span><span class="rail-label">الإعدادات</span></button>
   </nav>
   <div class="rail-account">
@@ -6665,6 +6691,7 @@ $('#navNewFile').dataset.view = 'taqseem';
 $('#navNewFile').dataset.viewAlso = 'editor';
 $('#navUqn').dataset.view = 'uqn';
 $('#navSiteUpdates').dataset.view = 'siteUpdates';
+$('#navAssistant').dataset.view = 'assistant';
 $('#navSettings').dataset.view = 'settings';
 $('#navHome').addEventListener('click', ()=>goToView('home'));
 /* the rail entry opens the tool's own page, not a blank file. An open file is
@@ -6678,6 +6705,7 @@ $('#tqDoneMore').addEventListener('click', ()=>{
 });
 $('#navUqn').addEventListener('click', ()=>goToView('uqn'));
 $('#navSiteUpdates').addEventListener('click', ()=>goToView('siteUpdates'));
+$('#navAssistant').addEventListener('click', ()=>goToView('assistant'));
 $('#navSettings').addEventListener('click', ()=>goToView('settings'));
 $('#acctNameSave').addEventListener('click', saveAccountName);
 $('#acctName').addEventListener('keydown', e => { if(e.key === 'Enter') saveAccountName(); });
