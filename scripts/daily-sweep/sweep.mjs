@@ -3,10 +3,10 @@
 // Runs every جهة before noon so that an employee arriving at twelve reads a
 // result instead of starting one.
 //
-// The twenty adapters are browser code — they parse with DOMParser, they call
+// The adapters are browser code — they parse with DOMParser, they call
 // site-proxy through the app's own supabase client, and one of them (وزارة
 // السياحة's الأنظمة) can only be read from a browser at all. Rewriting them for
-// a server would mean two copies of twenty parsers drifting apart, and the
+// a server would mean two copies of every parser drifting apart, and the
 // copy nobody watches would be the one deciding whether a تحديث was missed.
 //
 // So this does not reimplement anything. It opens the deployed app in the same
@@ -35,7 +35,7 @@ const APP_URL = process.env.APP_URL || 'https://blatc95-dev.github.io/Taqseem/';
 // so "today" has to mean the same thing here
 const TZ_OFFSET_MS = 3 * 3600 * 1000;
 // how far back a single run is allowed to reach when earlier ones did not run.
-// Without a cap, a job stopped for a month comes back and asks twenty sites
+// Without a cap, a job stopped for a month comes back and asks every جهة
 // for a month at once; with it, the gap is closed in bites and said out loud.
 const MAX_CATCHUP_DAYS = 14;
 const NAV_TIMEOUT_MS = 90_000;
@@ -207,7 +207,7 @@ async function main() {
   const itemCount = ok.reduce((n, r) => n + r.rows.length, 0);
   const undatedCount = ok.reduce((n, r) => n + r.undated, 0);
 
-  // every جهة failing is not a sweep with twenty holes, it is a sweep that did
+  // every جهة failing is not a sweep with holes in it, it is a sweep that did
   // not happen — recording it would move the range forward over days nothing
   // read, and the next run would never come back for them
   if (!ok.length) {

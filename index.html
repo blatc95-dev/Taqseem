@@ -3359,10 +3359,8 @@ function suMarkProxyAlive(){
   suSetupState.detail = '';
   suRenderSetup();
 }
-async function suProxyFetch(urls, method){
-  const { data, error } = await sb.functions.invoke(SU_PROXY_FN, {
-    body: { urls, method: method || 'GET' }
-  });
+async function suProxyInvoke(payload){
+  const { data, error } = await sb.functions.invoke(SU_PROXY_FN, { body: payload });
   if(error){
     const status = (error.context && error.context.status) || 0;
     const err = new Error(error.message || 'تعذر الاتصال بوسيط القراءة');
@@ -3390,6 +3388,26 @@ async function suProxyFetch(urls, method){
     throw err;
   }
   return data.results;
+}
+async function suProxyFetch(urls, method){
+  return suProxyInvoke({ urls, method: method || 'GET' });
+}
+/* One url, one form body, and the page that comes back — how هيئة التأمين's
+   listing turns a tab or a page, since it turns them no other way.
+
+   The marker is checked rather than assumed: a deployed copy older than this
+   page has never heard of FORM, reads it as a GET, ignores the body and answers
+   with the listing's own first page. That is a result that looks perfectly
+   ordinary while answering a question nobody asked, and left unchecked it would
+   land in the log as coverage of a tab nobody turned. */
+async function suProxyForm(url, body){
+  const [res] = await suProxyInvoke({ url, method: 'FORM', body });
+  if(!res || !res.formPosted){
+    const stale = new Error('النسخة المنشورة من وسيط القراءة لا تعرف قراءة هذه الجهة — أعِد نشرها من بطاقة التجهيزة');
+    stale.proxyStale = true;
+    throw stale;
+  }
+  return res;
 }
 /* site-proxy refuses more than 24 urls in one call. A listing longer than that
    is read in consecutive calls rather than by raising the cap, so a single
@@ -4274,6 +4292,143 @@ async function cuaScan(range, onProgress){
   return { ...suSplitByRange(entries, range), scanned: entries.length, pagesRead: 1 };
 }
 
+/* ---------- هيئة التأمين — اللوائح ----------
+   Four listings behind one page — القواعد والتعليمات، الأنظمة واللوائح،
+   التعاميم، وتشريعات التأمين الصحي — nine cards a page, newest first, every
+   card printing a date and linking its own PDF.
+
+   None of that is reachable by URL. The page is ASP.NET WebForms and its tabs
+   and pager are both __doPostBack: a GET always lands on the first page of
+   القواعد والتعليمات, whatever is asked of it. ?page=, ?category=, the viewstate
+   moved into the query string, the SharePoint list API and the sitemap were each
+   tried and none of them turns a page — and the site sends no CORS header, so
+   the browser cannot even read what it does answer. So this جهة is read the way
+   a browser reads it: one GET to take the page's own hidden fields, then a POST
+   per page handing them back. That is what site-proxy's FORM mode exists for,
+   and what it cost is written at the top of that function.
+
+   Every POST answers with a whole page, hidden fields and all, so the walk is a
+   chain — each hop signed by the page before it. It walks with «التالى» rather
+   than the numbered links because the pager only renders a window of six of
+   them, and التعاميم is thirty-three pages deep.
+
+   The date on a card is the site's own and the site never says what it means:
+   نظام مكافحة غسل الأموال carries 25/10/2017, the very day of its مرسوم ملكي,
+   while نظام مراقبة شركات التأمين التعاوني carries 15/09/2021 for a نظام issued
+   in 1424هـ. So dateMeaning calls it the card's date and stops there, rather
+   than naming it a تاريخ صدور on the strength of the rows where it is one. */
+const IA_ORIGIN = 'https://www.ia.gov.sa';
+const IA_LIST_URL = IA_ORIGIN + '/ar/regulations-and-licenses/regulations';
+const IA_MAX_PAGES = 40;   // التعاميم runs 33 pages today; this is the guard
+/* one page, one date column, one meaning — so the four entries share both of
+   these rather than repeating them four times over */
+const IA_DATE_MEANING = 'التاريخ المنشور على بطاقة الوثيقة — الموقع لا يسمّيه، ويوافق تاريخ الصدور في بعض الوثائق دون بعض';
+const IA_NOTE = 'تبويبات الموقع لا تُفتح برابط، ففتح «الموقع» يبدأ دائمًا من تبويب القواعد والتعليمات — اضغط اسم التبويب في الصفحة للوصول إلى هذه القائمة.';
+/* the health tab publishes dozens of cards with the date box left empty — they
+   are the ones titled «التأمين الصحي_1075» and the like. They come back undated
+   every sweep, which is the tab's own rule for an entry nobody can date, and the
+   files cannot settle it either: every document in this listing, dated card and
+   undated alike, carries the same 13 نوفمبر 2025 Last-Modified from one upload.
+   So the count is said here rather than left to surprise the employee. */
+const IA_HEALTH_NOTE = IA_NOTE
+  + ' وفيه ٤٦ بطاقة ينشرها الموقع بخانة تاريخ فارغة، فتصل بلا تاريخ في كل بحث — وتاريخ الملف لا يصلح بديلاً لأن ملفات القائمة كلها رُفعت في يوم واحد.';
+
+/* the hidden fields, read back out of whatever the page last answered with.
+   Their names carry the web part's own GUID, so they are taken from the page
+   rather than written down here: a GUID that changed would otherwise become a
+   postback the server ignores, and an ignored postback answers with the first
+   tab — the one failure that looks like a result. */
+function iaFormState(doc){
+  const attr = (sel, name) => {
+    const el = doc.querySelector(sel);
+    return el ? (el.getAttribute(name) || '') : null;
+  };
+  const viewState = attr('input[name="__VIEWSTATE"]', 'value');
+  const catName = attr('input[id$="hfSelectedCategoryId"]', 'name');
+  const TAIL = 'hfSelectedCategoryId';
+  if(viewState === null || !catName || !catName.endsWith(TAIL)) return null;
+  return {
+    viewState,
+    generator: attr('input[name="__VIEWSTATEGENERATOR"]', 'value') || '',
+    validation: attr('input[name="__EVENTVALIDATION"]', 'value') || '',
+    prefix: catName.slice(0, -TAIL.length)
+  };
+}
+/* the same fields a browser posts pressing a tab or «التالى», in the same
+   encoding — the page reads them from the form and nowhere else */
+function iaBody(state, category, target, argument, reset){
+  const p = new URLSearchParams();
+  p.set('__EVENTTARGET', state.prefix + target);
+  p.set('__EVENTARGUMENT', argument);
+  p.set('__VIEWSTATE', state.viewState);
+  p.set('__VIEWSTATEGENERATOR', state.generator);
+  p.set('__EVENTVALIDATION', state.validation);
+  p.set(state.prefix + 'hfSelectedCategoryId', String(category));
+  p.set(state.prefix + 'hfSearchQuery', '');
+  p.set(state.prefix + 'hfResetPage', reset ? '1' : '');
+  return p.toString();
+}
+async function iaTurn(state, category, target, argument, reset, label){
+  const res = await suProxyForm(IA_LIST_URL, iaBody(state, category, target, argument, reset));
+  if(!res.ok) throw new Error(`تعذر فتح ${label} (${res.status || res.error || 'خطأ'})`);
+  return suDoc(res.body);
+}
+
+function iaParse(doc, category){
+  const cards = doc.querySelectorAll(`.grid-wrapper .nds-card[data-categoryid="${category}"]`);
+  return Array.from(cards).map(card => {
+    /* one link a card and it is the document itself, never a page about it —
+       464 PDFs and one JPEG across the four tabs today. So it is taken for what
+       the card says it is rather than filtered by extension: suIsFile would drop
+       that JPEG, and it is a تعميم the الهيئة published as an image. */
+    const action = card.querySelector('.nds-card-actions a[href]');
+    return suEntry({
+      title: suText(card.querySelector('.nds-card-title')),
+      /* the green tag is the date; the grey one beside it is the file's type */
+      date: suGregToIso(suText(card.querySelector('.nds-tag.nds-green'))),
+      fileUrl: action ? suSameOrigin(action.getAttribute('href'), IA_LIST_URL, IA_ORIGIN) : ''
+    });
+  }).filter(e => e.title);
+}
+
+function iaScanner(category, label){
+  return async function(range, onProgress){
+    onProgress(`جاري فتح ${label}…`);
+    const first = suDoc(await suGetPage(IA_LIST_URL, label));
+    const state = iaFormState(first);
+    if(!state) throw new Error(`تعذر قراءة ${label} — تغيّر شكل الصفحة`);
+    /* the tab has to still answer to the id being asked for. Categories that
+       were renumbered would otherwise be swept silently under each other's
+       names, which no later reader could catch. */
+    if(!first.querySelector(`[role="tab"][data-categoryid="${category}"]`)){
+      throw new Error(`تعذر قراءة ${label} — لم يعد التبويب موجودًا في الصفحة`);
+    }
+
+    const entries = [];
+    let pagesRead = 0;
+    let doc = await iaTurn(state, category, 'paginationContainer', 'categoryChanged', true, label);
+    for(let pg = 1; pg <= IA_MAX_PAGES; pg++){
+      const page = iaParse(doc, category);
+      /* every page up to the last carries nine cards, so an empty one is a
+         postback that did not take — not a listing that ended. Treating it as
+         the end would report "لا تحديثات" for pages nobody read. */
+      if(!page.length) throw new Error(`تعذر قراءة ${label} — الصفحة ${pg} عادت فارغة`);
+      entries.push(...page);
+      pagesRead = pg;
+      /* newest first, so a page entirely before the window ends the walk */
+      if(page.every(e => e.date && e.date < range.from)) break;
+      const pager = doc.querySelector('.nds-pagination');
+      const total = Number((pager && pager.getAttribute('data-total-pages')) || 0);
+      if(pg >= total) break;
+      onProgress(`${label} — الصفحة ${pg + 1}…`);
+      const next = iaFormState(doc);
+      if(!next) throw new Error(`تعذر قراءة ${label} — تغيّر شكل الصفحة`);
+      doc = await iaTurn(next, category, 'btnNext', '', false, label);
+    }
+    return { ...suSplitByRange(entries, range), scanned: entries.length, pagesRead };
+  };
+}
+
 /* ---------- the site registry ----------
    `dateMeaning` is shown next to the range, because "published on" means two
    different things across these sites and an employee reading a result has to
@@ -4355,7 +4510,23 @@ const SU_SITES = [
   { key: 'cua-regulations', name: 'مجلس شؤون الجامعات', section: 'الأنظمة واللوائح',
     home: CUA_LIST_URL, dateMeaning: 'التاريخ المنشور على بطاقة الوثيقة — وهو تاريخ رفعها على الموقع لا تاريخ صدورها',
     added: '2026-08-17',
-    scan: cuaScan }
+    scan: cuaScan },
+  { key: 'ia-rules', name: 'هيئة التأمين', section: 'القواعد والتعليمات',
+    home: IA_LIST_URL, dateMeaning: IA_DATE_MEANING,
+    added: '2026-08-17',
+    scan: iaScanner(2, 'قواعد وتعليمات هيئة التأمين') },
+  { key: 'ia-regulations', name: 'هيئة التأمين', section: 'الأنظمة واللوائح',
+    home: IA_LIST_URL, dateMeaning: IA_DATE_MEANING, note: IA_NOTE,
+    added: '2026-08-17',
+    scan: iaScanner(1, 'أنظمة ولوائح هيئة التأمين') },
+  { key: 'ia-circulars', name: 'هيئة التأمين', section: 'التعاميم',
+    home: IA_LIST_URL, dateMeaning: IA_DATE_MEANING, note: IA_NOTE,
+    added: '2026-08-17',
+    scan: iaScanner(3, 'تعاميم هيئة التأمين') },
+  { key: 'ia-health', name: 'هيئة التأمين', section: 'الأنظمة والقواعد والتعاميم المتعلقة بالتأمين الصحي',
+    home: IA_LIST_URL, dateMeaning: IA_DATE_MEANING, note: IA_HEALTH_NOTE,
+    added: '2026-08-17',
+    scan: iaScanner(4, 'تشريعات التأمين الصحي') }
 ];
 function suSiteLabel(site){ return site.section ? `${site.name} — ${site.section}` : site.name; }
 
@@ -4936,7 +5107,15 @@ const SU_PROXY_SOURCE = `// Taqseem — site-proxy
 //   * only public Saudi hosts over https are reachable (see resolveTarget), so
 //     the function can never be pointed at the project's own services or at a
 //     cloud metadata endpoint
-//   * only GET and HEAD upstream, so it can never change anything there
+//   * GET and HEAD read, and FORM submits one urlencoded body. FORM exists for
+//     هيئة التأمين, whose listing is an ASP.NET page: its four tabs and every
+//     page past the first are __doPostBack and answer no GET route at all — not
+//     ?page=, not ?category=, not the viewstate in the query string. This is a
+//     real widening and it is not dressed up as anything else: a POST is not a
+//     read by definition, and this function can no longer promise it never
+//     wrote anything upstream. What still holds is who and where — a signed-in
+//     employee, a public .sa host, one body per call — and what the app itself
+//     sends, which is الهيئة's own tab-and-pager postback and nothing else.
 //   * JWT verification stays on (Supabase's default), so only a signed-in
 //     employee can drive it
 
@@ -4960,6 +5139,10 @@ const MAX_BODY = 4_000_000;   // bytes; the largest listing runs ~460 KB
 // ceiling: these are scanned PDFs and a few of them run past ten megabytes.
 // base64 inflates by a third, so this is ~27 MB on the wire.
 const MAX_FILE = 20_000_000;
+// A FORM body is one page's hidden fields. هيئة التأمين's __VIEWSTATE alone is
+// ~11 KB before urlencoding, so this is roomy on purpose and still far too small
+// to make this function a way of uploading anything.
+const MAX_FORM = 200_000;
 const POOL = 6;               // parallel upstream requests per call
 const TIMEOUT_MS = 40_000;    // a source site that hangs must not hang the call,
                               // but a slow-and-working one must not be cut off either
@@ -5034,21 +5217,28 @@ function resolveTarget(raw) {
 // HEAD — headers only, for a file's Last-Modified
 // FILE — the bytes themselves, base64'd, so the browser can save a document
 //        from a site that sends no CORS header
-async function fetchOne(raw, mode) {
+// FORM — one urlencoded body POSTed, the page that comes back decoded to text.
+//        The one listing that pages by postback needs it; see Safety above.
+async function fetchOne(raw, mode, form = '') {
   const target = resolveTarget(raw);
   if (!target) return { url: raw, ok: false, status: 0, error: 'host not allowed' };
   try {
+    const headers = {
+      'User-Agent': USER_AGENT,
+      'Accept': mode === 'FILE'
+        ? '*/*'
+        : 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      'Accept-Language': 'ar,en;q=0.9',
+    };
+    // the one content type this function will ever send, and it is the one a
+    // browser sends submitting the same page's own form
+    if (mode === 'FORM') headers['Content-Type'] = 'application/x-www-form-urlencoded';
     const res = await fetch(target, {
-      method: mode === 'HEAD' ? 'HEAD' : 'GET',
+      method: mode === 'HEAD' ? 'HEAD' : mode === 'FORM' ? 'POST' : 'GET',
       redirect: 'follow',
       signal: AbortSignal.timeout(TIMEOUT_MS),
-      headers: {
-        'User-Agent': USER_AGENT,
-        'Accept': mode === 'FILE'
-          ? '*/*'
-          : 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Accept-Language': 'ar,en;q=0.9',
-      },
+      headers,
+      body: mode === 'FORM' ? form : undefined,
     });
     const contentType = res.headers.get('content-type') || '';
     const out = {
@@ -5060,6 +5250,12 @@ async function fetchOne(raw, mode) {
       contentType,
       contentLength: res.headers.get('content-length') || '',
     };
+    // how the page tells an older deployment apart. A copy that predates FORM
+    // reads the method it does not know as GET, ignores the body, and answers
+    // with the listing's own first page — a plausible-looking result for a
+    // postback that never happened, which would land as "لا تحديثات" for a tab
+    // nobody turned. This marker is the proof the POST was actually made.
+    if (mode === 'FORM') out.formPosted = true;
     const cap = mode === 'FILE' ? MAX_FILE : MAX_BODY;
     if (mode === 'HEAD') {
       // a HEAD is only worth making when the upstream answers it honestly;
@@ -5092,13 +5288,13 @@ async function fetchOne(raw, mode) {
   }
 }
 
-async function fetchAll(urls, mode) {
+async function fetchAll(urls, mode, form = '') {
   const out = new Array(urls.length);
   let cursor = 0;
   async function worker() {
     while (cursor < urls.length) {
       const i = cursor++;
-      out[i] = await fetchOne(urls[i], mode);
+      out[i] = await fetchOne(urls[i], mode, form);
     }
   }
   await Promise.all(
@@ -5126,7 +5322,8 @@ Deno.serve(async (req) => {
   }
 
   const mode = payload.method === 'HEAD' ? 'HEAD'
-    : payload.method === 'FILE' ? 'FILE' : 'GET';
+    : payload.method === 'FILE' ? 'FILE'
+    : payload.method === 'FORM' ? 'FORM' : 'GET';
   const urls = Array.isArray(payload.urls)
     ? payload.urls
     : (payload.url !== undefined ? [payload.url] : []);
@@ -5137,7 +5334,18 @@ Deno.serve(async (req) => {
   // built in memory at the same time
   if (mode === 'FILE' && urls.length > 1) return json({ error: 'one url per FILE call' }, 400);
 
-  return json({ results: await fetchAll(urls, mode) });
+  let form = '';
+  if (mode === 'FORM') {
+    // one url and one body, always paired: a body sent to several urls would be
+    // this function submitting the same form around a host, which is neither
+    // what the tab needs nor something worth being able to do
+    if (urls.length > 1) return json({ error: 'one url per FORM call' }, 400);
+    if (typeof payload.body !== 'string') return json({ error: 'FORM needs a body string' }, 400);
+    if (payload.body.length > MAX_FORM) return json({ error: 'form body too large' }, 400);
+    form = payload.body;
+  }
+
+  return json({ results: await fetchAll(urls, mode, form) });
 });`;
 
 function suFunctionsUrl(){
@@ -5172,8 +5380,9 @@ function suRenderSetup(){
       <div class="src-setup-body">
         ${st.fnStale
           ? `الدالة تعمل، لكنها منشورة بنسخة سابقة: إما أنها تحمل قائمة مواقع بالأسماء لا تعرف
-             هذه الجهة، وإما أنها لا تعرف كيف تُنزّل ملفًا. النسخة أدناه تسمح بأي موقع سعودي عام
-             تحت النطاق <b>.sa</b> وتُعيد الملفات كما هي، فهي آخر إعادة نشر تحتاجها.
+             هذه الجهة، وإما أنها لا تعرف كيف تُنزّل ملفًا، وإما أنها لا تعرف كيف تفتح تبويبًا
+             أو صفحة في موقع لا يفتحهما إلا بإرسال نموذج. النسخة أدناه تسمح بأي موقع سعودي عام
+             تحت النطاق <b>.sa</b> وتعرف الثلاثة.
              من لوحة Supabase: <b>Edge Functions</b> ثم
              <b>site-proxy</b> ثم <b>Edit function</b>، استبدل الكود كاملًا ثم اضغط Deploy.`
           : `مواقع الجهات لا ترسل ترويسة CORS، فلا يستطيع المتصفح قراءتها مباشرة؛ هذه الدالة هي الوسيط الذي يقرأها.
