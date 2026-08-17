@@ -3432,8 +3432,11 @@ async function suProxyFetchMany(urls, method, onBatch){
 function suDoc(html){ return new DOMParser().parseFromString(html, 'text/html'); }
 function suText(el){
   /* bidi marks are data-entry residue in the sites' own titles: invisible, and
-     dropping them keeps the stored text comparable */
-  return ((el && el.textContent) || '').replace(/[\u200e\u200f]/g, '').replace(/\s+/g, ' ').trim();
+     dropping them keeps the stored text comparable. LRM and RLM covered every
+     site here until \u0645\u062c\u0644\u0633 \u0634\u0624\u0648\u0646 \u0627\u0644\u062c\u0627\u0645\u0639\u0627\u062a, three of whose titles arrive wrapped in
+     an isolate pair (U+2066\u2013U+2069) \u2014 so this folds away the same set the
+     \u0623\u0645 \u0627\u0644\u0642\u0631\u0649 side already folds, rather than growing a second list of marks. */
+  return ((el && el.textContent) || '').replace(AR_INVISIBLE, '').replace(/\s+/g, ' ').trim();
 }
 /* <br> carries meaning in some of these cells — a list of sectors, a title and
    its note — and textContent runs the lines together, so they are separated
@@ -4229,6 +4232,48 @@ async function mtCircularsScan(range, onProgress){
   return { ...suSplitByRange(entries, range), scanned: entries.length, pagesRead: 1 };
 }
 
+/* ---------- مجلس شؤون الجامعات — الأنظمة واللوائح ----------
+   One page, no pager, twenty-five cards today, and every card carries all three
+   fields itself: the title, a date, and a link straight to the published PDF.
+
+   The date is the day the card went up, not the day the وثيقة was issued — the
+   وثيقة's own page prints that same moment as its only date (2025-01-13T15:44:40
+   +00:00 for إطار ومنهجية تقييم دراسات الجدوى) and gives no other. So a نظام
+   older than this site sits under the day it was uploaded here, and dateMeaning
+   says so.
+
+   It is still the right date to test the range against, and the files settle
+   that: eighteen of the twenty-five carry Last-Modified 1 يونيو 2024, the day a
+   site move re-uploaded them all, while their cards read 2023. Dating by file
+   would move two thirds of this listing onto one day that means nothing. */
+const CUA_ORIGIN = 'https://www.cua.gov.sa';
+const CUA_LIST_URL = CUA_ORIGIN + '/regulations-and-regulations/';
+
+function cuaParse(html){
+  const doc = suDoc(html);
+  const cards = doc.querySelectorAll('.view-id-regulations .node');
+  if(!cards.length) return null;
+  return Array.from(cards).map(card => {
+    /* ten links a card: four to the file (the image, its hidden label, تحميل
+       and its icon), two to the وثيقة's page, four to share buttons off-site */
+    const file = Array.from(card.querySelectorAll('a[href]'))
+      .map(a => suSameOrigin(a.getAttribute('href'), CUA_LIST_URL, CUA_ORIGIN))
+      .find(suIsFile);
+    return suEntry({
+      title: suText(card.querySelector('.field--name-node-title')),
+      date: suGregToIso(suText(card.querySelector('.field--name-node-post-date'))),
+      fileUrl: file || ''
+    });
+  }).filter(e => e.title);
+}
+
+async function cuaScan(range, onProgress){
+  onProgress('جاري قراءة أنظمة ولوائح مجلس شؤون الجامعات…');
+  const entries = cuaParse(await suGetPage(CUA_LIST_URL, 'أنظمة ولوائح مجلس شؤون الجامعات'));
+  if(!entries) throw new Error('تعذر قراءة قائمة الأنظمة واللوائح — تغيّر شكل الصفحة');
+  return { ...suSplitByRange(entries, range), scanned: entries.length, pagesRead: 1 };
+}
+
 /* ---------- the site registry ----------
    `dateMeaning` is shown next to the range, because "published on" means two
    different things across these sites and an employee reading a result has to
@@ -4306,7 +4351,11 @@ const SU_SITES = [
     home: MT_CIRCULARS_URL, dateMeaning: 'تاريخ التعميم المنشور على بطاقته',
     added: '2026-08-12',
     note: 'الموقع يمنع القراءة الآلية، فهذه الجهة تُقرأ من نسخة يحدّثها متصفح مجدول يوميًا (مهمة mt-circulars) لا من الموقع مباشرة، ويُرفض أي نطاق يتجاوز آخر تحديث ناجح.',
-    scan: mtCircularsScan }
+    scan: mtCircularsScan },
+  { key: 'cua-regulations', name: 'مجلس شؤون الجامعات', section: 'الأنظمة واللوائح',
+    home: CUA_LIST_URL, dateMeaning: 'التاريخ المنشور على بطاقة الوثيقة — وهو تاريخ رفعها على الموقع لا تاريخ صدورها',
+    added: '2026-08-17',
+    scan: cuaScan }
 ];
 function suSiteLabel(site){ return site.section ? `${site.name} — ${site.section}` : site.name; }
 
