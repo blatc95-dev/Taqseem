@@ -88,6 +88,10 @@
   }
 
   *{box-sizing:border-box;}
+  /* every button here is given a display, and a display beats the `hidden`
+     attribute — so a button hidden in script stayed on the screen. This is the
+     one rule that makes `hidden` mean hidden, whatever else is set. */
+  [hidden]{display:none !important;}
   html{ transition:background-color .15s ease; }
   body{
     margin:0;
@@ -440,6 +444,10 @@
   .act-tag.act-su{background:var(--lvl3-bg);color:var(--lvl3-text);}
   .act-tag.act-draft{background:var(--bg-soft);color:var(--text-muted);border:1px solid var(--border);}
   .activity-more{display:flex;justify-content:center;margin-top:14px;}
+
+  /* تقسيم's own page: the new-file action, under the files that already exist */
+  .tq-new{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;}
+  .tq-new-text{font-size:12.5px;color:var(--text-muted);line-height:1.8;flex:1;min-width:200px;}
 
   /* log sections (embedded in the home page) */
   .log-section{margin-bottom:30px;}
@@ -961,6 +969,34 @@
     </div>
   </div>
 
+  <!-- ============ TAQSEEM: the files that exist, then a new one ============ -->
+  <div class="view" id="viewTaqseem">
+    <div class="home-header">
+      <div class="eyebrow">أداة داخلية · إدخال البيانات</div>
+      <h1>تقسيم</h1>
+      <p class="sub">الملفات المنجزة والمسودات المعلّقة، ومن أسفلها بدء ملف جديد.</p>
+    </div>
+
+    <div class="log-section">
+      <div class="log-section-title">آخر الملفات المنجزة</div>
+      <div class="log-list" id="tqDone"></div>
+      <div class="activity-more"><button class="pill-btn" id="tqDoneMore" hidden>عرض المزيد</button></div>
+    </div>
+
+    <div class="log-section" style="margin-top:34px;">
+      <div class="log-section-title">المسودات</div>
+      <div class="log-list" id="tqDrafts"></div>
+    </div>
+
+    <div class="log-section" style="margin-top:34px;">
+      <div class="log-section-title">ملف جديد</div>
+      <div class="card tq-new">
+        <div class="tq-new-text">الصق نص التشريع، وحدّد عناوينه بالماوس، ويتكفّل النظام بالباقي.</div>
+        <button class="btn-primary" id="tqNewBtn">بدء ملف جديد</button>
+      </div>
+    </div>
+  </div>
+
   <!-- EDITOR -->
   <div class="view" id="viewEditor">
 
@@ -1322,8 +1358,10 @@ function goToView(view){
   currentView = view;
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById('view' + view.charAt(0).toUpperCase() + view.slice(1)).classList.add('active');
-  document.querySelectorAll('.rail-item[data-view]').forEach(b=>b.classList.toggle('active', b.dataset.view === view));
+  document.querySelectorAll('.rail-item[data-view]').forEach(b=>b.classList.toggle('active',
+    b.dataset.view === view || (b.dataset.viewAlso || '') === view));
   if(view === 'home') renderHome();
+  if(view === 'taqseem') renderTaqseem();
   if(view === 'uqn') uqnRenderLog();
   if(view === 'siteUpdates') suOnEnter();
   if(view === 'settings') settingsOnEnter();
@@ -1488,6 +1526,53 @@ async function startNewFile(){
   goToView('editor');
   goToStep(1);
   showToast('بدأت ملفًا جديدًا');
+}
+
+/* ---------- تقسيم tab: what exists first, a new file last ----------
+   Opening the tool used to be the same act as starting a file, which is the one
+   thing an employee least often wants first: they came back for the file they
+   left yesterday. So the tab opens on what is already there — the finished files,
+   then the drafts still waiting — and بدء ملف جديد sits under both, where a
+   reader arrives having found that what they wanted is not in the list. */
+const TQ_DONE_PAGE = 8;
+let tqRecords = [];
+let tqDoneExpanded = false;
+function tqCardHtml(r){
+  const mine = r.ownerId === currentUser.id;
+  const draft = r.status === 'draft';
+  const articles = (r.counts && r.counts[3]) || 0;
+  return `<div class="log-card">
+    <div class="log-card-main">
+      <div class="log-title">${draft ? '<span class="act-tag act-draft">مسودة</span>' : ''}${
+        escapeHtml(r.title || 'بدون عنوان')}</div>
+      <div class="log-meta">${escapeHtml(r.user || 'غير معروف')} · ${
+        relTime(r.updatedAt || r.exportedAt || r.createdAt)}${
+        articles ? ' · ' + escapeHtml(arCount(articles, 'مادة واحدة', 'مادتان', 'مواد', 'مادة')) : ''}</div>
+    </div>
+    <div class="log-card-actions">${(draft && mine)
+      ? `<button class="btn-ghost log-open-btn" data-id="${r.id}" data-action="continue">متابعة</button>
+         <button class="btn-ghost log-open-btn log-danger" data-id="${r.id}" data-action="delete">إنهاء</button>`
+      : `<button class="btn-ghost log-open-btn" data-id="${r.id}" data-action="view">عرض</button>`}</div>
+  </div>`;
+}
+function tqRenderLists(){
+  /* records arrive newest-updated first, which is what «آخر» means here */
+  const done = tqRecords.filter(r => r.status === 'completed');
+  const drafts = tqRecords.filter(r => r.status === 'draft');
+  const shown = tqDoneExpanded ? done : done.slice(0, TQ_DONE_PAGE);
+  $('#tqDone').innerHTML = shown.length
+    ? shown.map(tqCardHtml).join('')
+    : '<div class="empty-hint">لم يكتمل أي ملف بعد</div>';
+  const more = $('#tqDoneMore');
+  more.hidden = done.length <= TQ_DONE_PAGE;
+  more.textContent = tqDoneExpanded ? 'عرض أقل' : `عرض المزيد (${done.length - TQ_DONE_PAGE})`;
+  $('#tqDrafts').innerHTML = drafts.length
+    ? drafts.map(tqCardHtml).join('')
+    : '<div class="empty-hint">لا مسودات معلّقة</div>';
+}
+async function renderTaqseem(){
+  tqRecords = await loadRecords();
+  tqRenderLists();
 }
 
 /* ---------- home dashboard ----------
@@ -1746,7 +1831,7 @@ document.addEventListener('click', async e=>{
   if(action === 'delete'){
     if(!confirm('هل تريد إنهاء هذه المسودة؟ سيتم حذفها نهائيًا من السجل ولا يمكن التراجع عن ذلك.')) return;
     await deleteRecord(id);
-    await renderHome();
+    await (currentView === 'taqseem' ? renderTaqseem() : renderHome());
     showToast('تم حذف المسودة');
     return;
   }
@@ -6424,17 +6509,21 @@ $('#railToggle').addEventListener('click', async ()=>{
 });
 
 $('#navHome').dataset.view = 'home';
-$('#navNewFile').dataset.view = 'editor';
+$('#navNewFile').dataset.view = 'taqseem';
+/* the editor is where this entry leads, so it stays lit while a file is open */
+$('#navNewFile').dataset.viewAlso = 'editor';
 $('#navUqn').dataset.view = 'uqn';
 $('#navSiteUpdates').dataset.view = 'siteUpdates';
 $('#navSettings').dataset.view = 'settings';
 $('#navHome').addEventListener('click', ()=>goToView('home'));
-/* the rail entry is the tool, not the "new file" button it used to be: an open
-   file is returned to rather than thrown away, and starting a fresh one is the
-   home card's job */
-$('#navNewFile').addEventListener('click', ()=>{
-  if(rawText.trim() || marks.length) goToView('editor');
-  else startNewFile();
+/* the rail entry opens the tool's own page, not a blank file. An open file is
+   not thrown away by going there: it is saved as a draft as it is typed, so it
+   is in the list under المسودات waiting to be continued. */
+$('#navNewFile').addEventListener('click', ()=>goToView('taqseem'));
+$('#tqNewBtn').addEventListener('click', startNewFile);
+$('#tqDoneMore').addEventListener('click', ()=>{
+  tqDoneExpanded = !tqDoneExpanded;
+  tqRenderLists();
 });
 $('#navUqn').addEventListener('click', ()=>goToView('uqn'));
 $('#navSiteUpdates').addEventListener('click', ()=>goToView('siteUpdates'));
