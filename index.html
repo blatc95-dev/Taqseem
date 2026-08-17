@@ -548,22 +548,64 @@
   .settings-lang-current{font-size:13px;font-weight:600;color:var(--text);}
   .soon-badge{font-size:11px;font-weight:600;color:var(--text-muted);background:var(--bg-soft);padding:3px 9px;border-radius:999px;}
 
-  /* المساعد الذكي: the whole page is one locked state — a conversation with a
-     lock over it. Drawn inline in tokens rather than shipped as an image so it
-     turns with the theme, and sized in relative units so it holds at every font
-     scale. */
-  .assist-locked{display:flex;flex-direction:column;align-items:center;text-align:center;gap:18px;padding:56px 22px;}
-  .assist-art{width:100%;max-width:260px;height:auto;display:block;}
-  .assist-bubble{fill:var(--surface);stroke:var(--border);stroke-width:2;}
-  .assist-line{fill:var(--bg-soft);}
-  .assist-line-own{fill:var(--blue-bg);}
-  /* the lock sits on the conversation, so it carries the card's own background
-     with it — the message lines run behind it and stop at its edge */
-  .assist-lock-bg{fill:var(--surface);}
+  /* المساعد الذكي: the page is the chat this tab will be — replies on the start
+     side under the assistant's own mark, the employee's message on the other, and
+     the composer at the bottom — with a lock over the middle of it.
+
+     It is a drawing, not a disabled interface: no input, no button, nothing
+     focusable, and the whole panel is aria-hidden, so a keyboard and a screen
+     reader both find one thing on this page, the sentence that says قريبًا. The
+     bubbles carry bars rather than words for the same reason — a mock
+     conversation would be putting words in the assistant's mouth before it has
+     one. Built from the theme's tokens so it turns with the theme. */
+  .assist-stage{position:relative;max-width:720px;margin:8px auto 0;}
+  /* tall enough to read as a chat window, with the composer sitting at the
+     bottom of it — which also leaves the middle open for the lock, rather than
+     dropping it on top of a bubble */
+  .assist-chat{
+    display:flex;flex-direction:column;gap:14px;padding:20px;min-height:380px;
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+    opacity:.62;user-select:none;
+  }
+  .ac-row{display:flex;gap:9px;align-items:flex-end;}
+  .ac-me{justify-content:flex-end;}
+  .ac-avatar{
+    width:28px;height:28px;border-radius:50%;flex-shrink:0;
+    background:var(--blue-bg);color:var(--blue);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .ac-avatar .icon{width:15px;height:15px;}
+  .ac-bubble{display:flex;flex-direction:column;gap:7px;padding:13px 15px;border-radius:14px;background:var(--bg-soft);}
+  .ac-me .ac-bubble{background:var(--blue-bg);}
+  .ac-line{height:8px;border-radius:4px;background:var(--border);}
+  .ac-me .ac-line{background:var(--blue);opacity:.32;}
+  .ac-composer{
+    display:flex;align-items:center;gap:10px;margin-top:auto;padding:10px 14px;
+    background:var(--bg);border:1px solid var(--border);border-radius:999px;
+  }
+  .ac-placeholder{flex:1;font-size:13px;color:var(--text-muted);}
+  .ac-send{
+    width:30px;height:30px;border-radius:50%;flex-shrink:0;background:var(--blue);color:#fff;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .ac-send .icon{width:14px;height:14px;}
+  /* the lock, over the middle of it — on its own opaque seal, so it stays crisp
+     while what it covers is dimmed */
+  .assist-veil{
+    position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;gap:14px;padding:20px;text-align:center;
+  }
+  .assist-seal{
+    width:78px;height:78px;border-radius:50%;background:var(--surface);border:1px solid var(--border);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .assist-lock-art{width:38px;height:38px;display:block;}
   .assist-lock{fill:none;stroke:var(--blue);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
   .assist-keyhole{fill:var(--blue);}
-  .assist-title{font-size:19px;font-weight:700;color:var(--text);}
-  .assist-sub{font-size:13px;color:var(--text-muted);line-height:1.9;max-width:34em;}
+  .assist-title{
+    font-size:18px;font-weight:700;color:var(--text);
+    background:var(--surface);border:1px solid var(--border);padding:9px 18px;border-radius:999px;
+  }
 
   /* step 3 table of contents sidebar: a nested tree with connecting lines
      between levels (باب -> فصل -> مادة ...) instead of a flat indented list */
@@ -1223,19 +1265,44 @@
        nothing, or a promise about what the tool will do that nobody has decided
        yet. -->
   <div class="view" id="viewAssistant">
-    <div class="card assist-locked">
-      <svg class="assist-art" viewBox="0 0 220 160" role="img" aria-label="محادثة مقفلة">
-        <path class="assist-bubble" d="M28 20h164a20 20 0 0 1 20 20v60a20 20 0 0 1-20 20h-8v22l-28-22H28a20 20 0 0 1-20-20V40a20 20 0 0 1 20-20z"/>
-        <rect class="assist-line" x="34" y="44" width="152" height="9" rx="4.5"/>
-        <rect class="assist-line-own" x="34" y="63" width="152" height="9" rx="4.5"/>
-        <rect class="assist-line" x="34" y="82" width="104" height="9" rx="4.5"/>
-        <circle class="assist-lock-bg" cx="110" cy="70" r="34"/>
-        <rect class="assist-lock" x="95" y="69" width="30" height="23" rx="6"/>
-        <path class="assist-lock" d="M101 69v-7a9 9 0 0 1 18 0v7"/>
-        <circle class="assist-keyhole" cx="110" cy="80.5" r="2.6"/>
-      </svg>
-      <div class="assist-title">مساعدك الذكي: قريبًا</div>
-      <div class="assist-sub">التبويب محجوز باسمه، ولا شيء فيه يُستخدم اليوم. ما يفعله المساعد يُكتب هنا حين يُبنى.</div>
+    <div class="assist-stage">
+      <div class="assist-chat" aria-hidden="true">
+        <div class="ac-row">
+          <span class="ac-avatar"><span class="icon icon-assistant"></span></span>
+          <div class="ac-bubble" style="width:64%;">
+            <span class="ac-line"></span>
+            <span class="ac-line" style="width:86%;"></span>
+            <span class="ac-line" style="width:52%;"></span>
+          </div>
+        </div>
+        <div class="ac-row ac-me">
+          <div class="ac-bubble" style="width:42%;">
+            <span class="ac-line"></span>
+            <span class="ac-line" style="width:62%;"></span>
+          </div>
+        </div>
+        <div class="ac-row">
+          <span class="ac-avatar"><span class="icon icon-assistant"></span></span>
+          <div class="ac-bubble" style="width:54%;">
+            <span class="ac-line"></span>
+            <span class="ac-line" style="width:74%;"></span>
+          </div>
+        </div>
+        <div class="ac-composer">
+          <span class="ac-placeholder">اكتب سؤالك…</span>
+          <span class="ac-send"><span class="icon icon-go"></span></span>
+        </div>
+      </div>
+      <div class="assist-veil">
+        <span class="assist-seal">
+          <svg class="assist-lock-art" viewBox="0 0 40 40" role="img" aria-label="مقفل">
+            <rect class="assist-lock" x="9" y="17" width="22" height="17" rx="5"/>
+            <path class="assist-lock" d="M13.5 17v-4.5a6.5 6.5 0 0 1 13 0V17"/>
+            <circle class="assist-keyhole" cx="20" cy="25.5" r="2.1"/>
+          </svg>
+        </span>
+        <div class="assist-title">مساعدك الذكي: قريبًا</div>
+      </div>
     </div>
   </div>
 
