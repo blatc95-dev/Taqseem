@@ -3556,21 +3556,29 @@ async function suProxyInvoke(payload){
 async function suProxyFetch(urls, method){
   return suProxyInvoke({ urls, method: method || 'GET' });
 }
+/* The marker each posting mode sets is checked rather than assumed: a deployed
+   copy older than this page has never heard of the method, reads it as a GET,
+   ignores the body and answers with the listing's own first page. That is a
+   result that looks perfectly ordinary while answering a question nobody asked,
+   and left unchecked it would land in the log as coverage of a page nobody
+   turned. */
+function suProxyStale(){
+  const stale = new Error('النسخة المنشورة من وسيط القراءة لا تعرف قراءة هذه الجهة — أعِد نشرها من بطاقة التجهيزة');
+  stale.proxyStale = true;
+  return stale;
+}
 /* One url, one form body, and the page that comes back — how هيئة التأمين's
-   listing turns a tab or a page, since it turns them no other way.
-
-   The marker is checked rather than assumed: a deployed copy older than this
-   page has never heard of FORM, reads it as a GET, ignores the body and answers
-   with the listing's own first page. That is a result that looks perfectly
-   ordinary while answering a question nobody asked, and left unchecked it would
-   land in the log as coverage of a tab nobody turned. */
+   listing turns a tab or a page, since it turns them no other way. */
 async function suProxyForm(url, body){
   const [res] = await suProxyInvoke({ url, method: 'FORM', body });
-  if(!res || !res.formPosted){
-    const stale = new Error('النسخة المنشورة من وسيط القراءة لا تعرف قراءة هذه الجهة — أعِد نشرها من بطاقة التجهيزة');
-    stale.proxyStale = true;
-    throw stale;
-  }
+  if(!res || !res.formPosted) throw suProxyStale();
+  return res;
+}
+/* One url, one JSON body, and the answer — how هيئة الاتصالات والفضاء والتقنية's
+   two listings are paged, since the page itself pages them no other way. */
+async function suProxyJson(url, body){
+  const [res] = await suProxyInvoke({ url, method: 'JSON', body });
+  if(!res || !res.jsonPosted) throw suProxyStale();
   return res;
 }
 /* site-proxy refuses more than 24 urls in one call. A listing longer than that
@@ -4593,6 +4601,123 @@ function iaScanner(category, label){
   };
 }
 
+/* ---------- هيئة الاتصالات والفضاء والتقنية — القرارات والتنظيمات ----------
+   Two listings drawn by one component: قائمة القرارات and التنظيمات، twelve
+   cards a page, newest first. Neither pages by URL. ?page=3 is a query the page
+   writes for itself and never asks the server about (a shallow push), so every
+   GET answers with the same first twelve — those twelve are in the markup as
+   JSON and nothing else is. Every page after them the page reads from its own
+   API, and that API answers POST with application/json and no other way: a GET
+   is a 404 and the same body sent urlencoded is refused before it reaches the
+   application. This جهة is what site-proxy's JSON mode exists for, and what it
+   cost is written at the top of that function.
+
+   What the API gives back for it is the whole listing in one call — pageSize is
+   honoured, so today's 149 قرارًا and 109 وثيقة each arrive at once, and
+   TotalRecords is what proves the walk was complete rather than cut short.
+
+   The date is the card's own: DecisionDate، تاريخ اعتماد القرار — the label the
+   وثيقة's own page prints over it, and the field the site's own date filter
+   filters on. It is not the day the entry appeared on the site and the site
+   publishes no such day: the قرارات carry an effectiveDate months after their
+   اعتماد (20-09-2026 against 25-06-2026), the hijri field arrives empty on all
+   258 rows, and the التنظيمات files cannot settle it either — five sampled from
+   2007 to 2025 all carry the same 16 أغسطس 2026 Last-Modified from one media
+   republish, which would date a 2007 وثيقة to yesterday. So the note says what
+   اعتماد costs: a قرار approved in June and put up in August sits under June.
+
+   Neither listing gives a row a file to point at, so both point at the entry's
+   own page. A قرار has no file to give: its text is its page, and `documents`
+   comes back empty for all 149 of them. A تنظيم does publish one, but not at any
+   address worth keeping. The listing carries an id, not a path, and the address
+   the site answers with when asked about that id (GetPdfUrl, then
+   /-/media/<hash>.pdf) does not outlive the site's own media republish: five
+   addresses read within an hour of each other were all answering 302 to
+   /sitecore/service/notfound.aspx an hour later, while freshly read ones served
+   the same documents. A row in the log is read weeks after it was written, and a
+   link that has quietly turned into the site's «الصفحة غير موجودة» is worse than
+   a link that costs a click — so the row keeps the وثيقة's own page, where the
+   site's own «استعراض الملف» always hands over the file that is current. */
+const CST_ORIGIN = 'https://www.cst.gov.sa';
+const CST_DECISIONS_URL = CST_ORIGIN + '/regulations-and-licenses/decisions';
+const CST_REGULATIONS_URL = CST_ORIGIN + '/regulations-and-licenses/regulations';
+/* the same two pages by the route the API asks for them under */
+const CST_DECISIONS_PATH = '/ar/regulations-and-licenses/decisions';
+const CST_REGULATIONS_PATH = '/ar/regulations-and-licenses/regulations';
+const CST_PAGE_SIZE = 200;   // both listings fit in one call today (149 and 109)
+const CST_MAX_PAGES = 20;    // the guard, and 4000 entries of room at that size
+/* one date column with one meaning across both listings */
+const CST_DATE_MEANING = 'تاريخ اعتماد القرار المنشور على البطاقة — لا تاريخ إدراج الوثيقة في الموقع، والموقع لا ينشر تاريخًا للإدراج';
+const CST_LATE_NOTE = 'التاريخ المعتمد هو تاريخ اعتماد القرار، فما اعتُمد قبل رفعه على الموقع بأشهر يظهر في نطاق شهر اعتماده لا شهر رفعه — والموقع لا ينشر تاريخ الرفع.';
+
+/* the body the page's own pager sends, with the filter fields left the way the
+   page leaves them when nobody has filtered anything */
+function cstBody(path, pageNumber){
+  return JSON.stringify({
+    lang: 'ar', sortAscending: false, pageNumber, pageSize: CST_PAGE_SIZE,
+    path, keyword: '', statusIds: null, documentSubjectIds: null,
+    documentTypeIds: null, startDate: '', endDate: ''
+  });
+}
+/* the same folding suText does for an element, for a title that arrives as JSON:
+   these two listings carry double spaces inside their own titles */
+function cstText(raw){ return suText({ textContent: raw == null ? '' : String(raw) }); }
+/* dd-mm-yyyy, which suGregToIso reads once the separators are ones it knows. The
+   hijri dates the site writes the same way (10-01-1448) come back empty by its
+   year guard rather than as a Gregorian day. */
+function cstIso(raw){ return suGregToIso(String(raw || '').replace(/-/g, '/')); }
+
+function cstEntry(rec){
+  return suEntry({
+    title: cstText(rec.Name),
+    date: cstIso(rec.DecisionDate),
+    fileUrl: suSameOrigin(rec.Url, CST_ORIGIN + '/', CST_ORIGIN)
+  });
+}
+
+async function cstFetchAll(recordType, path, label, onProgress){
+  const url = CST_ORIGIN + '/api/feature/' + recordType + 'NewResult';
+  const entries = [];
+  let total = 0, pagesRead = 0;
+  for(let pg = 1; pg <= CST_MAX_PAGES; pg++){
+    onProgress(pg === 1 ? `جاري قراءة ${label}…` : `${label} — الصفحة ${pg}…`);
+    const res = await suProxyJson(url, cstBody(path, pg));
+    if(!res.ok) throw new Error(`تعذر فتح ${label} (${res.status || res.error || 'خطأ'})`);
+    let data = null;
+    try{ data = JSON.parse(res.body); }catch(e){ data = null; }
+    /* the WAF answers a request it does not like with a page rather than an
+       error, so what came back has to be this listing before it is counted */
+    if(!data || !Array.isArray(data.Records)) throw new Error(`تعذر قراءة ${label} — تغيّر شكل الرد`);
+    if(pg === 1) total = Number(data.TotalRecords) || 0;
+    pagesRead = pg;
+    /* neither listing is empty, so a first page carrying nothing is the API
+       answering something other than what was asked of it */
+    if(!data.Records.length){
+      if(pg === 1) throw new Error(`تعذر قراءة ${label} — لم يحمل الرد أي عنصر`);
+      break;
+    }
+    entries.push(...data.Records.map(cstEntry));
+    if(entries.length >= total) break;
+  }
+  /* the listing counts itself, so a walk that stopped short of that count is a
+     hole — and a hole reported as a result would read as "لا تحديثات" */
+  if(entries.length < total){
+    throw new Error(`تعذر قراءة ${label} — قُرئ ${entries.length} من ${total} عنصرًا`);
+  }
+  return { entries, pagesRead };
+}
+
+function cstScanner(recordType, path, label){
+  return async function(range, onProgress){
+    const read = await cstFetchAll(recordType, path, label, onProgress);
+    return {
+      ...suSplitByRange(read.entries, range),
+      scanned: read.entries.length,
+      pagesRead: read.pagesRead
+    };
+  };
+}
+
 /* ---------- the site registry ----------
    `dateMeaning` and `note` are documentation rather than screen text: what
    "published on" means differs across these sites, and each limit is worth
@@ -4690,7 +4815,17 @@ const SU_SITES = [
   { key: 'ia-health', name: 'هيئة التأمين', section: 'الأنظمة والقواعد والتعاميم المتعلقة بالتأمين الصحي',
     home: IA_LIST_URL, dateMeaning: IA_DATE_MEANING, note: IA_HEALTH_NOTE,
     added: '2026-08-17',
-    scan: iaScanner(4, 'تشريعات التأمين الصحي') }
+    scan: iaScanner(4, 'تشريعات التأمين الصحي') },
+  { key: 'cst-decisions', name: 'هيئة الاتصالات والفضاء والتقنية', section: 'القرارات',
+    home: CST_DECISIONS_URL, dateMeaning: CST_DATE_MEANING,
+    note: CST_LATE_NOTE + ' والقرارات تُنشر نصًّا في صفحاتها لا كملفات، فالرابط يفتح صفحة القرار ولا ملف في الصف لتنزيله.',
+    added: '2026-08-17',
+    scan: cstScanner('Decisions', CST_DECISIONS_PATH, 'قرارات هيئة الاتصالات والفضاء والتقنية') },
+  { key: 'cst-regulations', name: 'هيئة الاتصالات والفضاء والتقنية', section: 'التنظيمات',
+    home: CST_REGULATIONS_URL, dateMeaning: CST_DATE_MEANING,
+    note: CST_LATE_NOTE + ' وتواريخ الملفات لا تصلح بديلاً فكلها بتاريخ إعادة نشر واحد. والرابط يفتح صفحة الوثيقة لا ملفها، لأن العنوان الذي يعطيه الموقع للملف مؤقت ينتهي بعد ساعات — فيُنزَّل الملف من زر «استعراض الملف» في الصفحة، وفيها أيضًا الملف الثاني لأربع وثائق (سجل تغييرات أو التنظيمات الأصلية).',
+    added: '2026-08-17',
+    scan: cstScanner('Documents', CST_REGULATIONS_PATH, 'تنظيمات هيئة الاتصالات والفضاء والتقنية') }
 ];
 function suSiteLabel(site){ return site.section ? `${site.name} — ${site.section}` : site.name; }
 
@@ -5307,15 +5442,20 @@ const SU_PROXY_SOURCE = `// Taqseem — site-proxy
 //   * only public Saudi hosts over https are reachable (see resolveTarget), so
 //     the function can never be pointed at the project's own services or at a
 //     cloud metadata endpoint
-//   * GET and HEAD read, and FORM submits one urlencoded body. FORM exists for
-//     هيئة التأمين, whose listing is an ASP.NET page: its four tabs and every
-//     page past the first are __doPostBack and answer no GET route at all — not
-//     ?page=, not ?category=, not the viewstate in the query string. This is a
-//     real widening and it is not dressed up as anything else: a POST is not a
-//     read by definition, and this function can no longer promise it never
-//     wrote anything upstream. What still holds is who and where — a signed-in
+//   * GET and HEAD read; FORM submits one urlencoded body and JSON one JSON
+//     body. FORM exists for هيئة التأمين, whose listing is an ASP.NET page: its
+//     four tabs and every page past the first are __doPostBack and answer no GET
+//     route at all — not ?page=, not ?category=, not the viewstate in the query
+//     string. JSON exists for هيئة الاتصالات والفضاء والتقنية, whose listing is a
+//     Next.js page carrying only its first twelve cards in the markup and reading
+//     every page after that from an API that answers POST with application/json
+//     and nothing else: a GET is a 404 there, and the same body sent urlencoded
+//     is refused before it reaches the application. Both are a real widening and
+//     neither is dressed up as anything else: a POST is not a read by
+//     definition, and this function can no longer promise it never wrote
+//     anything upstream. What still holds is who and where — a signed-in
 //     employee, a public .sa host, one body per call — and what the app itself
-//     sends, which is الهيئة's own tab-and-pager postback and nothing else.
+//     sends, which is those two listings' own paging requests and nothing else.
 //   * JWT verification stays on (Supabase's default), so only a signed-in
 //     employee can drive it
 
@@ -5343,6 +5483,11 @@ const MAX_FILE = 20_000_000;
 // ~11 KB before urlencoding, so this is roomy on purpose and still far too small
 // to make this function a way of uploading anything.
 const MAX_FORM = 200_000;
+// A JSON body is one listing's own query — the page number, the page size and
+// the filter fields left empty — which runs about 250 bytes for هيئة الاتصالات.
+// Roomy enough for a filter that grows, and nowhere near enough to make this
+// function a way of posting anything of substance.
+const MAX_JSON = 4_000;
 const POOL = 6;               // parallel upstream requests per call
 const TIMEOUT_MS = 40_000;    // a source site that hangs must not hang the call,
                               // but a slow-and-working one must not be cut off either
@@ -5419,26 +5564,32 @@ function resolveTarget(raw) {
 //        from a site that sends no CORS header
 // FORM — one urlencoded body POSTed, the page that comes back decoded to text.
 //        The one listing that pages by postback needs it; see Safety above.
-async function fetchOne(raw, mode, form = '') {
+// JSON — one application/json body POSTed, the answer decoded to text. The one
+//        listing that pages through its own API needs it; see Safety above.
+async function fetchOne(raw, mode, body = '') {
   const target = resolveTarget(raw);
   if (!target) return { url: raw, ok: false, status: 0, error: 'host not allowed' };
+  const posting = mode === 'FORM' || mode === 'JSON';
   try {
     const headers = {
       'User-Agent': USER_AGENT,
       'Accept': mode === 'FILE'
         ? '*/*'
+        : mode === 'JSON'
+        ? 'application/json'
         : 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
       'Accept-Language': 'ar,en;q=0.9',
     };
-    // the one content type this function will ever send, and it is the one a
-    // browser sends submitting the same page's own form
+    // the two content types this function will ever send, and each is the one
+    // the page it stands in for sends asking the same question
     if (mode === 'FORM') headers['Content-Type'] = 'application/x-www-form-urlencoded';
+    if (mode === 'JSON') headers['Content-Type'] = 'application/json';
     const res = await fetch(target, {
-      method: mode === 'HEAD' ? 'HEAD' : mode === 'FORM' ? 'POST' : 'GET',
+      method: mode === 'HEAD' ? 'HEAD' : posting ? 'POST' : 'GET',
       redirect: 'follow',
       signal: AbortSignal.timeout(TIMEOUT_MS),
       headers,
-      body: mode === 'FORM' ? form : undefined,
+      body: posting ? body : undefined,
     });
     const contentType = res.headers.get('content-type') || '';
     const out = {
@@ -5450,12 +5601,13 @@ async function fetchOne(raw, mode, form = '') {
       contentType,
       contentLength: res.headers.get('content-length') || '',
     };
-    // how the page tells an older deployment apart. A copy that predates FORM
-    // reads the method it does not know as GET, ignores the body, and answers
-    // with the listing's own first page — a plausible-looking result for a
-    // postback that never happened, which would land as "لا تحديثات" for a tab
-    // nobody turned. This marker is the proof the POST was actually made.
+    // how the page tells an older deployment apart. A copy that predates these
+    // modes reads the method it does not know as GET, ignores the body, and
+    // answers with the listing's own first page — a plausible-looking result for
+    // a request that never happened, which would land as "لا تحديثات" for a tab
+    // nobody turned. These markers are the proof the POST was actually made.
     if (mode === 'FORM') out.formPosted = true;
+    if (mode === 'JSON') out.jsonPosted = true;
     const cap = mode === 'FILE' ? MAX_FILE : MAX_BODY;
     if (mode === 'HEAD') {
       // a HEAD is only worth making when the upstream answers it honestly;
@@ -5488,13 +5640,13 @@ async function fetchOne(raw, mode, form = '') {
   }
 }
 
-async function fetchAll(urls, mode, form = '') {
+async function fetchAll(urls, mode, body = '') {
   const out = new Array(urls.length);
   let cursor = 0;
   async function worker() {
     while (cursor < urls.length) {
       const i = cursor++;
-      out[i] = await fetchOne(urls[i], mode, form);
+      out[i] = await fetchOne(urls[i], mode, body);
     }
   }
   await Promise.all(
@@ -5523,7 +5675,8 @@ Deno.serve(async (req) => {
 
   const mode = payload.method === 'HEAD' ? 'HEAD'
     : payload.method === 'FILE' ? 'FILE'
-    : payload.method === 'FORM' ? 'FORM' : 'GET';
+    : payload.method === 'FORM' ? 'FORM'
+    : payload.method === 'JSON' ? 'JSON' : 'GET';
   const urls = Array.isArray(payload.urls)
     ? payload.urls
     : (payload.url !== undefined ? [payload.url] : []);
@@ -5534,18 +5687,19 @@ Deno.serve(async (req) => {
   // built in memory at the same time
   if (mode === 'FILE' && urls.length > 1) return json({ error: 'one url per FILE call' }, 400);
 
-  let form = '';
-  if (mode === 'FORM') {
+  let body = '';
+  if (mode === 'FORM' || mode === 'JSON') {
     // one url and one body, always paired: a body sent to several urls would be
-    // this function submitting the same form around a host, which is neither
+    // this function posting the same request around a host, which is neither
     // what the tab needs nor something worth being able to do
-    if (urls.length > 1) return json({ error: 'one url per FORM call' }, 400);
-    if (typeof payload.body !== 'string') return json({ error: 'FORM needs a body string' }, 400);
-    if (payload.body.length > MAX_FORM) return json({ error: 'form body too large' }, 400);
-    form = payload.body;
+    if (urls.length > 1) return json({ error: 'one url per ' + mode + ' call' }, 400);
+    if (typeof payload.body !== 'string') return json({ error: mode + ' needs a body string' }, 400);
+    const cap = mode === 'FORM' ? MAX_FORM : MAX_JSON;
+    if (payload.body.length > cap) return json({ error: mode.toLowerCase() + ' body too large' }, 400);
+    body = payload.body;
   }
 
-  return json({ results: await fetchAll(urls, mode, form) });
+  return json({ results: await fetchAll(urls, mode, body) });
 });`;
 
 function suFunctionsUrl(){

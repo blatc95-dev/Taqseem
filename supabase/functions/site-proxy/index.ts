@@ -19,15 +19,20 @@
 //   * only public Saudi hosts over https are reachable (see resolveTarget), so
 //     the function can never be pointed at the project's own services or at a
 //     cloud metadata endpoint
-//   * GET and HEAD read, and FORM submits one urlencoded body. FORM exists for
-//     هيئة التأمين, whose listing is an ASP.NET page: its four tabs and every
-//     page past the first are __doPostBack and answer no GET route at all — not
-//     ?page=, not ?category=, not the viewstate in the query string. This is a
-//     real widening and it is not dressed up as anything else: a POST is not a
-//     read by definition, and this function can no longer promise it never
-//     wrote anything upstream. What still holds is who and where — a signed-in
+//   * GET and HEAD read; FORM submits one urlencoded body and JSON one JSON
+//     body. FORM exists for هيئة التأمين, whose listing is an ASP.NET page: its
+//     four tabs and every page past the first are __doPostBack and answer no GET
+//     route at all — not ?page=, not ?category=, not the viewstate in the query
+//     string. JSON exists for هيئة الاتصالات والفضاء والتقنية, whose listing is a
+//     Next.js page carrying only its first twelve cards in the markup and reading
+//     every page after that from an API that answers POST with application/json
+//     and nothing else: a GET is a 404 there, and the same body sent urlencoded
+//     is refused before it reaches the application. Both are a real widening and
+//     neither is dressed up as anything else: a POST is not a read by
+//     definition, and this function can no longer promise it never wrote
+//     anything upstream. What still holds is who and where — a signed-in
 //     employee, a public .sa host, one body per call — and what the app itself
-//     sends, which is الهيئة's own tab-and-pager postback and nothing else.
+//     sends, which is those two listings' own paging requests and nothing else.
 //   * JWT verification stays on (Supabase's default), so only a signed-in
 //     employee can drive it
 
@@ -55,6 +60,11 @@ const MAX_FILE = 20_000_000;
 // ~11 KB before urlencoding, so this is roomy on purpose and still far too small
 // to make this function a way of uploading anything.
 const MAX_FORM = 200_000;
+// A JSON body is one listing's own query — the page number, the page size and
+// the filter fields left empty — which runs about 250 bytes for هيئة الاتصالات.
+// Roomy enough for a filter that grows, and nowhere near enough to make this
+// function a way of posting anything of substance.
+const MAX_JSON = 4_000;
 const POOL = 6;               // parallel upstream requests per call
 const TIMEOUT_MS = 40_000;    // a source site that hangs must not hang the call,
                               // but a slow-and-working one must not be cut off either
@@ -74,7 +84,9 @@ type Result = Record<string, unknown>;
 //        from a site that sends no CORS header
 // FORM — one urlencoded body POSTed, the page that comes back decoded to text.
 //        The one listing that pages by postback needs it; see Safety above.
-type Mode = 'GET' | 'HEAD' | 'FILE' | 'FORM';
+// JSON — one application/json body POSTed, the answer decoded to text. The one
+//        listing that pages through its own API needs it; see Safety above.
+type Mode = 'GET' | 'HEAD' | 'FILE' | 'FORM' | 'JSON';
 
 // `res.text()` decodes as UTF-8 no matter what the response declares, so a page
 // served in a legacy encoding would come back as mojibake — saff.com.sa serves
@@ -134,26 +146,30 @@ function resolveTarget(raw: unknown): URL | null {
   return SAUDI_HOST.test(u.hostname.toLowerCase()) ? u : null;
 }
 
-async function fetchOne(raw: unknown, mode: Mode, form = ''): Promise<Result> {
+async function fetchOne(raw: unknown, mode: Mode, body = ''): Promise<Result> {
   const target = resolveTarget(raw);
   if (!target) return { url: raw, ok: false, status: 0, error: 'host not allowed' };
+  const posting = mode === 'FORM' || mode === 'JSON';
   try {
     const headers: Record<string, string> = {
       'User-Agent': USER_AGENT,
       'Accept': mode === 'FILE'
         ? '*/*'
+        : mode === 'JSON'
+        ? 'application/json'
         : 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
       'Accept-Language': 'ar,en;q=0.9',
     };
-    // the one content type this function will ever send, and it is the one a
-    // browser sends submitting the same page's own form
+    // the two content types this function will ever send, and each is the one
+    // the page it stands in for sends asking the same question
     if (mode === 'FORM') headers['Content-Type'] = 'application/x-www-form-urlencoded';
+    if (mode === 'JSON') headers['Content-Type'] = 'application/json';
     const res = await fetch(target, {
-      method: mode === 'HEAD' ? 'HEAD' : mode === 'FORM' ? 'POST' : 'GET',
+      method: mode === 'HEAD' ? 'HEAD' : posting ? 'POST' : 'GET',
       redirect: 'follow',
       signal: AbortSignal.timeout(TIMEOUT_MS),
       headers,
-      body: mode === 'FORM' ? form : undefined,
+      body: posting ? body : undefined,
     });
     const contentType = res.headers.get('content-type') || '';
     const out: Result = {
@@ -165,12 +181,13 @@ async function fetchOne(raw: unknown, mode: Mode, form = ''): Promise<Result> {
       contentType,
       contentLength: res.headers.get('content-length') || '',
     };
-    // how the page tells an older deployment apart. A copy that predates FORM
-    // reads the method it does not know as GET, ignores the body, and answers
-    // with the listing's own first page — a plausible-looking result for a
-    // postback that never happened, which would land as "لا تحديثات" for a tab
-    // nobody turned. This marker is the proof the POST was actually made.
+    // how the page tells an older deployment apart. A copy that predates these
+    // modes reads the method it does not know as GET, ignores the body, and
+    // answers with the listing's own first page — a plausible-looking result for
+    // a request that never happened, which would land as "لا تحديثات" for a tab
+    // nobody turned. These markers are the proof the POST was actually made.
     if (mode === 'FORM') out.formPosted = true;
+    if (mode === 'JSON') out.jsonPosted = true;
     const cap = mode === 'FILE' ? MAX_FILE : MAX_BODY;
     if (mode === 'HEAD') {
       // a HEAD is only worth making when the upstream answers it honestly;
@@ -203,13 +220,13 @@ async function fetchOne(raw: unknown, mode: Mode, form = ''): Promise<Result> {
   }
 }
 
-async function fetchAll(urls: unknown[], mode: Mode, form = ''): Promise<Result[]> {
+async function fetchAll(urls: unknown[], mode: Mode, body = ''): Promise<Result[]> {
   const out = new Array<Result>(urls.length);
   let cursor = 0;
   async function worker() {
     while (cursor < urls.length) {
       const i = cursor++;
-      out[i] = await fetchOne(urls[i], mode, form);
+      out[i] = await fetchOne(urls[i], mode, body);
     }
   }
   await Promise.all(
@@ -238,7 +255,8 @@ Deno.serve(async (req: Request) => {
 
   const mode: Mode = payload.method === 'HEAD' ? 'HEAD'
     : payload.method === 'FILE' ? 'FILE'
-    : payload.method === 'FORM' ? 'FORM' : 'GET';
+    : payload.method === 'FORM' ? 'FORM'
+    : payload.method === 'JSON' ? 'JSON' : 'GET';
   const urls = Array.isArray(payload.urls)
     ? payload.urls
     : (payload.url !== undefined ? [payload.url] : []);
@@ -249,16 +267,17 @@ Deno.serve(async (req: Request) => {
   // built in memory at the same time
   if (mode === 'FILE' && urls.length > 1) return json({ error: 'one url per FILE call' }, 400);
 
-  let form = '';
-  if (mode === 'FORM') {
+  let body = '';
+  if (mode === 'FORM' || mode === 'JSON') {
     // one url and one body, always paired: a body sent to several urls would be
-    // this function submitting the same form around a host, which is neither
+    // this function posting the same request around a host, which is neither
     // what the tab needs nor something worth being able to do
-    if (urls.length > 1) return json({ error: 'one url per FORM call' }, 400);
-    if (typeof payload.body !== 'string') return json({ error: 'FORM needs a body string' }, 400);
-    if (payload.body.length > MAX_FORM) return json({ error: 'form body too large' }, 400);
-    form = payload.body;
+    if (urls.length > 1) return json({ error: 'one url per ' + mode + ' call' }, 400);
+    if (typeof payload.body !== 'string') return json({ error: mode + ' needs a body string' }, 400);
+    const cap = mode === 'FORM' ? MAX_FORM : MAX_JSON;
+    if (payload.body.length > cap) return json({ error: mode.toLowerCase() + ' body too large' }, 400);
+    body = payload.body;
   }
 
-  return json({ results: await fetchAll(urls, mode, form) });
+  return json({ results: await fetchAll(urls, mode, body) });
 });
