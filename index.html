@@ -500,10 +500,20 @@
   /* a tab that exists before its tool does. The «قريبًا» badge rides inside the
      label, so the collapsed rail hides it with the words and no second rule is
      needed; what carries the same thing at 64px wide is the dimming, and the
-     title attribute for anyone who hovers. */
-  .rail-item.rail-soon{opacity:.6;}
+     title attribute for anyone who hovers.
+
+     The name is never what gives way. Two words and a badge in a 220px rail have
+     little room to spare, and how much they take depends on the font that
+     actually loaded — so the row is a flex line where the name refuses to shrink
+     and the badge is the one thing allowed to: it is repeated in the tooltip and
+     again on the tab's own page, while a clipped اسم is just a bug. */
+  /* dimmed enough to read as not-yet, not so much that the name looks half
+     printed beside the tools that do work */
+  .rail-item.rail-soon{opacity:.78;gap:8px;}
   .rail-item.rail-soon:hover,.rail-item.rail-soon.active{opacity:1;}
-  .rail-label .soon-badge{font-size:10px;padding:2px 7px;margin-inline-start:5px;vertical-align:middle;}
+  .rail-soon .rail-label{display:flex;align-items:center;gap:5px;}
+  .rail-soon .rail-name{flex:0 0 auto;}
+  .rail-soon .soon-badge{flex:0 1 auto;overflow:hidden;font-size:9.5px;padding:2px 6px;}
 
   .theme-dark-only{display:none;}
   :root[data-theme="dark"] .theme-light-only{display:none;}
@@ -537,6 +547,23 @@
   .settings-lang-row{display:flex;align-items:center;gap:8px;}
   .settings-lang-current{font-size:13px;font-weight:600;color:var(--text);}
   .soon-badge{font-size:11px;font-weight:600;color:var(--text-muted);background:var(--bg-soft);padding:3px 9px;border-radius:999px;}
+
+  /* المساعد الذكي: the whole page is one locked state — a conversation with a
+     lock over it. Drawn inline in tokens rather than shipped as an image so it
+     turns with the theme, and sized in relative units so it holds at every font
+     scale. */
+  .assist-locked{display:flex;flex-direction:column;align-items:center;text-align:center;gap:18px;padding:56px 22px;}
+  .assist-art{width:100%;max-width:260px;height:auto;display:block;}
+  .assist-bubble{fill:var(--surface);stroke:var(--border);stroke-width:2;}
+  .assist-line{fill:var(--bg-soft);}
+  .assist-line-own{fill:var(--blue-bg);}
+  /* the lock sits on the conversation, so it carries the card's own background
+     with it — the message lines run behind it and stop at its edge */
+  .assist-lock-bg{fill:var(--surface);}
+  .assist-lock{fill:none;stroke:var(--blue);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
+  .assist-keyhole{fill:var(--blue);}
+  .assist-title{font-size:19px;font-weight:700;color:var(--text);}
+  .assist-sub{font-size:13px;color:var(--text-muted);line-height:1.9;max-width:34em;}
 
   /* step 3 table of contents sidebar: a nested tree with connecting lines
      between levels (باب -> فصل -> مادة ...) instead of a flat indented list */
@@ -1196,13 +1223,19 @@
        nothing, or a promise about what the tool will do that nobody has decided
        yet. -->
   <div class="view" id="viewAssistant">
-    <div class="home-header">
-      <div class="eyebrow">أداة داخلية · لم تُبنَ بعد</div>
-      <h1>المساعد الذكي <span class="soon-badge">قريبًا</span></h1>
-      <p class="sub">التبويب محجوز باسمه، ولا شيء فيه يُستخدم اليوم. ما يفعله المساعد يُكتب هنا حين يُبنى.</p>
-    </div>
-    <div class="card">
-      <div class="empty-hint">لا شيء هنا بعد.</div>
+    <div class="card assist-locked">
+      <svg class="assist-art" viewBox="0 0 220 160" role="img" aria-label="محادثة مقفلة">
+        <path class="assist-bubble" d="M28 20h164a20 20 0 0 1 20 20v60a20 20 0 0 1-20 20h-8v22l-28-22H28a20 20 0 0 1-20-20V40a20 20 0 0 1 20-20z"/>
+        <rect class="assist-line" x="34" y="44" width="152" height="9" rx="4.5"/>
+        <rect class="assist-line-own" x="34" y="63" width="152" height="9" rx="4.5"/>
+        <rect class="assist-line" x="34" y="82" width="104" height="9" rx="4.5"/>
+        <circle class="assist-lock-bg" cx="110" cy="70" r="34"/>
+        <rect class="assist-lock" x="95" y="69" width="30" height="23" rx="6"/>
+        <path class="assist-lock" d="M101 69v-7a9 9 0 0 1 18 0v7"/>
+        <circle class="assist-keyhole" cx="110" cy="80.5" r="2.6"/>
+      </svg>
+      <div class="assist-title">مساعدك الذكي: قريبًا</div>
+      <div class="assist-sub">التبويب محجوز باسمه، ولا شيء فيه يُستخدم اليوم. ما يفعله المساعد يُكتب هنا حين يُبنى.</div>
     </div>
   </div>
 
@@ -1266,7 +1299,7 @@
     <button class="rail-item" id="navNewFile" title="تقسيم"><span class="icon icon-document"></span><span class="rail-label">تقسيم</span></button>
     <button class="rail-item" id="navUqn" title="تشريعات أم القرى"><span class="icon icon-newspaper"></span><span class="rail-label">تشريعات أم القرى</span></button>
     <button class="rail-item" id="navSiteUpdates" title="تحديثات المواقع"><span class="icon icon-globe"></span><span class="rail-label">تحديثات المواقع</span><span class="rail-dot" id="suAutoDot" hidden aria-label="الفحص التلقائي وجد ما يستحق النظر"></span></button>
-    <button class="rail-item rail-soon" id="navAssistant" title="المساعد الذكي — قريبًا"><span class="icon icon-assistant"></span><span class="rail-label">المساعد الذكي<span class="soon-badge">قريبًا</span></span></button>
+    <button class="rail-item rail-soon" id="navAssistant" title="المساعد الذكي — قريبًا"><span class="icon icon-assistant"></span><span class="rail-label"><span class="rail-name">المساعد الذكي</span><span class="soon-badge">قريبًا</span></span></button>
     <button class="rail-item" id="navSettings" title="الإعدادات"><span class="icon icon-setting"></span><span class="rail-label">الإعدادات</span></button>
   </nav>
   <div class="rail-account">
