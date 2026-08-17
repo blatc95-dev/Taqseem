@@ -969,15 +969,20 @@
     </div>
   </div>
 
-  <!-- ============ TAQSEEM: the files that exist, then a new one ============ -->
+  <!-- ============ TAQSEEM: a new file, then the ones that exist ============ -->
   <div class="view" id="viewTaqseem">
     <div class="home-header">
       <div class="eyebrow">أداة داخلية · إدخال البيانات</div>
       <h1>تقسيم</h1>
-      <p class="sub">الملفات المنجزة والمسودات المعلّقة، ومن أسفلها بدء ملف جديد.</p>
+      <p class="sub">ابدأ ملفًا جديدًا، أو تابع مسودة، أو راجع ما أُنجز.</p>
     </div>
 
-    <div class="log-section">
+    <div class="card tq-new">
+      <div class="tq-new-text">الصق نص التشريع، وحدّد عناوينه بالماوس، ويتكفّل النظام بالباقي.</div>
+      <button class="btn-primary" id="tqNewBtn">بدء ملف جديد</button>
+    </div>
+
+    <div class="log-section" style="margin-top:34px;">
       <div class="log-section-title">آخر الملفات المنجزة</div>
       <div class="log-list" id="tqDone"></div>
       <div class="activity-more"><button class="pill-btn" id="tqDoneMore" hidden>عرض المزيد</button></div>
@@ -986,14 +991,6 @@
     <div class="log-section" style="margin-top:34px;">
       <div class="log-section-title">المسودات</div>
       <div class="log-list" id="tqDrafts"></div>
-    </div>
-
-    <div class="log-section" style="margin-top:34px;">
-      <div class="log-section-title">ملف جديد</div>
-      <div class="card tq-new">
-        <div class="tq-new-text">الصق نص التشريع، وحدّد عناوينه بالماوس، ويتكفّل النظام بالباقي.</div>
-        <button class="btn-primary" id="tqNewBtn">بدء ملف جديد</button>
-      </div>
     </div>
   </div>
 
@@ -1528,12 +1525,12 @@ async function startNewFile(){
   showToast('بدأت ملفًا جديدًا');
 }
 
-/* ---------- تقسيم tab: what exists first, a new file last ----------
-   Opening the tool used to be the same act as starting a file, which is the one
-   thing an employee least often wants first: they came back for the file they
-   left yesterday. So the tab opens on what is already there — the finished files,
-   then the drafts still waiting — and بدء ملف جديد sits under both, where a
-   reader arrives having found that what they wanted is not in the list. */
+/* ---------- تقسيم tab: the new file, then the ones that exist ----------
+   Opening the tool used to be the same act as starting a file, so the file an
+   employee left yesterday was reachable only through the home page's mixed feed.
+   The tab has its own page now: بدء ملف جديد at the top, because that is the
+   press this tool exists for and it must not be scrolled to, and under it the
+   finished files and then the drafts still waiting. */
 const TQ_DONE_PAGE = 8;
 let tqRecords = [];
 let tqDoneExpanded = false;
