@@ -2953,7 +2953,7 @@ async function uqnOpenRecord(rec){
   const items = rec.items && rec.items.length ? rec.items : await uqnLoadItems(rec.id);
   if(!items){
     uqnSetStatus('تعذر فتح الاستخراج — لم تصل تشريعاته. تحقق من الاتصال ثم أعد المحاولة.', true);
-    return;
+    return false;
   }
   uqnSetStatus('');
   Object.assign(uqnDraft, {
@@ -2969,6 +2969,7 @@ async function uqnOpenRecord(rec){
   });
   edRender(uqnDraft);
   $('#uqnResult').scrollIntoView({ behavior:'smooth', block:'start' });
+  return true;
 }
 
 async function uqnSaveDraft(){
@@ -3212,6 +3213,29 @@ async function uqnExtract(){
   const hLabel = hijriLabel(picked.hy, picked.hm, picked.hd);
 
   try{
+    /* An عدد is the same عدد whoever pulls it, so extracting one that is already
+       in the log produces nothing new: a second row saying what the first row
+       says, bought with a few hundred requests at أم القرى. So the extraction is
+       refused and the saved one is opened instead — the employee asked to see
+       this عدد, and that is what showing it looks like.
+       The log is re-read first rather than trusted from the last visit: the
+       colleague who extracted it may have done so while this tab sat open. */
+    uqnSetStatus('<span class="src-spinner"></span>جاري التحقق من الاستخراجات السابقة…');
+    /* a log that will not load cannot answer "has this عدد been pulled before",
+       and that is a reason to go ahead rather than to refuse — the check spares
+       the employee duplicated work, it is not a condition for doing the work */
+    try{ await uqnRenderLog(); }catch(_){}
+    const already = uqnLogCache.find(r => r.iso === picked.iso);
+    if(already){
+      $('#uqnIssueNo').value = already.issueNumber || '—';
+      if(await uqnOpenRecord(already)){
+        uqnSetStatus(`هذا العدد مستخرج سابقًا — استخرجه ${
+          escapeHtml(already.user || 'غير معروف')} ${relTime(already.createdAt)}،
+          فلم يُستخرج مرة ثانية. المعروض أدناه هو الاستخراج المحفوظ.`, true);
+      }
+      return;
+    }
+
     uqnSetStatus('<span class="src-spinner"></span>جاري تحديد رقم العدد…');
     const issueNumber = await uqnIssueForDate(picked.iso);
     $('#uqnIssueNo').value = issueNumber || '—';
