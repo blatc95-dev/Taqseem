@@ -635,8 +635,6 @@
   /* ---------- تحديثات المواقع tab ---------- */
   .su-field input[type="date"]{min-width:158px;font-family:inherit;}
   .su-field select{min-width:300px;max-width:100%;}
-  .su-range-note{font-size:12px;color:var(--text-muted);margin-top:10px;line-height:1.9;}
-  .su-range-note b{color:var(--blue);font-weight:700;}
   .su-preset{
     background:none;border:none;padding:0;font:inherit;font-size:12px;font-weight:700;
     color:var(--blue);text-decoration:underline;cursor:pointer;
@@ -653,12 +651,6 @@
   .su-confirm-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px;}
   .su-confirm-actions .btn-primary,
   .su-confirm-actions .btn-ghost{padding:8px 18px;font-size:13px;}
-  .su-covered{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
-  .su-covered-chip{
-    font-size:11.5px;font-weight:600;color:var(--text-muted);
-    background:var(--bg-soft);border:1px solid var(--border);
-    border-radius:999px;padding:4px 10px;
-  }
   table.src-table .col-date{min-width:104px;white-space:nowrap;}
   table.src-table .col-type{min-width:96px;}
   table.src-table .col-entity{min-width:160px;}
@@ -1140,7 +1132,6 @@
         </div>
         <button class="btn-primary" id="suFetchBtn">بحث عن التحديثات</button>
       </div>
-      <div class="su-range-note" id="suRangeNote"></div>
       <div id="suConflict"></div>
       <div class="src-status" id="suStatus"></div>
     </div>
@@ -3434,10 +3425,6 @@ function suFormatIso(iso){
   return new Date(iso + 'T12:00:00Z')
     .toLocaleDateString('ar', { day:'numeric', month:'long', year:'numeric', timeZone:'UTC' });
 }
-function suHijriOf(iso){
-  const h = gregToHijri(new Date(iso + 'T12:00:00Z'));
-  return hijriLabel(h.y, h.m, h.d);
-}
 function suRangesOverlap(a, b){
   return a.from <= b.to && a.to >= b.from;
 }
@@ -4525,10 +4512,10 @@ function iaScanner(category, label){
 }
 
 /* ---------- the site registry ----------
-   `dateMeaning` is shown next to the range, because "published on" means two
-   different things across these sites and an employee reading a result has to
-   know which one they are looking at. `note` carries a limit worth stating up
-   front rather than leaving to be inferred from a short result.
+   `dateMeaning` and `note` are documentation rather than screen text: what
+   "published on" means differs across these sites, and each limit is worth
+   writing down beside the reader that depends on it. They were both printed
+   above the search once and made a wall of prose nobody read past.
 
    `added` is the day a جهة entered this list. A جهة nobody has swept yet is
    invisible in a tab whose every screen is about what was already read, so it
@@ -5139,7 +5126,6 @@ async function suSaveDraft(){
   }
   edRender(suDraft);
   await suRenderLog();
-  suRenderRangeNote();
 }
 
 /* ---------- the one-time setup steps ----------
@@ -6064,38 +6050,6 @@ function suFreeRangeForSites(sites){
   return from <= to ? { from, to } : null;
 }
 
-function suRenderRangeNote(){
-  const sites = suChosenSites();
-  const range = suReadRange();
-  const parts = [];
-  if(range && range.from <= range.to){
-    parts.push(`النطاق المحدد <b>${escapeHtml(suFormatIso(range.from))}</b> — <b>${escapeHtml(suFormatIso(range.to))}</b> (${escapeHtml(suHijriOf(range.from))} — ${escapeHtml(suHijriOf(range.to))})`);
-  }
-  parts.push(sites.length === 1
-    ? `التاريخ المعتمد: ${escapeHtml(sites[0].dateMeaning)}`
-    : `${sites.length} جهة محددة — التاريخ المعتمد يختلف بينها (تاريخ منشور على الصفحة، أو تاريخ الملف نفسه)، وهو مذكور في عمود «تاريخ النشر» لكل صف.`);
-  const notes = sites.filter(s => s.note);
-  if(notes.length){
-    parts.push(`<span class="su-note-title">حدود يجدر معرفتها:</span>` +
-      notes.map(s => `<br>· <b>${escapeHtml(s.name)}</b> — ${escapeHtml(s.note)}`).join(''));
-  }
-  /* coverage is per site, so with many chosen only the ones that were already
-     swept are worth listing — the rest have nothing to say. The daily sweep is
-     left out here too: two chips a جهة, eight in all, and it would spend every
-     one of them saying "اليوم" on every جهة, which is the one thing already
-     known. What is worth seeing is which days a person covered. */
-  const covered = [];
-  sites.forEach(s => suHumanCoverageFor(s.key).slice(0, 2).forEach(r =>
-    covered.push(`${s.name}: من ${r.from} إلى ${r.to}`)));
-  const chips = covered.length
-    ? `<div class="su-covered">${covered.slice(0, 8)
-        .map(t => `<span class="su-covered-chip">${escapeHtml(t)}</span>`).join('')}${
-        covered.length > 8 ? `<span class="su-covered-chip">و${covered.length - 8} نطاقًا آخر</span>` : ''}</div>`
-    : '';
-  $('#suRangeNote').innerHTML = parts.join('<br>') +
-    (covered.length ? `<br>نطاقات مغطاة سابقًا:${chips}` : '');
-}
-
 /* An out-of-order range is the only thing that still blocks the button: there is
    nothing there to search. Overlap no longer blocks and no longer shows itself
    while typing — it is asked about once, on the search itself. */
@@ -6310,7 +6264,6 @@ async function suOnEnter(){
      on the screen, not before it */
   await suMarkAutoSeen();
   suSyncScope();
-  suRenderRangeNote();
   suValidateRange();
 }
 
@@ -6324,7 +6277,6 @@ async function suOnEnter(){
       suCloseConfirm(false);
       if(!suBusy) suSetStatus('');
       suSyncScope();
-      suRenderRangeNote();
     }));
   $('#suPicker').addEventListener('click', e => {
     const bulk = e.target.closest('[data-su-pick]');
@@ -6333,9 +6285,8 @@ async function suOnEnter(){
       $('#suPicker').querySelectorAll('input[type="checkbox"]').forEach(c => { c.checked = on; });
     }
     suSyncScope();
-    suRenderRangeNote();
   });
-  $('#suPicker').addEventListener('change', () => { suSyncScope(); suRenderRangeNote(); });
+  $('#suPicker').addEventListener('change', () => { suSyncScope(); });
 
   /* the notice names the new جهات, and finding them again by hand in a
      seventeen-جهة picker is the work it exists to save — so it selects exactly
@@ -6350,7 +6301,6 @@ async function suOnEnter(){
     if(some) some.checked = true;
     $('#suPicker').querySelectorAll('input[type="checkbox"]').forEach(c => { c.checked = keys.has(c.value); });
     suSyncScope();
-    suRenderRangeNote();
     suValidateRange();
     $('#suPicker').scrollIntoView({ block:'nearest' });
   });
@@ -6362,7 +6312,6 @@ async function suOnEnter(){
     /* the previous search's outcome does not describe the new range, and
        leaving it up would read as a verdict on it */
     if(!suBusy && !suDraft.rows.length) suSetStatus('');
-    suRenderRangeNote();
     suValidateRange();
   }));
   $('#suFetchBtn').addEventListener('click', suSearch);
@@ -6375,7 +6324,6 @@ async function suOnEnter(){
         $('#suFrom').value = free.from;
         $('#suTo').value = free.to;
       }
-      suRenderRangeNote();
       suValidateRange();
       return;
     }
@@ -6403,7 +6351,6 @@ async function suOnEnter(){
       suSetupState.notes = false;
       suNotesMissing = false;      // let the next save find out for itself
       await suRenderLog();
-      suRenderRangeNote();
       suValidateRange();
       return;
     }
@@ -6466,7 +6413,6 @@ async function suOnEnter(){
     /* the draft was a view of the record that no longer exists */
     if(suDraft.recordIds && suDraft.recordIds[rec.siteKey] === rec.id) suResetDraft();
     await suRenderLog();
-    suRenderRangeNote();
     suValidateRange();
   });
 })();
