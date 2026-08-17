@@ -395,6 +395,17 @@
   .product-icon .icon{width:17px;height:17px;}
   .product-name{font-size:15.5px;font-weight:800;}
   .product-desc{font-size:12.5px;color:var(--text-muted);line-height:1.7;}
+  /* how much this tool has actually done — the totals, in the unit the tool
+     itself counts in. They sit under the description rather than beside the
+     state line below, because a total is not a thing to act on. */
+  .product-stats{display:flex;flex-wrap:wrap;gap:6px;}
+  .product-stat{
+    display:inline-flex;align-items:baseline;gap:5px;
+    padding:4px 10px;border-radius:999px;
+    background:var(--bg-soft);border:1px solid var(--border);
+    font-size:11.5px;font-weight:600;color:var(--text-muted);
+  }
+  .product-stat b{font-size:13px;font-weight:800;color:var(--text);}
   /* the one line that actually decides whether this tool needs attention */
   .product-state{
     font-size:12.5px;font-weight:600;color:var(--text);margin-top:auto;
@@ -910,6 +921,7 @@
           <span class="product-name">تقسيم</span>
         </span>
         <span class="product-desc">تحويل نص التشريع إلى أقسام وأبواب وفصول ومواد</span>
+        <span class="product-stats" id="prodTaqseemStats"></span>
         <span class="product-state" id="prodTaqseemState">…</span>
         <span class="product-cta">ابدأ تقسيمًا جديدًا<span class="icon icon-go"></span></span>
       </button>
@@ -919,6 +931,7 @@
           <span class="product-name">تشريعات أم القرى</span>
         </span>
         <span class="product-desc">استخراج جدول تشريعات عدد من جريدة أم القرى</span>
+        <span class="product-stats" id="prodUqnStats"></span>
         <span class="product-state" id="prodUqnState">…</span>
         <span class="product-cta">استخرج عددًا<span class="icon icon-go"></span></span>
       </button>
@@ -928,6 +941,7 @@
           <span class="product-name">تحديثات المواقع</span>
         </span>
         <span class="product-desc">ما نُشر على مواقع الجهات خلال فترة محددة</span>
+        <span class="product-stats" id="prodSuStats"></span>
         <span class="product-state" id="prodSuState">…</span>
         <span class="product-cta">ابحث عن التحديثات<span class="icon icon-go"></span></span>
       </button>
@@ -1487,6 +1501,16 @@ function arCount(n, one, two, few, many){
   if(n === 2) return two;
   return `${n} ${(n >= 3 && n <= 10) ? few : many}`;
 }
+/* arCount with the figure set apart, for the counters that are read as numbers
+   rather than as sentences. The figure is only pulled out where Arabic writes
+   one: «ملفان» already says two, so «٢ ملفان» is not a thing to render — and
+   none is said in words, because «٠ ملفًا» is not either. */
+function arCountHtml(n, one, two, few, many){
+  if(n === 0) return `لا ${few}`;
+  if(n === 1) return one;
+  if(n === 2) return two;
+  return `<b>${n}</b> ${n <= 10 ? few : many}`;
+}
 /* on a landing page "قبل يومين" carries the meaning a timestamp doesn't; the
    exact stamp is still one click away inside each tool's own log */
 function relTime(iso){
@@ -1507,10 +1531,25 @@ function homeSetState(sel, html, tone){
   el.className = 'product-state' + (tone ? ' is-' + tone : '');
   el.innerHTML = html;
 }
+/* How much work each tool has behind it. The state line above answers "does
+   this need me right now"; these answer "how much has come out of it", which is
+   the question nobody could answer without opening all three logs and counting.
+   A tool whose log could not be read shows nothing rather than a zero — zero is
+   a count, and «لم يُقرأ السجل» is not one. */
+function homeSetStats(sel, chips){
+  const el = $(sel);
+  el.innerHTML = (chips || []).filter(Boolean).join('');
+}
+function homeStatHtml(n, one, two, few, many){
+  return `<span class="product-stat">${arCountHtml(n, one, two, few, many)}</span>`;
+}
 function homeRenderTaqseemState(records){
   const drafts = records.filter(r => r.status === 'draft').length;
   const done = records.filter(r => r.status === 'completed').length;
   const tail = done ? ` · ${arCount(done, 'ملف مكتمل', 'ملفان مكتملان', 'ملفات مكتملة', 'ملفًا مكتملًا')}` : '';
+  homeSetStats('#prodTaqseemStats', [
+    homeStatHtml(done, 'ملف منجز', 'ملفان منجزان', 'ملفات منجزة', 'ملفًا منجزًا')
+  ]);
   homeSetState('#prodTaqseemState',
     drafts
       ? `<b>${arCount(drafts, 'مسودة واحدة', 'مسودتان', 'مسودات', 'مسودة')}</b> قيد العمل${tail}`
@@ -1518,7 +1557,16 @@ function homeRenderTaqseemState(records){
     drafts ? 'attention' : 'clear');
 }
 function homeRenderUqnState(res){
-  if(res.error){ homeSetState('#prodUqnState', 'السجل غير متاح — تحتاج الصفحة تجهيزة'); return; }
+  if(res.error){
+    homeSetStats('#prodUqnStats', []);
+    homeSetState('#prodUqnState', 'السجل غير متاح — تحتاج الصفحة تجهيزة');
+    return;
+  }
+  homeSetStats('#prodUqnStats', [
+    homeStatHtml(res.rows.length, 'عدد مستخرج', 'عددان مستخرجان', 'أعداد مستخرجة', 'عددًا مستخرجًا'),
+    homeStatHtml(res.rows.reduce((n, r) => n + (r.itemCount || 0), 0),
+      'تشريع', 'تشريعان', 'تشريعات', 'تشريعًا')
+  ]);
   /* no "behind / caught up" to report here — an issue is extracted on demand —
      so the number stays neutral rather than claiming a state it can't know */
   const last = res.rows[0];
@@ -1530,7 +1578,20 @@ function homeRenderUqnState(res){
 /* the number that decides whether this tool needs attention is how many days
    on a site nobody has swept yet */
 function homeRenderSuState(res){
-  if(res.error){ homeSetState('#prodSuState', 'السجل غير متاح — تحتاج الصفحة تجهيزة'); return; }
+  if(res.error){
+    homeSetStats('#prodSuStats', []);
+    homeSetState('#prodSuState', 'السجل غير متاح — تحتاج الصفحة تجهيزة');
+    return;
+  }
+  /* one search over ten جهات writes ten rows, so counting rows would report ten
+     searches for one press. The log groups those rows back into the run they
+     came from, and that grouping is what «مرات البحث» means here — the number
+     on the card matches the number of lines the log opens with. */
+  homeSetStats('#prodSuStats', [
+    homeStatHtml(suGroupSearches(res.rows).length, 'بحث', 'بحثان', 'عمليات بحث', 'عملية بحث'),
+    homeStatHtml(res.rows.reduce((n, r) => n + (r.itemCount || 0), 0),
+      'ملف', 'ملفان', 'ملفات', 'ملفًا')
+  ]);
   const today = suTodayIso();
   const states = SU_SITES.map(site => {
     const newest = res.rows.filter(r => r.siteKey === site.key)
