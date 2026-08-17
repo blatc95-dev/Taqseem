@@ -799,6 +799,47 @@
   /* ---------- a result, read by default and edited on request ---------- */
   .ed-note{font-size:12px;color:var(--text-muted);line-height:1.8;margin:0 0 12px;}
   .ed-note b{color:var(--text);}
+  /* the pair of buttons that pick which half of a sweep is on screen */
+  .ed-panes{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px;}
+  .ed-pane{
+    display:inline-flex;align-items:center;gap:7px;
+    padding:8px 16px;border-radius:9px;
+    background:var(--surface);border:1px solid var(--border);
+    font:inherit;font-size:12.5px;font-weight:700;color:var(--text-muted);cursor:pointer;
+    transition:border-color .15s ease, color .15s ease, background-color .15s ease;
+  }
+  .ed-pane:hover{border-color:var(--blue);color:var(--blue);}
+  .ed-pane.is-on{background:var(--blue-bg);border-color:var(--blue);color:var(--blue);}
+  .ed-pane:focus-visible{outline:2px solid var(--blue);outline-offset:2px;}
+  /* the count of جهات that failed, kept on the button so the hole in the table
+     is visible from the pane that does not show it */
+  .ed-pane-badge{
+    display:inline-flex;align-items:center;justify-content:center;
+    min-width:18px;height:18px;padding:0 5px;border-radius:999px;
+    background:var(--lvl2-bg);color:var(--lvl2-text);
+    border:1px solid var(--lvl2-border);font-size:11px;font-weight:800;
+  }
+
+  /* ---------- the جهات pane ---------- */
+  .su-ents-line{font-size:12.5px;color:var(--text-muted);margin-bottom:10px;}
+  .su-ents-line b{color:var(--text);font-weight:800;font-size:14px;}
+  .su-ent-list{
+    list-style:none;margin:0;padding:0;background:var(--surface);
+    border:1px solid var(--border);border-radius:12px;overflow:hidden;
+  }
+  .su-ent{
+    display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+    padding:11px 14px;border-bottom:1px solid var(--border);font-size:13px;
+  }
+  .su-ent:last-child{border-bottom:none;}
+  .su-ent:hover{background:var(--bg-soft);}
+  .su-ent-name{font-weight:600;flex:1;min-width:0;}
+  .su-ent-count{font-size:12.5px;color:var(--text);white-space:nowrap;text-align:center;}
+  .su-ent-count b{color:var(--blue);font-weight:800;font-size:14px;}
+  /* a جهة that answered with nothing is an answer, so it is stated plainly
+     rather than left as a blank the reader has to interpret */
+  .su-ent-count.is-none{color:var(--text-muted);font-weight:600;}
+  .su-ent-foot{margin-top:8px;font-size:12px;}
   /* the actions sit under the table: that is where a reader arrives having
      decided whether anything needs fixing */
   .ed-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:14px 0 0;}
@@ -4724,17 +4765,45 @@ function edBarHtml(draft){
     ? `<button class="pill-btn" data-ed-done>إنهاء التعديل</button>${add}${save}`
     : `<button class="pill-btn" data-ed-edit>تعديل</button>${add}${save}`}</div>`;
 }
-function edRender(draft){
-  const host = $(draft.hostSel);
-  if(!draft.head && !draft.rows.length){ host.innerHTML = ''; return; }
-  host.innerHTML = `
-    <div class="src-result-top"><div class="src-result-title">${draft.head || ''}</div></div>
-    ${edNoteHtml(draft)}
-    ${draft.rows.length
+/* ---------- the two questions a sweep answers ----------
+   "What turned up" and "which جهات were actually read" are different questions,
+   and answering both in one scroll answers neither well: the جهات list is long,
+   it sits under the table, and nobody reaches it — yet it is the half that
+   decides whether the other half can be trusted. A جهة that refused to load is
+   not a جهة with nothing new in it.
+
+   So the result carries both and a pair of buttons decides which is on screen.
+   The جهات button keeps a count on it when something failed, because a reader
+   who never presses it must still be told the table has holes in it. */
+function edPane(draft){
+  return draft.panes ? (draft.pane || draft.panes[0].key) : '';
+}
+function edPanesHtml(draft){
+  if(!draft.panes) return '';
+  const on = edPane(draft);
+  return `<div class="ed-panes" role="tablist">${draft.panes.map(p => `
+    <button class="ed-pane${p.key === on ? ' is-on' : ''}" role="tab"
+      aria-selected="${p.key === on}" data-ed-pane="${escapeHtml(p.key)}">${escapeHtml(p.label)}${
+      p.badge ? `<span class="ed-pane-badge">${escapeHtml(String(p.badge))}</span>` : ''}</button>`).join('')}</div>`;
+}
+function edResultsHtml(draft){
+  return `${draft.rows.length
       ? edTableHtml(draft)
       : `<div class="empty-hint">${escapeHtml(draft.emptyHint || 'لا يوجد شيء')}</div>`}
     ${edBarHtml(draft)}
     ${draft.footer || ''}`;
+}
+function edRender(draft){
+  const host = $(draft.hostSel);
+  if(!draft.head && !draft.rows.length){ host.innerHTML = ''; return; }
+  const pane = edPane(draft);
+  host.innerHTML = `
+    <div class="src-result-top"><div class="src-result-title">${draft.head || ''}</div></div>
+    ${edNoteHtml(draft)}
+    ${edPanesHtml(draft)}
+    ${!draft.panes || pane === 'results'
+      ? edResultsHtml(draft)
+      : (draft.paneHtml ? draft.paneHtml(pane, draft) : '')}`;
 }
 function edBlankRow(draft){
   const row = {};
@@ -4772,6 +4841,14 @@ function edBind(draft){
     if(file){ suDownloadRowFile(draft.rows[+file.dataset.edFile], file); return; }
     const text = e.target.closest('[data-ed-text]');
     if(text){ uqnDownloadRowText(draft.rows[+text.dataset.edText]); return; }
+    /* switching panes is reading too, so it works on a colleague's record —
+       and it is left above the readOnly gate for exactly that reason */
+    const pane = e.target.closest('[data-ed-pane]');
+    if(pane){
+      draft.pane = pane.dataset.edPane;
+      edRender(draft);
+      return;
+    }
     if(draft.readOnly) return;
     if(e.target.closest('[data-ed-edit]') || e.target.closest('[data-ed-done]')){
       /* nothing is discarded either way — the inputs are a view of rows that
@@ -4844,15 +4921,65 @@ const suDraft = {
   recordIds: null, readOnly: false, editing: false,
   head: '', note: '', footer: '', emptyHint: '',
   dirty: false, saving: false,
+  panes: null, pane: 'results', paneHtml: suEntitiesHtml,
   save: function(){ return suSaveDraft(); }
 };
 function suResetDraft(){
   Object.assign(suDraft, {
     rows: [], sites: [], range: null, stats: {}, failures: [],
     recordIds: null, automatic: false, readOnly: false, editing: false,
-    head: '', note: '', footer: '', emptyHint: '', dirty: false, saving: false
+    head: '', note: '', footer: '', emptyHint: '', dirty: false, saving: false,
+    panes: null, pane: 'results'
   });
   $('#suResult').innerHTML = '';
+}
+/* the two buttons over a sweep's result. النتائج is first because it is what
+   the search was for; الجهات carries the failure count so the hole in the
+   answer is visible from the pane that does not show it */
+function suPanes(failures){
+  return [
+    { key:'results', label:'عرض النتائج' },
+    { key:'entities', label:'عرض الجهات', badge: (failures || []).length || '' }
+  ];
+}
+/* ---------- the جهات half of a sweep ----------
+   Every جهة the search reached, what came out of it, and — the loud part —
+   every جهة it could not read. Silence from a جهة that answered means nothing
+   was published; silence from one that never loaded means nothing is known, and
+   the two must not look alike. */
+function suEntitiesHtml(_pane, draft){
+  const failures = draft.failures || [];
+  const sites = draft.sites || [];
+  const scanned = Object.values(draft.stats || {}).reduce((n, s) => n + (s.scanned || 0), 0);
+  const okHtml = sites.length ? `<ul class="su-ent-list">${sites.map(s => {
+    const items = draft.rows.filter(r => r.siteKey === s.key).length;
+    const stat = (draft.stats || {})[s.key] || {};
+    return `<li class="su-ent">
+      <span class="su-ent-name">${escapeHtml(s.label || s.key)}</span>
+      <span class="su-ent-count${items ? '' : ' is-none'}">${items
+        ? arCountHtml(items, 'ملف واحد', 'ملفان', 'ملفات', 'ملفًا')
+        : 'لا جديد'}<span class="src-sub">من ${stat.scanned || 0} مفحوصًا</span></span>
+      ${/^https?:\/\//.test(s.home || '')
+        ? `<a class="src-link" href="${escapeHtml(s.home)}" target="_blank" rel="noopener noreferrer">فتح الموقع</a>`
+        : ''}
+    </li>`;
+  }).join('')}</ul>` : '<div class="empty-hint">لم تُقرأ أي جهة في هذا البحث</div>';
+  const failHtml = failures.length ? `<div class="su-note warn">
+      <div class="su-note-title">${escapeHtml(arCount(failures.length,
+        'جهة لم تُقرأ', 'جهتان لم تُقرآ', 'جهات لم تُقرأ', 'جهة لم تُقرأ'))} في هذا الفحص —
+        لا يمكن القول إنه لا جديد فيها:</div>
+      <ul>${failures.map(f =>
+        `<li><b>${escapeHtml(f.label || '')}</b> — ${escapeHtml(f.message || 'خطأ غير معروف')}</li>`).join('')}</ul>
+      <div class="su-ent-foot">هذه الجهات لا تُحفظ ولا يُسجَّل نطاقها، فتبقى الفترة مفتوحة عليها.</div>
+    </div>` : '';
+  /* "من ٥" is only worth saying when the sweep did not reach all five — with
+     nothing failed the total is the same number twice */
+  const read = arCountHtml(sites.length, 'جهة واحدة', 'جهتان', 'جهات', 'جهة');
+  return `<div class="su-ents">
+    <div class="su-ents-line">قُرئت ${read}${
+      failures.length ? ` من ${sites.length + failures.length}` : ''} · فُحص ${
+      arCountHtml(scanned, 'عنصر واحد', 'عنصران', 'عناصر', 'عنصرًا')}</div>
+    ${okHtml}${failHtml}</div>`;
 }
 
 /* ---------- downloading one row's file ----------
@@ -6040,6 +6167,9 @@ async function suSearch(){
     Object.assign(suDraft, {
       rows, sites: done, range, stats, failures,
       recordIds: null, readOnly: false, dirty: false, editing: false,
+      /* the جهات that were read and the ones that were not both live in the
+         الجهات pane now, so the footer keeps only what is about the table */
+      panes: suPanes(failures), pane: 'results',
       head: rows.length
         ? `تحديثات ${done.length === 1 ? escapeHtml(done[0].label) : done.length + ' جهة'}
            <span>· من ${escapeHtml(range.from)} إلى ${escapeHtml(range.to)} · ${rows.length} عنصرًا</span>`
@@ -6047,12 +6177,10 @@ async function suSearch(){
       note: `فُحص <b>${scanned}</b> عنصرًا على ${done.length === 1 ? 'الجهة' : done.length + ' جهات'}.
              لم يُحفظ شيء بعد — عدّل ما تريد ثم اضغط حفظ.`,
       emptyHint: 'لم يُنشر شيء على الجهات المحددة خلال هذه الفترة — يمكنك إضافة صف يدويًا إن كان لديك ما تسجّله.',
-      footer: [
-        undatedCount ? `<div class="su-note"><div class="su-note-title">${undatedCount} عنصرًا وصل بلا تاريخ يمكن التحقق منه</div>
-          صفوفها مميّزة في الجدول وخانة التاريخ فيها فارغة — املأها يدويًا أو احذف الصف.</div>` : '',
-        failures.length ? `<div class="su-note warn"><div class="su-note-title">${failures.length === 1 ? 'جهة واحدة' : failures.length + ' جهات'} لم تُقرأ، ولا تُحفظ ولا يُسجَّل نطاقها</div>
-          <ul>${failures.map(f => `<li>${escapeHtml(f.label)} — ${escapeHtml(f.message)}</li>`).join('')}</ul></div>` : ''
-      ].join('')
+      footer: undatedCount
+        ? `<div class="su-note"><div class="su-note-title">${undatedCount} عنصرًا وصل بلا تاريخ يمكن التحقق منه</div>
+           صفوفها مميّزة في الجدول وخانة التاريخ فيها فارغة — املأها يدويًا أو احذف الصف.</div>`
+        : ''
     });
     edRender(suDraft);
     suSetStatus(failures.length
@@ -6097,6 +6225,10 @@ function suOpenRecord(rec){
     automatic: !!rec.automatic,
     readOnly: !editable, editing: false,
     dirty: false, saving: false,
+    /* a saved record is one جهة, so its الجهات pane has nothing that failed —
+       but it still says what was scanned to produce these rows, and the two
+       buttons stay where the employee learned to find them */
+    panes: suPanes([]), pane: 'results',
     head: `${escapeHtml(rec.siteName || suSiteLabel(site))}
            <span>· من ${escapeHtml(rec.from)} إلى ${escapeHtml(rec.to)} · ${rec.items.length} عنصرًا · ${escapeHtml(rec.user || '')}${
              rec.reviewedBy ? ` · راجعه ${escapeHtml(rec.reviewedBy)}` : ''}</span>`,
