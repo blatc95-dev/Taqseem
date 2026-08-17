@@ -775,6 +775,10 @@
   }
   @media (prefers-reduced-motion: reduce){ .rail-dot{animation:none;} }
 
+  /* the sweep's report, opened with the جهات it is about: it spans the whole
+     table because it speaks about the run, not about any one column */
+  table.src-table tr.log-sub-report td{padding:12px 14px;}
+  .log-sub-report .su-auto{margin-bottom:0;}
   .su-auto{
     margin-bottom:14px;padding:11px 14px;border-radius:11px;
     background:var(--blue-bg);border:1px solid var(--blue-bg-hover);
@@ -4749,10 +4753,17 @@ function edTableHtml(draft){
   </table></div>`;
 }
 const ED_DIRTY_HTML = ' <span class="ed-dirty">· فيه تعديلات غير محفوظة</span>';
+/* a read-only draft has to say why, and usually the reason is that it is
+   somebody else's. A merged view can be read-only for a reason of its own,
+   though, and stating the wrong one is worse than stating none — so a draft
+   that has already explained itself passes an empty reason. */
 function edNoteHtml(draft){
-  return `<div class="ed-note">${draft.note || ''}${
-    draft.readOnly ? ' <b>هذا السجل لزميل آخر — يمكن عرضه لا تعديله.</b>'
-                   : (draft.dirty ? ED_DIRTY_HTML : '')}</div>`;
+  const why = draft.readOnly
+    ? (draft.readOnlyWhy === undefined
+        ? ' <b>هذا السجل لزميل آخر — يمكن عرضه لا تعديله.</b>'
+        : (draft.readOnlyWhy ? ` <b>${draft.readOnlyWhy}</b>` : ''))
+    : (draft.dirty ? ED_DIRTY_HTML : '');
+  return `<div class="ed-note">${draft.note || ''}${why}</div>`;
 }
 /* under the table, because that is where a reader arrives having decided
    whether anything needs fixing */
@@ -4927,7 +4938,7 @@ const suDraft = {
 function suResetDraft(){
   Object.assign(suDraft, {
     rows: [], sites: [], range: null, stats: {}, failures: [],
-    recordIds: null, automatic: false, readOnly: false, editing: false,
+    recordIds: null, automatic: false, readOnly: false, readOnlyWhy: undefined, editing: false,
     head: '', note: '', footer: '', emptyHint: '', dirty: false, saving: false,
     panes: null, pane: 'results'
   });
@@ -5695,7 +5706,7 @@ function suGroupSearches(rows){
   groups.forEach(g => {
     const first = g.records[0];
     Object.assign(g, {
-      ownerId: first.ownerId, user: first.user,
+      ownerId: first.ownerId, user: first.user, automatic: !!first.automatic,
       from: first.from, to: first.to, createdAt: first.createdAt,
       itemCount: g.records.reduce((n, r) => n + (r.itemCount || 0), 0),
       scannedCount: g.records.reduce((n, r) => n + (r.scannedCount || 0), 0),
@@ -5734,7 +5745,13 @@ const suExpanded = new Set();
    than repeated down its جهات. */
 function suGroupDetailHtml(g, cols){
   const hide = suExpanded.has(g.key) ? '' : ' hidden';
-  return g.records.map(r => {
+  /* the daily sweep's own report opens with its جهات, because it is the same
+     answer said twice over: these it read, and these it never reached */
+  const report = suGroupHostsSweep(g, suAutoSweep)
+    ? `<tr class="log-sub-row log-sub-report" data-su-detail="${g.key}"${hide}>
+         <td colspan="${cols.length}">${suAutoSweepHtml(suAutoSweep)}</td></tr>`
+    : '';
+  return report + g.records.map(r => {
     const cells = cols.map(c =>
       `<td class="${c.cls || ''}">${c.subCell ? c.subCell(r) : ''}</td>`).join('');
     return `<tr class="log-sub-row" data-su-detail="${g.key}"${hide}>${cells}</tr>`;
@@ -5742,6 +5759,60 @@ function suGroupDetailHtml(g, cols){
 }
 
 let suLogCache = [];
+let suLogGroups = [];
+/* عرض النتائج on a sweep: every ملف it found, in one table, with the جهة on the
+   row. The employee asked for the result — not for a tour of the جهات it came
+   from, and not for one table per جهة to be opened twelve times.
+   Editing works as it does on a single جهة: the draft already writes each row
+   back to the record of whichever جهة it belongs to, which is exactly what a
+   fresh sweep over twelve جهات saves. */
+function suOpenGroup(g){
+  const rows = [], sites = [], stats = {}, ids = {};
+  let clash = false;
+  g.records.forEach(rec => {
+    const site = SU_SITES.find(s => s.key === rec.siteKey)
+      || { key: rec.siteKey, name: rec.siteName || rec.siteKey, section: '', home: rec.sourceUrl || '' };
+    (rec.items || []).forEach(it => rows.push({ ...it, siteKey: site.key }));
+    /* the same جهة twice in one sitting would leave two records competing for
+       the same rows on حفظ, so that merge stays a view and nothing else */
+    if(ids[site.key]){ clash = true; return; }
+    ids[site.key] = rec.id;
+    sites.push({ key: site.key, label: rec.siteName || suSiteLabel(site), home: rec.sourceUrl || site.home });
+    stats[site.key] = { scanned: rec.scannedCount, pagesRead: 0 };
+  });
+  /* newest first with the undated last — the order a sweep hands its rows back
+     in, and the order the work sits in */
+  rows.sort((a, b) => {
+    if(!a.date && !b.date) return 0;
+    if(!a.date) return 1;
+    if(!b.date) return -1;
+    return a.date < b.date ? 1 : a.date > b.date ? -1 : 0;
+  });
+  const automatic = g.records.every(r => r.automatic);
+  const editable = !clash && g.records.every(suCanEdit);
+  const reviewedBy = (g.records.find(r => r.reviewedBy) || {}).reviewedBy || '';
+  Object.assign(suDraft, {
+    rows, sites, range: { from: g.from, to: g.to }, stats,
+    failures: [], recordIds: ids, automatic,
+    readOnly: !editable, readOnlyWhy: clash ? '' : undefined,
+    editing: false, dirty: false, saving: false,
+    panes: suPanes([]), pane: 'results',
+    head: `تحديثات ${escapeHtml(arCount(sites.length, 'جهة واحدة', 'جهتين', 'جهات', 'جهة'))}
+           <span>· من ${escapeHtml(g.from)} إلى ${escapeHtml(g.to)} · ${rows.length} عنصرًا · ${
+             escapeHtml(g.user || '')}${reviewedBy ? ` · راجعه ${escapeHtml(reviewedBy)}` : ''}</span>`,
+    note: clash
+      ? 'في هذا البحث جهة مكررة، فيُعرض للقراءة فقط — افتح سجل الجهة نفسها من «عرض الجهات» لتعديله.'
+      : automatic
+        ? (reviewedBy
+            ? `فحص تلقائي — راجعه ${escapeHtml(reviewedBy)}. أي تعديل هنا يحدّثه في مكانه بعد الضغط على حفظ.`
+            : 'فحص تلقائي لم يراجعه أحد بعد — صحّح ما يحتاج تصحيحًا ثم اضغط حفظ ليُسجَّل أنك راجعته.')
+        : editable ? 'بحث محفوظ — أي تعديل هنا يحدّثه في مكانه بعد الضغط على حفظ.' : 'بحث محفوظ.',
+    emptyHint: 'لم يجد هذا البحث أي ملف على الجهات التي قرأها.',
+    footer: ''
+  });
+  edRender(suDraft);
+  $('#suResult').scrollIntoView({ behavior:'smooth', block:'start' });
+}
 async function suRenderLog(){
   const list = $('#suLogList');
   const res = await suLoadSearches();
@@ -5764,9 +5835,12 @@ async function suRenderLog(){
   suLogLoaded = true;
   suSyncNewBadges();
   suAutoSweep = await suLoadAutoSweep();
-  suRenderAutoSweep();
   suRenderAutoAlert();
   const groups = suGroupSearches(res.rows);
+  suLogGroups = groups;
+  /* the sweep's report goes inside its own row's عرض الجهات; the box above the
+     log appears only when no row can carry it */
+  suRenderAutoSweep(!groups.some(g => suGroupHostsSweep(g, suAutoSweep)));
   /* a sweep that reached one جهة is already one line — there is nothing to open
      it into, so it keeps its own name and its own buttons */
   const single = g => g.records.length === 1;
@@ -5789,13 +5863,18 @@ async function suRenderLog(){
         { label:'من بحث', cls:'col-user', cell: g => escapeHtml(g.user || 'غير معروف') },
         { label:'تاريخ البحث', cls:'col-date', cell: g => logWhenHtml(g.createdAt) },
         { label:'إجراءات', cls:'col-acts', hideLabel:true,
+          /* two questions, two buttons: النتائج is every ملف the sweep found,
+             الجهات is which جهات it read to find them — and which it could not */
           cell: g => single(g)
             ? `<div class="col-acts-pair">${suLogActionsHtml(g.records[0])}</div>`
-            : `<button class="log-toggle" data-su-toggle="${g.key}"
-                 aria-expanded="${suExpanded.has(g.key)}">
-                 <span class="log-toggle-word">${suExpanded.has(g.key) ? 'إخفاء الجهات' : 'عرض الجهات'}</span>
-                 <span class="caret" aria-hidden="true">▾</span>
-               </button>`,
+            : `<div class="col-acts-pair">
+                 <button class="btn-ghost" data-su-open="${g.key}">عرض النتائج</button>
+                 <button class="log-toggle" data-su-toggle="${g.key}"
+                   aria-expanded="${suExpanded.has(g.key)}">
+                   <span class="log-toggle-word">${suExpanded.has(g.key) ? 'إخفاء الجهات' : 'عرض الجهات'}</span>
+                   <span class="caret" aria-hidden="true">▾</span>
+                 </button>
+               </div>`,
           subCell: r => `<div class="col-acts-pair">${suLogActionsHtml(r)}</div>` }
       ], groups, {
         trAttrs: g => single(g) ? '' :
@@ -5924,11 +6003,11 @@ function suRenderAutoAlert(){
   const dot = $('#suAutoDot');
   if(dot) dot.hidden = !suAutoNeedsEye(suAutoSweep);
 }
-function suRenderAutoSweep(){
-  const box = $('#suAuto');
-  if(!box) return;
-  const s = suAutoSweep;
-  if(!s){ box.hidden = true; box.innerHTML = ''; return; }
+/* The sweep's own account of one run: the range it covered, what it found, and
+   the جهات it could not read. All of that answers «which جهات», not «what
+   turned up» — so it belongs inside عرض الجهات on the sweep's own row in the
+   log, rather than above the log greeting everyone who opens the tab. */
+function suAutoSweepHtml(s){
   const failures = Array.isArray(s.failures) ? s.failures : [];
   const when = logWhenHtml(s.ran_at);
   const range = s.range_from === s.range_to
@@ -5950,14 +6029,30 @@ function suRenderAutoSweep(){
       <ul class="su-auto-fail-list">${failures.map(f =>
         `<li><b>${escapeHtml(f.label || '')}</b><span>${escapeHtml(f.message || '')}</span></li>`).join('')}</ul>
     </div>` : '';
-  box.hidden = false;
-  box.className = failures.length ? 'su-auto su-auto-warn' : 'su-auto';
-  box.innerHTML = `<div class="su-auto-line">
+  return `<div class="su-auto${failures.length ? ' su-auto-warn' : ''}">
+    <div class="su-auto-line">
       <span class="su-tag-auto">فحص تلقائي</span>
       <span class="su-auto-text">${range} · ${found}${undated} ·
         ${escapeHtml(String(s.ok_count || 0))} من ${escapeHtml(String(s.site_count || 0))} جهة قُرئت</span>
       <span class="su-auto-when">${when}</span>
-    </div>${failHtml}`;
+    </div>${failHtml}</div>`;
+}
+/* Which row in the log is this sweep's row: the automatic group over the same
+   range. The sweep saves one record per جهة it read, all in one sitting, so
+   that group is the run itself. */
+function suGroupHostsSweep(g, s){
+  return !!s && !!g.automatic && g.from === s.range_from && g.to === s.range_to;
+}
+/* The box above the log is now only the fallback: a sweep that failed on every
+   جهة saved no record, so it has no row to sit inside, and dropping it would
+   leave the loudest run of all with nowhere to be reported. */
+function suRenderAutoSweep(standalone){
+  const box = $('#suAuto');
+  if(!box) return;
+  if(!suAutoSweep || !standalone){ box.hidden = true; box.className = ''; box.innerHTML = ''; return; }
+  box.hidden = false;
+  box.className = '';
+  box.innerHTML = suAutoSweepHtml(suAutoSweep);
 }
 /* Opening the log is the reading, so the mark clears on the way in rather than
    on a button nobody would press. It is written once — a second employee
@@ -6373,6 +6468,14 @@ async function suOnEnter(){
     /* the whole summary row opens the sweep, not only its button: the row is
        what was pressed at, and the button is there to say the row can be. Any
        other button inside the row keeps its own meaning. */
+    const openBtn = e.target.closest('[data-su-open]');
+    if(openBtn){
+      const g = suLogGroups.find(x => x.key === openBtn.dataset.suOpen);
+      if(!g) return;
+      if(suDraft.dirty && !confirm('في الجدول تعديلات غير محفوظة، وفتح سجل آخر سيستبدلها. أتريد المتابعة؟')) return;
+      suOpenGroup(g);
+      return;
+    }
     const toggle = e.target.closest('[data-su-toggle]');
     const row = e.target.closest('.log-group');
     if(toggle || (row && !e.target.closest('button, a'))){
